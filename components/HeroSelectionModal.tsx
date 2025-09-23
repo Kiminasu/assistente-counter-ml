@@ -13,10 +13,10 @@ const HeroSelectionModal: React.FC<HeroSelectionModalProps> = ({ isOpen, onClose
     const searchInputRef = useRef<HTMLInputElement>(null);
 
     const filteredHeroes = useMemo(() => {
-        return Object.values(heroes)
-            // Fix: Explicitly type parameters to resolve type inference issues on `hero`, `a`, and `b`.
-            .filter((hero: Hero) => hero.name.toLowerCase().includes(searchTerm.toLowerCase()))
-            .sort((a: Hero, b: Hero) => a.name.localeCompare(b.name));
+        // FIX: Cast Object.values(heroes) to Hero[] to ensure correct type inference for filter and sort, as explicit parameter typing is insufficient if Object.values returns unknown[].
+        return (Object.values(heroes) as Hero[])
+            .filter(hero => hero.name.toLowerCase().includes(searchTerm.toLowerCase()))
+            .sort((a, b) => a.name.localeCompare(b.name));
     }, [heroes, searchTerm]);
 
     useEffect(() => {

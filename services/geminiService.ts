@@ -5,14 +5,33 @@ import { HeroDetails } from './heroService';
 
 let ai: GoogleGenAI | null = null;
 
+function getApiKey(): string {
+    let key: string | undefined;
+
+    // Vite/Netlify convention: VITE_ prefixed variables are exposed to the client.
+    // @ts-ignore
+    if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_KEY) {
+        // @ts-ignore
+        key = import.meta.env.VITE_API_KEY;
+    }
+    
+    // AI Studio/Node.js convention: process.env is often available.
+    if (!key && typeof process !== 'undefined' && process.env && process.env.API_KEY) {
+        key = process.env.API_KEY;
+    }
+
+    if (!key) {
+        // Provide a helpful error message for both environments.
+        throw new Error("A chave da API do Google não está configurada. Certifique-se de que a variável de ambiente VITE_API_KEY (para Netlify) ou API_KEY (para AI Studio) está definida.");
+    }
+    return key;
+}
+
 function getGenAIClient(): GoogleGenAI {
     if (ai) {
         return ai;
     }
-    const apiKey = process.env.VITE_API_KEY || process.env.API_KEY;
-    if (!apiKey) {
-        throw new Error("A chave da API do Google não está configurada. A funcionalidade de IA está desativada.");
-    }
+    const apiKey = getApiKey();
     ai = new GoogleGenAI({ apiKey });
     return ai;
 }

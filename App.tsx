@@ -60,7 +60,8 @@ const App: React.FC = () => {
     }, []);
     
     const heroApiIdMap = useMemo(() => {
-        return Object.values(heroes).reduce((acc, hero: Hero) => {
+        // FIX: Proactively cast Object.values(heroes) as it may be inferred as unknown[]. This ensures type safety for the 'reduce' operation.
+        return (Object.values(heroes) as Hero[]).reduce((acc, hero) => {
             if (hero.apiId) {
                 acc[hero.apiId] = hero;
             }
@@ -78,7 +79,8 @@ const App: React.FC = () => {
         
         try {
             const counterData = await fetchCounters(enemyHero.apiId);
-            const heroesInRole: Hero[] = Object.values(heroes).filter((h: Hero) => h.roles.includes(role));
+            // FIX: Cast Object.values(heroes) to Hero[] to fix type error where it was inferred as unknown[].
+            const heroesInRole: Hero[] = (Object.values(heroes) as Hero[]).filter(h => h.roles.includes(role));
             const relevantCounterHeroes = counterData
                 .map(c => heroApiIdMap[c.heroid])
                 .filter((hero): hero is Hero => {
@@ -134,7 +136,8 @@ const App: React.FC = () => {
             const validSpellNames = Object.keys(SPELL_ICONS);
 
             const heroSuggestions: HeroSuggestion[] = analysisFromAI.sugestoesHerois.map((aiSuggestion): HeroSuggestion => {
-                const heroData: Hero | undefined = Object.values(heroes).find((h: Hero) => h.name === aiSuggestion.nome);
+                // FIX: Cast Object.values(heroes) to Hero[] to fix type error where its callback parameter was inferred as unknown.
+                const heroData: Hero | undefined = (Object.values(heroes) as Hero[]).find(h => h.name === aiSuggestion.nome);
                 // FIX: Explicitly type parameter `c` to resolve potential type inference issues.
                 const stat = !isTheoretical ? relevantCounterHeroes.find((c: Hero) => c.name === aiSuggestion.nome) : null;
                 const winRateIncrease = stat ? stat.increase_win_rate : 0;
