@@ -7,22 +7,16 @@ let ai: GoogleGenAI | null = null;
 
 function getApiKey(): string {
     let key: string | undefined;
-
-    // Vite/Netlify convention: VITE_ prefixed variables are exposed to the client.
-    // @ts-ignore
-    if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_KEY) {
-        // @ts-ignore
-        key = import.meta.env.VITE_API_KEY;
-    }
     
-    // AI Studio/Node.js convention: process.env is often available.
-    if (!key && typeof process !== 'undefined' && process.env && process.env.API_KEY) {
+    // De acordo com as diretrizes do projeto, a chave da API deve vir exclusivamente de process.env.API_KEY.
+    // O ambiente de hospedagem (Google AI Studio, Netlify, etc.) é responsável por disponibilizar esta variável.
+    if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
         key = process.env.API_KEY;
     }
 
     if (!key) {
-        // Provide a helpful error message for both environments.
-        throw new Error("A chave da API do Google não está configurada. Certifique-se de que a variável de ambiente VITE_API_KEY (para Netlify) ou API_KEY (para AI Studio) está definida.");
+        // Esta mensagem de erro fornece instruções claras para o usuário configurar seu ambiente de implantação.
+        throw new Error("A chave da API do Google não está configurada. Para corrigir, defina a variável de ambiente `API_KEY` nas configurações do seu site no Netlify (ou na sua plataforma de hospedagem).");
     }
     return key;
 }
