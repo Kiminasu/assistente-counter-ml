@@ -1,24 +1,25 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
-import { Lane, Role, SpellSuggestion, MatchupClassification, Hero } from "../types";
+import { Lane, Role, SpellSuggestion, MatchupClassification } from "../types";
 import { ITEM_ICONS, SPELL_ICONS } from "../constants";
 import { HeroDetails } from './heroService';
 
-let ai: GoogleGenAI | null = null;
+let genAIInstance: GoogleGenAI | null = null;
 
 function getGenAIClient(): GoogleGenAI {
-    if (ai) {
-        return ai;
+    if (genAIInstance) {
+        return genAIInstance;
     }
     
-    // FIX: Switched from import.meta.env.VITE_API_KEY to process.env.API_KEY to resolve the TypeScript error and align with coding guidelines.
+    // Fix: Use process.env.API_KEY to get the API key as per the coding guidelines.
     const apiKey = process.env.API_KEY;
 
     if (!apiKey) {
-        // FIX: Updated the error message to reference the correct environment variable, API_KEY.
-        throw new Error("A chave da API do Google não está configurada. Para corrigir, defina a variável de ambiente `API_KEY` nas configurações do seu site de hospedagem e faça o deploy novamente.");
+        // Fix: Update error message to reflect the correct environment variable.
+        throw new Error("A chave da API do Google não está configurada. Para corrigir, defina a variável de ambiente `API_KEY` nas configurações do seu site de hospedagem (ex: Netlify) e faça o deploy novamente.");
     }
-    ai = new GoogleGenAI({ apiKey });
-    return ai;
+    genAIInstance = new GoogleGenAI({ apiKey });
+    return genAIInstance;
 }
 
 const formatHeroDetailsForPrompt = (details: HeroDetails): string => {
@@ -108,7 +109,7 @@ export async function getStrategicAnalysis(
   isTheoretical: boolean = false
 ): Promise<AnalysisPayload> {
     try {
-        const genAI = getGenAIClient();
+        const ai = getGenAIClient();
         const itemList = Object.keys(ITEM_ICONS).filter(item => item !== 'default').join(', ');
         const spellList = Object.keys(SPELL_ICONS).filter(spell => spell !== 'default').join(', ');
         
@@ -133,9 +134,7 @@ Não foram encontrados dados estatísticos. Baseado na sua análise profunda das
 Analise CADA UM dos seguintes heróis, que são counters estatísticos, e siga as instruções.\n\nHeróis para Análise:\n${countersDetailsPrompt}\n\n${commonInstructions}`;
         }
 
-
-        // FIX: Using the locally scoped 'genAI' client instance instead of the module-level 'ai'.
-        const response = await genAI.models.generateContent({
+        const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",
             contents: userQuery,
             config: {
@@ -193,7 +192,7 @@ export async function getDetailedMatchupAnalysis(
     isSuggestedCounter: boolean
 ): Promise<DetailedMatchupPayload> {
     try {
-        const genAI = getGenAIClient();
+        const ai = getGenAIClient();
         const spellList = Object.keys(SPELL_ICONS).filter(spell => spell !== 'default').join(', ');
         
         let winRateDescription = `estatisticamente NEUTRO (ou sem dados)`;
@@ -229,8 +228,7 @@ INSTRUÇÕES:
 3. Forneça uma 'detailedAnalysis'. Comece a análise com a mesma palavra da 'classification' para consistência. Explique o motivo e dê 2 dicas táticas diretas.
 4. Recomende o melhor 'recommendedSpell' da lista [${spellList}].`;
 
-        // FIX: Using the locally scoped 'genAI' client instance instead of the module-level 'ai'.
-        const response = await genAI.models.generateContent({
+        const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",
             contents: userQuery,
             config: {

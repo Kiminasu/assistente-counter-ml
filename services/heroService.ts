@@ -1,6 +1,6 @@
+
 import { Hero } from '../types';
 
-// Updated interface to capture the numerical hero_id from the API.
 interface ApiHeroRecord {
   data: {
     hero_id: number;
@@ -13,13 +13,11 @@ interface ApiHeroRecord {
   }
 }
 
-// Interface for the data returned by the new counter API.
 export interface CounterHeroData {
   heroid: number;
   increase_win_rate: number;
 }
 
-// Interfaces for the detailed hero data from the hero-detail API.
 export interface HeroSkill {
     skillname: string;
     skilldesc: string;
@@ -37,7 +35,6 @@ export interface HeroDetails {
     combos: SkillCombo[];
 }
 
-// Helper to clean HTML-like tags from skill descriptions provided by the API.
 function cleanSkillDescription(desc: string): string {
     return desc.replace(/<font color="[^"]*">/g, '').replace(/<\/font>/g, '');
 }
@@ -72,9 +69,9 @@ export async function fetchHeroes(): Promise<Record<string, Hero>> {
                 const heroId = heroName.toLowerCase().replace(/[^a-z0-9]/g, '');
                 heroDatabase[heroId] = {
                     id: heroId,
-                    apiId: apiId, // Storing the numerical ID
+                    apiId: apiId,
                     name: heroName,
-                    roles: [], // Initialize roles array, to be populated later.
+                    roles: [], 
                     imageUrl: heroInfo.head,
                 };
             }
@@ -107,13 +104,13 @@ export async function fetchCounters(heroApiId: number): Promise<CounterHeroData[
         const records = apiResponse?.data?.records;
 
         if (!records || !Array.isArray(records) || records.length === 0) {
-            throw new Error('Os registos de counter não foram encontrados na resposta da API.');
+            return []; // Retorna um array vazio se não houver counters para não quebrar a aplicação
         }
 
         const counterHeroes = records[0]?.data?.sub_hero;
 
         if (!counterHeroes || !Array.isArray(counterHeroes)) {
-            throw new Error('O array sub_hero não foi encontrado na resposta da API de counter.');
+            return []; // Retorna um array vazio se a estrutura for inesperada
         }
 
         return counterHeroes;
@@ -131,8 +128,7 @@ async function fetchSkillCombos(heroApiId: number): Promise<SkillCombo[]> {
     try {
         const response = await fetch(fetchUrl);
         if (!response.ok) {
-            console.warn(`Resposta da API de combos não foi 'ok' para o herói ${heroApiId}, retornando array vazio.`);
-            return []; // Not all heroes have combos, so we don't throw an error.
+            return []; 
         }
         const apiResponse = await response.json();
         const records = apiResponse?.data?.records;
@@ -148,7 +144,7 @@ async function fetchSkillCombos(heroApiId: number): Promise<SkillCombo[]> {
 
     } catch (error) {
         console.error(`Falha ao buscar combos para o herói ID ${heroApiId}:`, error);
-        return []; // Return empty array on error to not block the main analysis.
+        return []; 
     }
 }
 

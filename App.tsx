@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Hero, Lane, AnalysisResult, SlotType, LANES, ROLES, Role, HeroSuggestion, BanSuggestion, MatchupData } from './types';
 import { fetchHeroes, fetchCounters, fetchHeroDetails, HeroDetails } from './services/heroService';
@@ -20,8 +21,8 @@ const App: React.FC = () => {
 
     const [yourPick, setYourPick] = useState<string | null>(null);
     const [enemyPick, setEnemyPick] = useState<string | null>(null);
-    const [activeLane, setActiveLane] = useState<Lane>(LANES[3]); // Default to 'Ouro' lane
-    const [selectedRole, setSelectedRole] = useState<Role>(ROLES[2]); // Default to 'Atirador' role
+    const [activeLane, setActiveLane] = useState<Lane>(LANES[3]); 
+    const [selectedRole, setSelectedRole] = useState<Role>(ROLES[2]);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [activeSlotType, setActiveSlotType] = useState<SlotType | null>(null);
@@ -60,8 +61,7 @@ const App: React.FC = () => {
     }, []);
     
     const heroApiIdMap = useMemo(() => {
-        // FIX: Proactively cast Object.values(heroes) as it may be inferred as unknown[]. This ensures type safety for the 'reduce' operation.
-        return (Object.values(heroes) as Hero[]).reduce((acc, hero) => {
+        return Object.values(heroes).reduce((acc, hero) => {
             if (hero.apiId) {
                 acc[hero.apiId] = hero;
             }
@@ -71,7 +71,7 @@ const App: React.FC = () => {
 
     const fetchAnalysis = useCallback(async (heroId: string, lane: Lane, role: Role) => {
         const enemyHero = heroes[heroId];
-        if (!enemyHero || !enemyHero.apiId) return;
+        if (!enemyHero?.apiId) return;
         
         setIsAnalysisLoading(true);
         setAnalysisError(null);
@@ -79,15 +79,11 @@ const App: React.FC = () => {
         
         try {
             const counterData = await fetchCounters(enemyHero.apiId);
-            // FIX: Cast Object.values(heroes) to Hero[] to fix type error where it was inferred as unknown[].
-            const heroesInRole: Hero[] = (Object.values(heroes) as Hero[]).filter(h => h.roles.includes(role));
+            const heroesInRole = Object.values(heroes).filter(h => h.roles.includes(role));
+            
             const relevantCounterHeroes = counterData
                 .map(c => heroApiIdMap[c.heroid])
-                .filter((hero): hero is Hero => {
-                    if (!hero) return false;
-                    // FIX: Explicitly type parameter `h` to resolve potential type inference issues.
-                    return !!heroesInRole.find((h: Hero) => h.id === hero.id);
-                })
+                .filter((hero): hero is Hero => !!hero && heroesInRole.some(h => h.id === hero.id))
                 .map(hero => {
                     const stat = counterData.find(c => c.heroid === hero.apiId)!;
                     return { ...hero, increase_win_rate: stat.increase_win_rate };
@@ -102,23 +98,21 @@ const App: React.FC = () => {
                 potentialCounters = relevantCounterHeroes.slice(0, 4);
             } else {
                 isTheoretical = true;
-                potentialCounters = heroesInRole.filter((h: Hero) => h.name !== enemyHero.name).slice(0, 3);
+                potentialCounters = heroesInRole.filter(h => h.name !== enemyHero.name).slice(0, 3);
                 if (potentialCounters.length === 0) {
                     throw new Error(`Nenhum herói da função '${role}' foi encontrado para análise teórica.`);
                 }
             }
 
             const allHeroesForDetails = [enemyHero, ...potentialCounters];
-            const detailsToFetch = allHeroesForDetails.filter(h => !heroDetailsCache[h.apiId]);
+            const detailsToFetch = allHeroesForDetails.filter(h => h.apiId && !heroDetailsCache[h.apiId]);
             const newCacheEntries: Record<number, HeroDetails> = {};
 
             if (detailsToFetch.length > 0) {
                 const fetchedDetails = await Promise.all(
                     detailsToFetch.map(h => fetchHeroDetails(h.apiId).then(details => ({ apiId: h.apiId, details })))
                 );
-                fetchedDetails.forEach(item => {
-                    newCacheEntries[item.apiId] = item.details;
-                });
+                fetchedDetails.forEach(item => { newCacheEntries[item.apiId] = item.details; });
                 setHeroDetailsCache(prev => ({ ...prev, ...newCacheEntries }));
             }
 
@@ -136,11 +130,9 @@ const App: React.FC = () => {
             const validSpellNames = Object.keys(SPELL_ICONS);
 
             const heroSuggestions: HeroSuggestion[] = analysisFromAI.sugestoesHerois.map((aiSuggestion): HeroSuggestion => {
-                // FIX: Cast Object.values(heroes) to Hero[] to fix type error where its callback parameter was inferred as unknown.
-                const heroData: Hero | undefined = (Object.values(heroes) as Hero[]).find(h => h.name === aiSuggestion.nome);
-                // FIX: Explicitly type parameter `c` to resolve potential type inference issues.
-                const stat = !isTheoretical ? relevantCounterHeroes.find((c: Hero) => c.name === aiSuggestion.nome) : null;
-                const winRateIncrease = stat ? stat.increase_win_rate : 0;
+                const heroData = Object.values(heroes).find(h => h.name === aiSuggestion.nome);
+                const stat = !isTheoretical ? relevantCounterHeroes.find(c => c.name === aiSuggestion.nome) : null;
+                const winRateIncrease = stat?.increase_win_rate || 0;
                 
                 const classificacao: 'ANULA' | 'VANTAGEM' = isTheoretical ? 'VANTAGEM' : (winRateIncrease > 0.04 ? 'ANULA' : 'VANTAGEM');
 
@@ -160,8 +152,8 @@ const App: React.FC = () => {
                 };
             }).sort((a, b) => {
                 if (isTheoretical) return 0;
-                const statA = relevantCounterHeroes.find((c: Hero) => c.name === a.nome)?.increase_win_rate || 0;
-                const statB = relevantCounterHeroes.find((c: Hero) => c.name === b.nome)?.increase_win_rate || 0;
+                const statA = relevantCounterHeroes.find(c => c.name === a.nome)?.increase_win_rate || 0;
+                const statB = relevantCounterHeroes.find(c => c.name === b.nome)?.increase_win_rate || 0;
                 return statB - statA;
             });
 
@@ -184,7 +176,7 @@ const App: React.FC = () => {
 
     const fetchBans = useCallback(async (heroId: string) => {
         const myHero = heroes[heroId];
-        if (!myHero || !myHero.apiId) return;
+        if (!myHero?.apiId) return;
 
         setIsBansLoading(true);
         setBanSuggestions([]);
@@ -228,74 +220,75 @@ const App: React.FC = () => {
 
      useEffect(() => {
         const analyzeMatchup = async () => {
-            if (yourPick && enemyPick) {
-                const yourHero = heroes[yourPick];
-                const enemyHero = heroes[enemyPick];
-
-                if (!yourHero?.apiId || !enemyHero?.apiId) return;
-
-                setIsMatchupLoading(true);
-                setMatchupError(null);
+            if (!yourPick || !enemyPick) {
                 setMatchupData(null);
+                return;
+            };
+
+            const yourHero = heroes[yourPick];
+            const enemyHero = heroes[enemyPick];
+
+            if (!yourHero?.apiId || !enemyHero?.apiId) return;
+
+            setIsMatchupLoading(true);
+            setMatchupError(null);
+            setMatchupData(null);
+            
+            try {
+                const heroesForDetails = [yourHero, enemyHero];
+                const detailsToFetch = heroesForDetails.filter(h => h.apiId && !heroDetailsCache[h.apiId]);
+                const newCacheEntries: Record<number, HeroDetails> = {};
                 
-                try {
-                    // Fetch details for both heroes if not in cache
-                    const heroesForDetails = [yourHero, enemyHero];
-                    const detailsToFetch = heroesForDetails.filter(h => !heroDetailsCache[h.apiId]);
-                    const newCacheEntries: Record<number, HeroDetails> = {};
-                    if (detailsToFetch.length > 0) {
-                        const fetchedDetails = await Promise.all(
-                            detailsToFetch.map(h => fetchHeroDetails(h.apiId).then(details => ({ apiId: h.apiId, details })))
-                        );
-                        fetchedDetails.forEach(item => { newCacheEntries[item.apiId] = item.details; });
-                        setHeroDetailsCache(prev => ({ ...prev, ...newCacheEntries }));
-                    }
-                    const currentCache = { ...heroDetailsCache, ...newCacheEntries };
-                    const yourHeroDetails = currentCache[yourHero.apiId];
-                    const enemyHeroDetails = currentCache[enemyHero.apiId];
-                    
-                    if (!yourHeroDetails || !enemyHeroDetails) {
-                        throw new Error("Não foi possível carregar os detalhes dos heróis para o confronto.");
-                    }
-
-                    // Calculate win rate from counter data
-                    const enemyCounters = await fetchCounters(enemyHero.apiId);
-                    const matchupStat = enemyCounters.find(counter => counter.heroid === yourHero.apiId);
-                    let winRate = matchupStat?.increase_win_rate ?? 0;
-
-                    if (winRate === 0) {
-                        const yourCounters = await fetchCounters(yourHero.apiId);
-                        const counterMatchupStat = yourCounters.find(counter => counter.heroid === enemyHero.apiId);
-                        if (counterMatchupStat) {
-                            winRate = -counterMatchupStat.increase_win_rate;
-                        }
-                    }
-
-                    const isSuggestedCounter = !!analysisResult?.sugestoesHerois.some(s => s.nome === yourHero.name);
-                    const analysis = await getDetailedMatchupAnalysis(yourHeroDetails, enemyHeroDetails, activeLane, winRate, isSuggestedCounter);
-                    
-                    const validSpellNames = Object.keys(SPELL_ICONS);
-                    const correctedSpell = {
-                        ...analysis.recommendedSpell,
-                        nome: findClosestString(analysis.recommendedSpell.nome, validSpellNames)
-                    };
-
-                    setMatchupData({
-                        yourHero,
-                        enemyHero,
-                        winRate,
-                        classification: analysis.classification,
-                        detailedAnalysis: analysis.detailedAnalysis,
-                        recommendedSpell: correctedSpell
-                    });
-
-                } catch (error) {
-                     setMatchupError(error instanceof Error ? error.message : "Erro desconhecido.");
-                } finally {
-                    setIsMatchupLoading(false);
+                if (detailsToFetch.length > 0) {
+                    const fetchedDetails = await Promise.all(
+                        detailsToFetch.map(h => fetchHeroDetails(h.apiId).then(details => ({ apiId: h.apiId, details })))
+                    );
+                    fetchedDetails.forEach(item => { newCacheEntries[item.apiId] = item.details; });
+                    setHeroDetailsCache(prev => ({ ...prev, ...newCacheEntries }));
                 }
-            } else {
-                setMatchupData(null);
+
+                const currentCache = { ...heroDetailsCache, ...newCacheEntries };
+                const yourHeroDetails = currentCache[yourHero.apiId];
+                const enemyHeroDetails = currentCache[enemyHero.apiId];
+                
+                if (!yourHeroDetails || !enemyHeroDetails) {
+                    throw new Error("Não foi possível carregar os detalhes dos heróis para o confronto.");
+                }
+
+                const enemyCounters = await fetchCounters(enemyHero.apiId);
+                const matchupStat = enemyCounters.find(counter => counter.heroid === yourHero.apiId);
+                let winRate = matchupStat?.increase_win_rate ?? 0;
+
+                if (winRate === 0) {
+                    const yourCounters = await fetchCounters(yourHero.apiId);
+                    const counterMatchupStat = yourCounters.find(counter => counter.heroid === enemyHero.apiId);
+                    if (counterMatchupStat) {
+                        winRate = -counterMatchupStat.increase_win_rate;
+                    }
+                }
+
+                const isSuggestedCounter = !!analysisResult?.sugestoesHerois.some(s => s.nome === yourHero.name);
+                const analysis = await getDetailedMatchupAnalysis(yourHeroDetails, enemyHeroDetails, activeLane, winRate, isSuggestedCounter);
+                
+                const validSpellNames = Object.keys(SPELL_ICONS);
+                const correctedSpell = {
+                    ...analysis.recommendedSpell,
+                    nome: findClosestString(analysis.recommendedSpell.nome, validSpellNames)
+                };
+
+                setMatchupData({
+                    yourHero,
+                    enemyHero,
+                    winRate,
+                    classification: analysis.classification,
+                    detailedAnalysis: analysis.detailedAnalysis,
+                    recommendedSpell: correctedSpell
+                });
+
+            } catch (error) {
+                 setMatchupError(error instanceof Error ? error.message : "Erro desconhecido.");
+            } finally {
+                setIsMatchupLoading(false);
             }
         };
         analyzeMatchup();
@@ -311,7 +304,6 @@ const App: React.FC = () => {
             setYourPick(heroId);
         } else if (activeSlotType === 'enemyPick') {
             setEnemyPick(heroId);
-            // Clear previous results when enemy changes
             setAnalysisResult(null);
             setAnalysisError(null);
         }
@@ -374,7 +366,7 @@ const App: React.FC = () => {
                             >
                                 {isAnalysisLoading ? (
                                     <>
-                                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                         </svg>
