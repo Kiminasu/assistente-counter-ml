@@ -2,7 +2,29 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { Lane } from "../types";
 import { ITEM_ICONS, SPELL_ICONS } from "../constants";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+// O cliente da IA será inicializado de forma preguiçosa para evitar falhas na inicialização.
+let ai: GoogleGenAI | null = null;
+
+/**
+ * Obtém o cliente GoogleGenAI inicializado.
+ * Lança um erro se a chave da API não estiver configurada no ambiente.
+ * @returns Uma instância de GoogleGenAI.
+ */
+function getGenAIClient(): GoogleGenAI {
+    if (ai) {
+        return ai;
+    }
+
+    const apiKey = process.env.API_KEY;
+    if (!apiKey) {
+        // Este erro será capturado pelos blocos try/catch nas funções de chamada.
+        throw new Error("A chave da API do Google não está configurada. A funcionalidade de IA está desativada.");
+    }
+    
+    ai = new GoogleGenAI({ apiKey });
+    return ai;
+}
+
 
 interface AnalysisPayload {
   sugestoesHerois: {
@@ -68,6 +90,7 @@ export async function getStrategicAnalysis(
   potentialCounters: string[]
 ): Promise<AnalysisPayload> {
     try {
+        const genAI = getGenAIClient(); // A inicialização ocorre aqui.
         const itemList = Object.keys(ITEM_ICONS).filter(item => item !== 'default').join(', ');
         const spellList = Object.keys(SPELL_ICONS).filter(spell => spell !== 'default').join(', ');
         const counterList = potentialCounters.join(', ');
@@ -81,7 +104,7 @@ Analise CADA UM dos seguintes heróis estatisticamente fortes contra ele: [${cou
 2. Sugira 3 'sugestoesItens' de counter gerais da lista [${itemList}] que seriam eficazes contra o ${enemyHeroName}.
 Use os nomes dos itens e feitiços EXATAMENTE como fornecidos nas listas.`;
 
-        const response = await ai.models.generateContent({
+        const response = await genAI.models.generateContent({
             model: "gemini-2.5-flash",
             contents: userQuery,
             config: {
@@ -102,7 +125,8 @@ Use os nomes dos itens e feitiços EXATAMENTE como fornecidos nas listas.`;
         return parsedResult;
     } catch (error) {
         console.error("Erro ao chamar a API Gemini:", error);
-        throw new Error("Não foi possível gerar a análise estratégica da IA. Tente novamente.");
+        const errorMessage = error instanceof Error ? error.message : "Não foi possível gerar a análise estratégica da IA. Tente novamente.";
+        throw new Error(errorMessage);
     }
 }
 
@@ -113,10 +137,11 @@ export async function getMatchupAnalysis(
     lane: Lane
 ): Promise<string> {
     try {
+        const genAI = getGenAIClient(); // A inicialização ocorre aqui.
         const systemPrompt = `Você é um analista de nível mítico em Mobile Legends. Dê uma dica estratégica curta (máximo 2 frases) para o confronto direto entre dois heróis numa lane específica. Foque na condição de vitória. Responda apenas com o texto da dica.`;
         const userQuery = `Meu herói: ${yourHeroName}. Oponente: ${enemyHeroName}. Lane: ${lane}. Como devo jogar este confronto?`;
 
-        const response = await ai.models.generateContent({
+        const response = await genAI.models.generateContent({
             model: "gemini-2.5-flash",
             contents: userQuery,
             config: {
