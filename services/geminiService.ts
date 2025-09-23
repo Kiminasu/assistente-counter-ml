@@ -1,4 +1,5 @@
 
+
 import { GoogleGenAI, Type } from "@google/genai";
 import { Lane, Role, SpellSuggestion, MatchupClassification } from "../types";
 import { ITEM_ICONS, SPELL_ICONS } from "../constants";
@@ -122,7 +123,7 @@ export async function getStrategicAnalysis(
         
         const commonInstructions = `
 1. Para cada herói counter sugerido:
-   a. Forneça um 'motivo' tático detalhado, explicando como suas habilidades e combos counteram especificamente as de ${enemyHeroDetails.name}.
+   a. Forneça um 'motivo' tático detalhado. Sua análise deve comparar diretamente as habilidades chave do counter com as do oponente. Exemplo: 'A habilidade X (nome da hab.) do counter permite escapar/anular o combo de atordoamento da Eudora porque...'. Foque em anulação de habilidades, timings críticos e vantagens de posicionamento.
    b. Forneça 1-2 'avisos' críticos, como habilidades do oponente que anulam sua vantagem ou combos que você precisa evitar.
    c. Sugira 1 ou 2 'spells' (feitiços) ideais da lista [${spellList}].
 2. Sugira 3 'sugestoesItens' de counter da lista [${itemList}] que sejam eficazes contra ${enemyHeroDetails.name} E APROPRIADOS para um herói da função '${selectedRole}' na lane '${lane}', explicando a interação com as habilidades dele.`;
@@ -130,7 +131,7 @@ export async function getStrategicAnalysis(
         let userQuery = '';
         if (isTheoretical) {
             userQuery = `Oponente na lane '${lane}':\n${enemyDetailsPrompt}\n\nEu quero jogar com um herói da função '${selectedRole}'.
-Não foram encontrados dados estatísticos. Baseado na sua análise profunda das habilidades, escolha os 3 melhores counters TEÓRICOS da seguinte lista e siga as instruções.\n\nHeróis para Análise:\n${countersDetailsPrompt}\n\n${commonInstructions}`;
+Os dados estatísticos são limitados. Portanto, analise CADA UM dos heróis da lista a seguir, que foram pré-selecionados por seu alto potencial tático, e determine os melhores counters. Siga as instruções.\n\nHeróis para Análise:\n${countersDetailsPrompt}\n\n${commonInstructions}`;
         } else {
             userQuery = `Oponente na lane '${lane}':\n${enemyDetailsPrompt}\n\nEu quero jogar com um herói da função '${selectedRole}'.
 Analise CADA UM dos seguintes heróis, que são counters estatísticos, e siga as instruções.\n\nHeróis para Análise:\n${countersDetailsPrompt}\n\n${commonInstructions}`;

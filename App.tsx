@@ -1,10 +1,12 @@
 
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Hero, Lane, AnalysisResult, SlotType, LANES, ROLES, Role, HeroSuggestion, BanSuggestion, MatchupData } from './types';
 import { fetchHeroes, fetchCounters, fetchHeroDetails, HeroDetails } from './services/heroService';
 import { getStrategicAnalysis, getDetailedMatchupAnalysis } from './services/geminiService';
 import { findClosestString } from './utils';
 import { ITEM_ICONS, SPELL_ICONS, HERO_ROLES } from './constants';
+import { HERO_EXPERT_RANK } from './components/data/heroData';
 import LoadingOverlay from './components/LoadingOverlay';
 import AnalysisPanel from './components/AnalysisPanel';
 import LaneSelector from './components/LaneSelector';
@@ -94,13 +96,24 @@ const App: React.FC = () => {
             let potentialCounters: Array<Hero & { increase_win_rate?: number }> = [];
             let isTheoretical = false;
 
-            if (relevantCounterHeroes.length > 0) {
-                potentialCounters = relevantCounterHeroes.slice(0, 4);
+            const MIN_STATISTICAL_COUNTERS = 2;
+            const TOTAL_CANDIDATES_FOR_AI = 4;
+
+            if (relevantCounterHeroes.length >= MIN_STATISTICAL_COUNTERS) {
+                potentialCounters = relevantCounterHeroes.slice(0, TOTAL_CANDIDATES_FOR_AI);
             } else {
                 isTheoretical = true;
-                potentialCounters = heroesInRole.filter(h => h.name !== enemyHero.name).slice(0, 3);
+                potentialCounters = [...relevantCounterHeroes];
+                
+                const theoreticalCandidates = heroesInRole
+                    .filter(h => h.name !== enemyHero.name && !potentialCounters.some(pc => pc.id === h.id))
+                    .sort((a, b) => (HERO_EXPERT_RANK[b.name] || 5) - (HERO_EXPERT_RANK[a.name] || 5));
+                
+                const neededCandidates = TOTAL_CANDIDATES_FOR_AI - potentialCounters.length;
+                potentialCounters.push(...theoreticalCandidates.slice(0, neededCandidates));
+
                 if (potentialCounters.length === 0) {
-                    throw new Error(`Nenhum herói da função '${role}' foi encontrado para análise teórica.`);
+                     throw new Error(`Nenhum herói da função '${role}' foi encontrado para análise.`);
                 }
             }
 
@@ -131,10 +144,10 @@ const App: React.FC = () => {
 
             const heroSuggestions: HeroSuggestion[] = analysisFromAI.sugestoesHerois.map((aiSuggestion): HeroSuggestion => {
                 const heroData = Object.values(heroes).find(h => h.name === aiSuggestion.nome);
-                const stat = !isTheoretical ? relevantCounterHeroes.find(c => c.name === aiSuggestion.nome) : null;
+                const stat = relevantCounterHeroes.find(c => c.name === aiSuggestion.nome);
                 const winRateIncrease = stat?.increase_win_rate || 0;
                 
-                const classificacao: 'ANULA' | 'VANTAGEM' = isTheoretical ? 'VANTAGEM' : (winRateIncrease > 0.04 ? 'ANULA' : 'VANTAGEM');
+                const classificacao: 'ANULA' | 'VANTAGEM' = (isTheoretical || !stat) ? 'VANTAGEM' : (winRateIncrease > 0.04 ? 'ANULA' : 'VANTAGEM');
 
                 const correctedSpells = aiSuggestion.spells.map(spell => ({
                     ...spell,
@@ -148,10 +161,9 @@ const App: React.FC = () => {
                     spells: correctedSpells,
                     imageUrl: heroData?.imageUrl || '',
                     classificacao,
-                    estatistica: isTheoretical ? 'Análise Tática' : `+${(winRateIncrease * 100).toFixed(1)}% vs. ${enemyHero.name}`
+                    estatistica: (isTheoretical || !stat) ? 'Análise Tática' : `+${(winRateIncrease * 100).toFixed(1)}% vs. ${enemyHero.name}`
                 };
             }).sort((a, b) => {
-                if (isTheoretical) return 0;
                 const statA = relevantCounterHeroes.find(c => c.name === a.nome)?.increase_win_rate || 0;
                 const statB = relevantCounterHeroes.find(c => c.name === b.nome)?.increase_win_rate || 0;
                 return statB - statA;
@@ -366,7 +378,7 @@ const App: React.FC = () => {
                             >
                                 {isAnalysisLoading ? (
                                     <>
-                                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                         </svg>
