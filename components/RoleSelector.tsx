@@ -8,7 +8,7 @@ interface RoleSelectorProps {
 
 const RoleSelector: React.FC<RoleSelectorProps> = ({ activeRole, onSelectRole }) => {
     return (
-        <div className="glassmorphism p-4 rounded-xl animated-entry" style={{ animationDelay: '150ms' }}>
+        <div className="glassmorphism p-4 rounded-xl animated-entry border-2 border-yellow-400 shadow-lg shadow-yellow-400/20" style={{ animationDelay: '150ms' }}>
             <h2 className="text-xl font-bold text-center mb-3">QUAL SUA FUNÇÃO?</h2>
             <div className="flex flex-wrap justify-center gap-2">
                 {ROLES.map(role => (

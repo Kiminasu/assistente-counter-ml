@@ -32,7 +32,7 @@
         
         .animated-entry { animation: fadeIn 0.5s ease-out forwards; }
         .modal-animation { animation: zoomIn 0.3s ease-out forwards; }
-        .glassmorphism { background: rgba(10, 10, 16, 0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid var(--border-color); }
+        .glassmorphism { background: rgba(10, 10, 16, 0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
         .hero-slot { border: 2px solid var(--border-color); transition: all 0.3s ease; min-height: 92px; }
         .hero-slot.empty:hover { border-color: #a78bfa; background-color: rgba(167, 139, 250, 0.1); }
         .hero-slot.ally.filled { box-shadow: var(--glow-blue); border-color: #3b82f6;}
@@ -56,7 +56,7 @@
 }
 </script>
 </head>
-<body class="p-4 lg:p-8 flex items-center justify-center min-h-screen">
+<body class="min-h-screen">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
 </body>

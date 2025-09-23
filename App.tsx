@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Hero, Lane, AnalysisResult, SlotType, LANES, ROLES, Role, HeroSuggestion, BanSuggestion, MatchupData, MatchupClassification } from './types';
-import { fetchHeroes, fetchCounters, fetchDirectMatchup } from './services/heroService';
+import { Hero, Lane, AnalysisResult, SlotType, LANES, ROLES, Role, HeroSuggestion, BanSuggestion, MatchupData } from './types';
+import { fetchHeroes, fetchCounters, fetchHeroDetails, HeroDetails } from './services/heroService';
 import { getStrategicAnalysis, getDetailedMatchupAnalysis } from './services/geminiService';
 import { findClosestString } from './utils';
 import { ITEM_ICONS, SPELL_ICONS, HERO_ROLES } from './constants';
@@ -36,6 +36,8 @@ const App: React.FC = () => {
     const [matchupData, setMatchupData] = useState<MatchupData | null>(null);
     const [isMatchupLoading, setIsMatchupLoading] = useState(false);
     const [matchupError, setMatchupError] = useState<string | null>(null);
+    
+    const [heroDetailsCache, setHeroDetailsCache] = useState<Record<number, HeroDetails>>({});
 
     useEffect(() => {
         const loadHeroes = async () => {
@@ -58,7 +60,7 @@ const App: React.FC = () => {
     }, []);
     
     const heroApiIdMap = useMemo(() => {
-        return Object.values(heroes).reduce((acc, hero) => {
+        return Object.values(heroes).reduce((acc, hero: Hero) => {
             if (hero.apiId) {
                 acc[hero.apiId] = hero;
             }
@@ -76,10 +78,14 @@ const App: React.FC = () => {
         
         try {
             const counterData = await fetchCounters(enemyHero.apiId);
-            const heroesInRole = Object.values(heroes).filter(h => h.roles.includes(role)).map(h => h.name);
+            const heroesInRole: Hero[] = Object.values(heroes).filter((h: Hero) => h.roles.includes(role));
             const relevantCounterHeroes = counterData
                 .map(c => heroApiIdMap[c.heroid])
-                .filter((hero): hero is Hero => !!hero && heroesInRole.includes(hero.name))
+                .filter((hero): hero is Hero => {
+                    if (!hero) return false;
+                    // FIX: Explicitly type parameter `h` to resolve potential type inference issues.
+                    return !!heroesInRole.find((h: Hero) => h.id === hero.id);
+                })
                 .map(hero => {
                     const stat = counterData.find(c => c.heroid === hero.apiId)!;
                     return { ...hero, increase_win_rate: stat.increase_win_rate };
@@ -87,31 +93,50 @@ const App: React.FC = () => {
                 .filter(c => c.increase_win_rate > 0.01)
                 .sort((a, b) => b.increase_win_rate - a.increase_win_rate);
 
-            let potentialCounters: string[];
+            let potentialCounters: Array<Hero & { increase_win_rate?: number }> = [];
             let isTheoretical = false;
 
             if (relevantCounterHeroes.length > 0) {
-                potentialCounters = relevantCounterHeroes.map(h => h.name).slice(0, 4);
+                potentialCounters = relevantCounterHeroes.slice(0, 4);
             } else {
                 isTheoretical = true;
-                const heroesInRoleAsCounters = Object.values(heroes)
-                    .filter(h => h.roles.includes(role) && h.name !== enemyHero.name)
-                    .map(h => h.name);
-                
-                if (heroesInRoleAsCounters.length === 0) {
-                    throw new Error(`Nenhum herói da função '${role}' foi encontrado para análise.`);
+                potentialCounters = heroesInRole.filter((h: Hero) => h.name !== enemyHero.name).slice(0, 3);
+                if (potentialCounters.length === 0) {
+                    throw new Error(`Nenhum herói da função '${role}' foi encontrado para análise teórica.`);
                 }
-                potentialCounters = heroesInRoleAsCounters;
+            }
+
+            const allHeroesForDetails = [enemyHero, ...potentialCounters];
+            const detailsToFetch = allHeroesForDetails.filter(h => !heroDetailsCache[h.apiId]);
+            const newCacheEntries: Record<number, HeroDetails> = {};
+
+            if (detailsToFetch.length > 0) {
+                const fetchedDetails = await Promise.all(
+                    detailsToFetch.map(h => fetchHeroDetails(h.apiId).then(details => ({ apiId: h.apiId, details })))
+                );
+                fetchedDetails.forEach(item => {
+                    newCacheEntries[item.apiId] = item.details;
+                });
+                setHeroDetailsCache(prev => ({ ...prev, ...newCacheEntries }));
+            }
+
+            const currentCache = { ...heroDetailsCache, ...newCacheEntries };
+            const enemyHeroDetails = currentCache[enemyHero.apiId];
+            const potentialCountersDetails = potentialCounters.map(h => currentCache[h.apiId]).filter((d): d is HeroDetails => !!d);
+
+            if (!enemyHeroDetails || potentialCountersDetails.length !== potentialCounters.length) {
+                 throw new Error("Falha ao carregar detalhes de um ou mais heróis para a análise.");
             }
             
-            const analysisFromAI = await getStrategicAnalysis(enemyHero.name, lane, potentialCounters, role, isTheoretical);
+            const analysisFromAI = await getStrategicAnalysis(enemyHeroDetails, lane, potentialCountersDetails, role, isTheoretical);
 
             const validItemNames = Object.keys(ITEM_ICONS);
             const validSpellNames = Object.keys(SPELL_ICONS);
 
-            const heroSuggestions: HeroSuggestion[] = analysisFromAI.sugestoesHerois.map(aiSuggestion => {
-                const heroData = Object.values(heroes).find(h => h.name === aiSuggestion.nome);
-                const stat = !isTheoretical ? relevantCounterHeroes.find(c => c.name === aiSuggestion.nome) : null;
+            const heroSuggestions: HeroSuggestion[] = analysisFromAI.sugestoesHerois.map((aiSuggestion): HeroSuggestion => {
+                const heroData: Hero | undefined = Object.values(heroes).find((h: Hero) => h.name === aiSuggestion.nome);
+                // FIX: Explicitly type parameter `c` to resolve potential type inference issues.
+                const stat = !isTheoretical ? relevantCounterHeroes.find((c: Hero) => c.name === aiSuggestion.nome) : null;
                 const winRateIncrease = stat ? stat.increase_win_rate : 0;
                 
                 const classificacao: 'ANULA' | 'VANTAGEM' = isTheoretical ? 'VANTAGEM' : (winRateIncrease > 0.04 ? 'ANULA' : 'VANTAGEM');
@@ -122,7 +147,8 @@ const App: React.FC = () => {
                 }));
 
                 return {
-                    ...aiSuggestion,
+                    nome: aiSuggestion.nome,
+                    motivo: aiSuggestion.motivo,
                     avisos: aiSuggestion.avisos || [],
                     spells: correctedSpells,
                     imageUrl: heroData?.imageUrl || '',
@@ -131,8 +157,8 @@ const App: React.FC = () => {
                 };
             }).sort((a, b) => {
                 if (isTheoretical) return 0;
-                const statA = relevantCounterHeroes.find(c => c.name === a.nome)?.increase_win_rate || 0;
-                const statB = relevantCounterHeroes.find(c => c.name === b.nome)?.increase_win_rate || 0;
+                const statA = relevantCounterHeroes.find((c: Hero) => c.name === a.nome)?.increase_win_rate || 0;
+                const statB = relevantCounterHeroes.find((c: Hero) => c.name === b.nome)?.increase_win_rate || 0;
                 return statB - statA;
             });
 
@@ -151,7 +177,7 @@ const App: React.FC = () => {
         } finally {
             setIsAnalysisLoading(false);
         }
-    }, [heroes, heroApiIdMap]);
+    }, [heroes, heroApiIdMap, heroDetailsCache]);
 
     const fetchBans = useCallback(async (heroId: string) => {
         const myHero = heroes[heroId];
@@ -182,15 +208,12 @@ const App: React.FC = () => {
             setIsBansLoading(false);
         }
     }, [heroes, heroApiIdMap]);
-
-    useEffect(() => {
+    
+    const handleAnalysis = () => {
         if (enemyPick) {
             fetchAnalysis(enemyPick, activeLane, selectedRole);
-        } else {
-            setAnalysisResult(null);
-            setAnalysisError(null);
         }
-    }, [enemyPick, activeLane, selectedRole, fetchAnalysis]);
+    };
 
     useEffect(() => {
         if (yourPick) {
@@ -213,10 +236,40 @@ const App: React.FC = () => {
                 setMatchupData(null);
                 
                 try {
-                    const stats = await fetchDirectMatchup(yourHero.apiId, enemyHero.apiId);
-                    const winRate = stats?.increase_win_rate ?? 0;
+                    // Fetch details for both heroes if not in cache
+                    const heroesForDetails = [yourHero, enemyHero];
+                    const detailsToFetch = heroesForDetails.filter(h => !heroDetailsCache[h.apiId]);
+                    const newCacheEntries: Record<number, HeroDetails> = {};
+                    if (detailsToFetch.length > 0) {
+                        const fetchedDetails = await Promise.all(
+                            detailsToFetch.map(h => fetchHeroDetails(h.apiId).then(details => ({ apiId: h.apiId, details })))
+                        );
+                        fetchedDetails.forEach(item => { newCacheEntries[item.apiId] = item.details; });
+                        setHeroDetailsCache(prev => ({ ...prev, ...newCacheEntries }));
+                    }
+                    const currentCache = { ...heroDetailsCache, ...newCacheEntries };
+                    const yourHeroDetails = currentCache[yourHero.apiId];
+                    const enemyHeroDetails = currentCache[enemyHero.apiId];
+                    
+                    if (!yourHeroDetails || !enemyHeroDetails) {
+                        throw new Error("Não foi possível carregar os detalhes dos heróis para o confronto.");
+                    }
 
-                    const analysis = await getDetailedMatchupAnalysis(yourHero.name, enemyHero.name, activeLane, winRate);
+                    // Calculate win rate from counter data
+                    const enemyCounters = await fetchCounters(enemyHero.apiId);
+                    const matchupStat = enemyCounters.find(counter => counter.heroid === yourHero.apiId);
+                    let winRate = matchupStat?.increase_win_rate ?? 0;
+
+                    if (winRate === 0) {
+                        const yourCounters = await fetchCounters(yourHero.apiId);
+                        const counterMatchupStat = yourCounters.find(counter => counter.heroid === enemyHero.apiId);
+                        if (counterMatchupStat) {
+                            winRate = -counterMatchupStat.increase_win_rate;
+                        }
+                    }
+
+                    const isSuggestedCounter = !!analysisResult?.sugestoesHerois.some(s => s.nome === yourHero.name);
+                    const analysis = await getDetailedMatchupAnalysis(yourHeroDetails, enemyHeroDetails, activeLane, winRate, isSuggestedCounter);
                     
                     const validSpellNames = Object.keys(SPELL_ICONS);
                     const correctedSpell = {
@@ -243,7 +296,7 @@ const App: React.FC = () => {
             }
         };
         analyzeMatchup();
-    }, [yourPick, enemyPick, heroes, activeLane]);
+    }, [yourPick, enemyPick, heroes, activeLane, analysisResult, heroDetailsCache]);
 
     const handleSlotClick = (type: SlotType) => {
         setActiveSlotType(type);
@@ -255,6 +308,9 @@ const App: React.FC = () => {
             setYourPick(heroId);
         } else if (activeSlotType === 'enemyPick') {
             setEnemyPick(heroId);
+            // Clear previous results when enemy changes
+            setAnalysisResult(null);
+            setAnalysisError(null);
         }
         setIsModalOpen(false);
         setActiveSlotType(null);
@@ -273,20 +329,21 @@ const App: React.FC = () => {
     }
 
     return (
-        <>
-            <div className="w-full max-w-7xl mx-auto flex flex-col gap-4 sm:gap-6">
-                 <header className="text-center animated-entry">
-                    <h1 className="text-3xl sm:text-4xl font-black tracking-wider text-purple-300">
-                        Assistente de Counter MLBB
-                    </h1>
-                    <p className="text-sm sm:text-base text-gray-400 mt-2 max-w-3xl mx-auto">
-                        Analise confrontos, descubra os melhores counters e domine sua lane com sugestões táticas baseadas em dados.
-                    </p>
-                    <p className="text-xs text-gray-500 font-semibold mt-2">
-                        Desenvolvido por Lucas Kimi
-                    </p>
-                </header>
+        <div className="flex flex-col min-h-screen p-4 lg:p-8">
+            <header className="text-center mb-6 animated-entry">
+                <h1 className="text-4xl sm:text-5xl font-black tracking-tighter text-white">
+                    Assistente de Counter MLBB
+                </h1>
+                <div className="w-24 h-1 bg-yellow-400 mx-auto mt-3 rounded-full"></div>
+                <p className="text-sm sm:text-base text-gray-300 mt-4 max-w-3xl mx-auto">
+                    Analise confrontos, descubra os melhores counters e domine sua lane com sugestões táticas baseadas em dados.
+                </p>
+                 <p className="text-xs text-gray-500 font-semibold mt-4">
+                    Desenvolvido por Lucas Kimi
+                </p>
+            </header>
 
+            <div className="w-full max-w-7xl mx-auto flex-grow">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
                     <div className="lg:order-1 order-2">
                         <AnalysisPanel 
@@ -306,6 +363,25 @@ const App: React.FC = () => {
                             heroes={heroes}
                             onSlotClick={handleSlotClick}
                         />
+                         <div className="animated-entry" style={{ animationDelay: '250ms' }}>
+                            <button
+                                onClick={handleAnalysis}
+                                disabled={!enemyPick || isAnalysisLoading}
+                                className="w-full bg-yellow-400 text-black font-bold py-3 px-4 rounded-lg text-lg hover:bg-yellow-300 transition-colors duration-300 disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed flex items-center justify-center shadow-lg shadow-yellow-400/30 disabled:shadow-none"
+                            >
+                                {isAnalysisLoading ? (
+                                    <>
+                                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        Analisando...
+                                    </>
+                                ) : (
+                                    'Analisar Confronto'
+                                )}
+                            </button>
+                        </div>
                         <BanSuggestions
                             suggestions={banSuggestions}
                             isLoading={isBansLoading}
@@ -328,7 +404,7 @@ const App: React.FC = () => {
                 onHeroSelect={handleHeroSelect}
                 heroes={heroes}
             />
-        </>
+        </div>
     );
 };
 

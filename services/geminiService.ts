@@ -1,6 +1,7 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { Lane, Role, SpellSuggestion, MatchupClassification } from "../types";
+import { Lane, Role, SpellSuggestion, MatchupClassification, Hero } from "../types";
 import { ITEM_ICONS, SPELL_ICONS } from "../constants";
+import { HeroDetails } from './heroService';
 
 let ai: GoogleGenAI | null = null;
 
@@ -16,7 +17,22 @@ function getGenAIClient(): GoogleGenAI {
     return ai;
 }
 
-interface AnalysisPayload {
+const formatHeroDetailsForPrompt = (details: HeroDetails): string => {
+    if (!details || !details.skills) return `${details?.name || 'Herói Desconhecido'} (detalhes indisponíveis)`;
+
+    const skills = details.skills.map(s => `- ${s.skillname}: ${s.skilldesc}`).join('\n');
+    const combos = details.combos?.map(c => `\n- Combo (${c.title}): ${c.desc}`).join('') || '';
+
+    return `
+Nome: ${details.name}
+Resumo: ${details.summary}
+Habilidades:
+${skills}
+${combos ? `\nCombos Táticos:${combos}` : ''}
+    `.trim();
+};
+
+export interface AnalysisPayload {
   sugestoesHerois: {
     nome: string;
     motivo: string;
@@ -42,7 +58,7 @@ const analysisResponseSchema = {
                 type: Type.OBJECT,
                 properties: {
                     nome: { type: Type.STRING, description: "Nome do herói, deve ser um da lista de potenciais counters." },
-                    motivo: { type: Type.STRING, description: "Análise estratégica concisa e detalhada explicando por que este herói é um bom counter, considerando todas as habilidades e passivas." },
+                    motivo: { type: Type.STRING, description: "Análise estratégica concisa e detalhada explicando por que este herói é um bom counter, considerando TODAS as habilidades, passivas e combos fornecidos." },
                     avisos: {
                         type: Type.ARRAY,
                         description: "Lista de 1-2 avisos críticos sobre o confronto. Foque em habilidades do oponente que podem counterar sua estratégia (ex: escudo da Hanabi) ou picos de poder a serem respeitados.",
@@ -71,7 +87,7 @@ const analysisResponseSchema = {
                 type: Type.OBJECT,
                 properties: {
                     nome: { type: Type.STRING, description: "Nome do item, deve ser um da lista de itens fornecida." },
-                    motivo: { type: Type.STRING, description: "Motivo pelo qual este item é eficaz contra o oponente." }
+                    motivo: { type: Type.STRING, description: "Motivo pelo qual este item é eficaz contra o oponente, com base em suas habilidades." }
                 },
                 required: ["nome", "motivo"]
             }
@@ -81,9 +97,9 @@ const analysisResponseSchema = {
 };
 
 export async function getStrategicAnalysis(
-  enemyHeroName: string,
+  enemyHeroDetails: HeroDetails,
   lane: Lane,
-  potentialCounters: string[],
+  potentialCountersDetails: HeroDetails[],
   selectedRole: Role,
   isTheoretical: boolean = false
 ): Promise<AnalysisPayload> {
@@ -91,27 +107,26 @@ export async function getStrategicAnalysis(
         const genAI = getGenAIClient();
         const itemList = Object.keys(ITEM_ICONS).filter(item => item !== 'default').join(', ');
         const spellList = Object.keys(SPELL_ICONS).filter(spell => spell !== 'default').join(', ');
-        const counterList = potentialCounters.join(', ');
+        
+        const enemyDetailsPrompt = formatHeroDetailsForPrompt(enemyHeroDetails);
+        const countersDetailsPrompt = potentialCountersDetails.map(d => formatHeroDetailsForPrompt(d)).join('\n\n---\n\n');
 
-        const systemPrompt = `Você é um analista de nível Mítico em Mobile Legends. Sua tarefa é fornecer uma análise tática profunda e holística. Considere todas as habilidades e passivas dos heróis envolvidos. Responda APENAS com um objeto JSON válido que siga o schema fornecido. Não se refira a si mesmo como uma IA. Forneça a análise de forma direta e factual, usando sempre termos e nomes de itens/feitiços em português do Brasil.`;
+        const systemPrompt = `Você é um analista de nível Mítico e engenheiro de jogo de Mobile Legends. Sua tarefa é fornecer uma análise tática infalível, tratando cada confronto como um problema matemático. Analise variáveis como dano, escalonamento, tempos de recarga e combos de habilidades para formular conclusões lógicas. Responda APENAS com um objeto JSON válido que siga o schema. Seja direto, preciso e use termos em português do Brasil.`;
+        
+        const commonInstructions = `
+1. Para cada herói counter sugerido:
+   a. Forneça um 'motivo' tático detalhado, explicando como suas habilidades e combos counteram especificamente as de ${enemyHeroDetails.name}.
+   b. Forneça 1-2 'avisos' críticos, como habilidades do oponente que anulam sua vantagem ou combos que você precisa evitar.
+   c. Sugira 1 ou 2 'spells' (feitiços) ideais da lista [${spellList}].
+2. Sugira 3 'sugestoesItens' de counter da lista [${itemList}] que sejam eficazes contra ${enemyHeroDetails.name} E APROPRIADOS para um herói da função '${selectedRole}' na lane '${lane}', explicando a interação com as habilidades dele.`;
         
         let userQuery = '';
-        const commonInstructions = `
-1. Para cada herói escolhido:
-   a. Forneça um 'motivo' tático detalhado, explicando como suas habilidades counteram ${enemyHeroName}.
-   b. Forneça 1-2 'avisos' críticos, como habilidades do oponente que podem anular sua vantagem (ex: passiva de escudo da Hanabi) ou picos de poder que devem ser respeitados.
-   c. Sugira 1 ou 2 'spells' (feitiços) ideais da lista [${spellList}].
-2. Sugira 3 'sugestoesItens' de counter gerais da lista [${itemList}] que seriam eficazes contra o ${enemyHeroName}.`;
-
         if (isTheoretical) {
-            userQuery = `Oponente: '${enemyHeroName}' na lane '${lane}'. Eu quero jogar com um herói da função '${selectedRole}'.
-Não foram encontrados dados estatísticos. Baseado no seu conhecimento profundo, analise a lista de heróis da função '${selectedRole}': [${counterList}].
-Escolha os 3 melhores counters TEÓRICOS para ${enemyHeroName} e siga as instruções abaixo.
-${commonInstructions}`;
+            userQuery = `Oponente na lane '${lane}':\n${enemyDetailsPrompt}\n\nEu quero jogar com um herói da função '${selectedRole}'.
+Não foram encontrados dados estatísticos. Baseado na sua análise profunda das habilidades, escolha os 3 melhores counters TEÓRICOS da seguinte lista e siga as instruções.\n\nHeróis para Análise:\n${countersDetailsPrompt}\n\n${commonInstructions}`;
         } else {
-            userQuery = `Oponente: '${enemyHeroName}' na lane '${lane}'. Eu quero jogar com um herói da função '${selectedRole}'.
-Analise CADA UM dos seguintes heróis, que são counters estatísticos: [${counterList}], e siga as instruções abaixo.
-${commonInstructions}`;
+            userQuery = `Oponente na lane '${lane}':\n${enemyDetailsPrompt}\n\nEu quero jogar com um herói da função '${selectedRole}'.
+Analise CADA UM dos seguintes heróis, que são counters estatísticos, e siga as instruções.\n\nHeróis para Análise:\n${countersDetailsPrompt}\n\n${commonInstructions}`;
         }
 
 
@@ -122,7 +137,7 @@ ${commonInstructions}`;
                 systemInstruction: systemPrompt,
                 responseMimeType: "application/json",
                 responseSchema: analysisResponseSchema,
-                temperature: 0.2,
+                temperature: 0.1,
                 thinkingConfig: { thinkingBudget: 0 },
             },
         });
@@ -136,7 +151,7 @@ ${commonInstructions}`;
     }
 }
 
-interface DetailedMatchupPayload {
+export interface DetailedMatchupPayload {
     classification: MatchupClassification;
     detailedAnalysis: string;
     recommendedSpell: SpellSuggestion;
@@ -147,11 +162,11 @@ const matchupResponseSchema = {
     properties: {
         classification: { 
             type: Type.STRING,
-            description: "A classificação final do confronto: 'VANTAGEM', 'DESVANTAGEM', ou 'NEUTRO'. Baseie-se na análise teórica se os dados estatísticos forem neutros."
+            description: "A classificação final do confronto: 'ANULA', 'VANTAGEM', 'DESVANTAGEM', ou 'NEUTRO'. A decisão deve ser lógica e baseada 100% nas habilidades e dados fornecidos."
         },
         detailedAnalysis: {
             type: Type.STRING,
-            description: "Análise tática concisa (3-4 frases). Comece com a mesma palavra da 'classification' para consistência. Explique o porquê e dê 2 dicas práticas sobre como jogar."
+            description: "Análise tática concisa (3-4 frases). Comece com a mesma palavra da 'classification' para consistência. Explique o porquê com base nas habilidades e combos, e dê 2 dicas práticas."
         },
         recommendedSpell: {
             type: Type.OBJECT,
@@ -166,10 +181,11 @@ const matchupResponseSchema = {
 };
 
 export async function getDetailedMatchupAnalysis(
-    yourHeroName: string,
-    enemyHeroName: string,
+    yourHeroDetails: HeroDetails,
+    enemyHeroDetails: HeroDetails,
     lane: Lane,
-    winRate: number
+    winRate: number,
+    isSuggestedCounter: boolean
 ): Promise<DetailedMatchupPayload> {
     try {
         const genAI = getGenAIClient();
@@ -182,14 +198,31 @@ export async function getDetailedMatchupAnalysis(
             winRateDescription = `uma DESVANTAGEM estatística de ${(winRate * 100).toFixed(1)}%`;
         }
 
-        const systemPrompt = `Você é um analista de nível Mítico em Mobile Legends. Sua tarefa é analisar um confronto direto e fornecer conselhos táticos. Responda APENAS com um objeto JSON válido que siga o schema. Seja direto e lógico. Não se refira a si mesmo como uma IA. Forneça a análise de forma direta e factual, usando sempre termos e nomes de itens/feitiços em português do Brasil.`;
-        const userQuery = `Confronto: ${yourHeroName} vs ${enemyHeroName} na lane ${lane}.
-Meu herói (${yourHeroName}) tem ${winRateDescription}.
+        const yourHeroDetailsPrompt = formatHeroDetailsForPrompt(yourHeroDetails);
+        const enemyHeroDetailsPrompt = formatHeroDetailsForPrompt(enemyHeroDetails);
+
+        let consistencyInstruction = `Analise este confronto de forma objetiva, usando as habilidades e combos fornecidos para determinar o resultado.`;
+        if (isSuggestedCounter) {
+            consistencyInstruction = `PONTO CRÍTICO: ${yourHeroDetails.name} já foi identificado como um counter tático para ${enemyHeroDetails.name} em uma análise anterior. Sua principal tarefa é elaborar sobre ESSA VANTAGEM. A 'classification' DEVE ser 'VANTAGEM' ou 'ANULA'. Explique detalhadamente *por que* a vantagem existe, com base na interação direta das habilidades e combos, e como explorá-la. NÃO CONTRADIGA a análise anterior.`;
+        }
+
+        const systemPrompt = `Você é um analista de nível Mítico e engenheiro de jogo de Mobile Legends. Sua tarefa é analisar um confronto direto com precisão absoluta, tratando-o como um problema matemático e baseando-se nos dados de habilidades e combos fornecidos. Sua lógica deve ser impecável. Responda APENAS com um objeto JSON válido que siga o schema. Seja direto, preciso e use termos em português do Brasil.`;
+        const userQuery = `
+CONFRONTO DIRETO na lane ${lane}:
+
+Meu Herói:
+${yourHeroDetailsPrompt}
+
+Herói Inimigo:
+${enemyHeroDetailsPrompt}
+
+Dados Estatísticos: Meu herói (${yourHeroDetails.name}) tem ${winRateDescription} contra ${enemyHeroDetails.name}.
 
 INSTRUÇÕES:
-1. Determine a 'classification' final ('VANTAGEM', 'DESVANTAGEM', 'NEUTRO'). Se os dados estatísticos forem NEUTROS, você DEVE fazer uma análise teórica profunda das habilidades e passivas para decidir quem tem a vantagem. Não devolva 'NEUTRO' a menos que seja um confronto de pura habilidade.
-2. Forneça uma 'detailedAnalysis'. Comece a análise com a mesma palavra da 'classification' para consistência. Explique o motivo e dê 2 dicas táticas.
-3. Recomende o melhor 'recommendedSpell' da lista [${spellList}].`;
+1. ${consistencyInstruction}
+2. Determine a 'classification' final ('ANULA', 'VANTAGEM', 'DESVANTAGEM', 'NEUTRO'). Use a análise teórica das habilidades e combos como fator decisivo.
+3. Forneça uma 'detailedAnalysis'. Comece a análise com a mesma palavra da 'classification' para consistência. Explique o motivo e dê 2 dicas táticas diretas.
+4. Recomende o melhor 'recommendedSpell' da lista [${spellList}].`;
 
         const response = await genAI.models.generateContent({
             model: "gemini-2.5-flash",
@@ -198,7 +231,7 @@ INSTRUÇÕES:
                 systemInstruction: systemPrompt,
                 responseMimeType: "application/json",
                 responseSchema: matchupResponseSchema,
-                temperature: 0.5,
+                temperature: 0.1,
                 thinkingConfig: { thinkingBudget: 0 }
             },
         });

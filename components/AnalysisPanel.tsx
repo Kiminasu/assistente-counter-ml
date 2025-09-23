@@ -27,7 +27,19 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ isLoading, result, error,
         }
 
         if (error) {
+            const isApiKeyError = error.includes("chave da API");
             const isSpecificError = error.includes("Nenhum counter estatístico");
+
+            if (isApiKeyError) {
+                return (
+                    <div className="text-center p-8 text-yellow-400 flex flex-col items-center justify-center h-full">
+                        <svg className="w-16 h-16 mx-auto mb-4 text-yellow-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                        <h3 className="text-xl font-bold">Análise Indisponível</h3>
+                        <p className="mt-2 text-sm text-yellow-300">A funcionalidade de análise por IA está desativada devido a um problema de configuração.</p>
+                    </div>
+                );
+            }
+    
             return (
                 <div className={`text-center p-8 ${isSpecificError ? 'text-yellow-400' : 'text-red-400'}`}>
                     <h3 className="text-xl font-bold">{isSpecificError ? 'Nenhuma Sugestão Encontrada' : 'Ocorreu um Erro'}</h3>
@@ -40,7 +52,7 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ isLoading, result, error,
             return (
                 <div className="text-center p-8 text-gray-400 flex flex-col items-center justify-center h-full">
                     <svg className="w-16 h-16 mb-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
-                    <p>Selecione o herói inimigo para receber sugestões de counter.</p>
+                    <p>Selecione o herói inimigo e clique em "Analisar Confronto" para receber sugestões.</p>
                 </div>
             );
         }
@@ -114,7 +126,7 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ isLoading, result, error,
     };
 
     return (
-        <aside className="col-span-1 glassmorphism p-4 rounded-xl animated-entry flex flex-col lg:h-[85vh]">
+        <aside className="col-span-1 glassmorphism p-4 rounded-xl animated-entry flex flex-col lg:h-[85vh] border-2 border-yellow-400 shadow-lg shadow-yellow-400/20">
             <h2 className="text-xl sm:text-2xl font-black text-center mb-4 tracking-wider flex-shrink-0">ANÁLISE E DADOS</h2>
             <div className="flex-1 overflow-y-auto pr-2 space-y-2">
                 {renderContent()}

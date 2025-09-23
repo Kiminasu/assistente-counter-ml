@@ -11,7 +11,7 @@ interface MatchupScreenProps {
 
 const MatchupScreen: React.FC<MatchupScreenProps> = ({ yourPick, enemyPick, heroes, onSlotClick }) => {
     return (
-        <div className="glassmorphism p-6 rounded-xl animated-entry flex-grow" style={{ animationDelay: '200ms' }}>
+        <div className="glassmorphism p-6 rounded-xl animated-entry flex-grow border-2 border-yellow-400 shadow-lg shadow-yellow-400/20" style={{ animationDelay: '200ms' }}>
             <div className="grid grid-cols-11 gap-2 items-center">
                 <div className="col-span-5">
                     <HeroSlot type="yourPick" heroId={yourPick} heroes={heroes} onClick={onSlotClick} />

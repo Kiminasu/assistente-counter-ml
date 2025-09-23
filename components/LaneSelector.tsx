@@ -8,7 +8,7 @@ interface LaneSelectorProps {
 
 const LaneSelector: React.FC<LaneSelectorProps> = ({ activeLane, onSelectLane }) => {
     return (
-        <div className="glassmorphism p-4 rounded-xl animated-entry" style={{ animationDelay: '100ms' }}>
+        <div className="glassmorphism p-4 rounded-xl animated-entry border-2 border-yellow-400 shadow-lg shadow-yellow-400/20" style={{ animationDelay: '100ms' }}>
             <h2 className="text-xl font-bold text-center mb-3">SELECIONE A LANE</h2>
             <div className="grid grid-cols-5 gap-1 sm:gap-2">
                 {LANES.map(lane => (

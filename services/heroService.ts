@@ -19,6 +19,29 @@ export interface CounterHeroData {
   increase_win_rate: number;
 }
 
+// Interfaces for the detailed hero data from the hero-detail API.
+export interface HeroSkill {
+    skillname: string;
+    skilldesc: string;
+}
+
+export interface SkillCombo {
+    title: string;
+    desc: string;
+}
+
+export interface HeroDetails {
+    name: string;
+    summary: string;
+    skills: HeroSkill[];
+    combos: SkillCombo[];
+}
+
+// Helper to clean HTML-like tags from skill descriptions provided by the API.
+function cleanSkillDescription(desc: string): string {
+    return desc.replace(/<font color="[^"]*">/g, '').replace(/<\/font>/g, '');
+}
+
 export async function fetchHeroes(): Promise<Record<string, Hero>> {
     const apiUrl = 'https://mlbb-stats.ridwaanhall.com/api/hero-list-new/';
     const proxyUrl = 'https://corsproxy.io/?';
@@ -100,34 +123,73 @@ export async function fetchCounters(heroApiId: number): Promise<CounterHeroData[
     }
 }
 
-export async function fetchDirectMatchup(yourHeroApiId: number, enemyHeroApiId: number): Promise<CounterHeroData | null> {
+async function fetchSkillCombos(heroApiId: number): Promise<SkillCombo[]> {
+    const apiUrl = `https://mlbb-stats.ridwaanhall.com/api/hero-skill-combo/${heroApiId}/`;
+    const proxyUrl = 'https://corsproxy.io/?';
+    const fetchUrl = proxyUrl + encodeURIComponent(apiUrl);
+
     try {
-        // We look for how well our hero performs against the enemy.
-        // So we fetch the enemy's counters and see if our hero is on that list.
-        const enemyCounters = await fetchCounters(enemyHeroApiId);
-        const matchup = enemyCounters.find(counter => counter.heroid === yourHeroApiId);
-        
-        // The API also tells us who our hero is weak against.
-        // We can fetch our counters to see if the enemy is a known counter to us.
-        const yourCounters = await fetchCounters(yourHeroApiId);
-        const counterMatchup = yourCounters.find(counter => counter.heroid === enemyHeroApiId);
+        const response = await fetch(fetchUrl);
+        if (!response.ok) {
+            console.warn(`Resposta da API de combos não foi 'ok' para o herói ${heroApiId}, retornando array vazio.`);
+            return []; // Not all heroes have combos, so we don't throw an error.
+        }
+        const apiResponse = await response.json();
+        const records = apiResponse?.data?.records;
 
-        if (matchup) {
-            return matchup; // Our hero has a statistical advantage
+        if (!records || !Array.isArray(records)) {
+            return [];
         }
 
-        if (counterMatchup) {
-            // The enemy is a counter to us, so we return a negative win rate.
-            return {
-                heroid: yourHeroApiId,
-                increase_win_rate: -counterMatchup.increase_win_rate
-            };
-        }
+        return records.map((record: any) => ({
+            title: record.data.title,
+            desc: record.data.desc,
+        }));
 
-        return null; // No significant statistical relationship found
     } catch (error) {
-        console.error(`Falha ao buscar confronto direto entre ${yourHeroApiId} e ${enemyHeroApiId}:`, error);
-        // Don't throw, just return null so the app can continue without this data.
-        return null; 
+        console.error(`Falha ao buscar combos para o herói ID ${heroApiId}:`, error);
+        return []; // Return empty array on error to not block the main analysis.
+    }
+}
+
+export async function fetchHeroDetails(heroApiId: number): Promise<HeroDetails> {
+    const apiUrl = `https://mlbb-stats.ridwaanhall.com/api/hero-detail/${heroApiId}/`;
+    const proxyUrl = 'https://corsproxy.io/?';
+    const fetchUrl = proxyUrl + encodeURIComponent(apiUrl);
+
+    try {
+        const [detailsResponse, combos] = await Promise.all([
+            fetch(fetchUrl),
+            fetchSkillCombos(heroApiId)
+        ]);
+        
+        if (!detailsResponse.ok) {
+            throw new Error(`A resposta da API de detalhes do herói não foi 'ok': ${detailsResponse.statusText}`);
+        }
+        const apiResponse = await detailsResponse.json();
+        const record = apiResponse?.data?.records?.[0]?.data;
+
+        if (!record) {
+            throw new Error('Os registos de detalhes do herói não foram encontrados na resposta da API.');
+        }
+        
+        const heroData = record.hero.data;
+        const skillList = heroData.heroskilllist?.[0]?.skilllist ?? [];
+
+        const skills = skillList.map((skill: any) => ({
+            skillname: skill.skillname,
+            skilldesc: cleanSkillDescription(skill.skilldesc),
+        }));
+
+        return {
+            name: heroData.name,
+            summary: heroData.story,
+            skills: skills,
+            combos: combos,
+        };
+
+    } catch (error) {
+        console.error(`Falha ao buscar detalhes para o herói ID ${heroApiId}:`, error);
+        throw new Error("Não foi possível carregar os detalhes do herói.");
     }
 }

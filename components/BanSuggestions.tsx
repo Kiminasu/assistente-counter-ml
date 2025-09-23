@@ -9,14 +9,14 @@ interface BanSuggestionsProps {
 const BanSuggestions: React.FC<BanSuggestionsProps> = ({ suggestions, isLoading }) => {
     if (suggestions.length === 0 && !isLoading) {
         return (
-             <div className="glassmorphism p-4 rounded-xl animated-entry min-h-[9rem] flex items-center justify-center text-center" style={{ animationDelay: '300ms' }}>
+             <div className="glassmorphism p-4 rounded-xl animated-entry min-h-[9rem] flex items-center justify-center text-center border-2 border-yellow-400 shadow-lg shadow-yellow-400/20" style={{ animationDelay: '300ms' }}>
                  <p className="text-gray-400 text-sm">Selecione seu herói para receber sugestões de banimento com base em suas fraquezas.</p>
              </div>
         );
     }
 
     return (
-        <div className="glassmorphism p-4 rounded-xl animated-entry min-h-[9rem]" style={{ animationDelay: '300ms' }}>
+        <div className="glassmorphism p-4 rounded-xl animated-entry min-h-[9rem] border-2 border-yellow-400 shadow-lg shadow-yellow-400/20" style={{ animationDelay: '300ms' }}>
             <h2 className="text-xl font-bold text-center mb-3 text-red-300">SUGESTÕES DE BANIMENTO</h2>
             {isLoading ? (
                 <div className="flex justify-center items-center h-24">
