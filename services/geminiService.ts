@@ -10,12 +10,12 @@ function getGenAIClient(): GoogleGenAI {
         return ai;
     }
     
-    // FIX: Using `process.env.API_KEY` as per the coding guidelines to resolve the TypeScript error.
+    // FIX: Switched to process.env.API_KEY as per the coding guidelines to resolve the type error.
     const apiKey = process.env.API_KEY;
 
     if (!apiKey) {
-        // The error message is now updated to guide the user to set the correct `API_KEY` variable.
-        throw new Error("A chave da API do Google não está configurada. Para corrigir, defina a variável de ambiente `API_KEY`.");
+        // FIX: Updated error message to reference API_KEY.
+        throw new Error("A chave da API do Google não está configurada. Para corrigir, defina a variável de ambiente `API_KEY` nas configurações do seu site de hospedagem e faça o deploy novamente.");
     }
     ai = new GoogleGenAI({ apiKey });
     return ai;
