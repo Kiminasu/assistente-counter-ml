@@ -5,27 +5,19 @@ import { HeroDetails } from './heroService';
 
 let ai: GoogleGenAI | null = null;
 
-function getApiKey(): string {
-    let key: string | undefined;
-    
-    // De acordo com as diretrizes do projeto, a chave da API deve vir exclusivamente de process.env.API_KEY.
-    // O ambiente de hospedagem (Google AI Studio, Netlify, etc.) é responsável por disponibilizar esta variável.
-    if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
-        key = process.env.API_KEY;
-    }
-
-    if (!key) {
-        // Esta mensagem de erro fornece instruções claras para o usuário configurar seu ambiente de implantação.
-        throw new Error("A chave da API do Google não está configurada. Para corrigir, defina a variável de ambiente `API_KEY` nas configurações do seu site no Netlify (ou na sua plataforma de hospedagem).");
-    }
-    return key;
-}
-
+// FIX: Converted API key handling to use `process.env.API_KEY` as required by coding guidelines.
+// This resolves the TypeScript error 'Property 'env' does not exist on type 'ImportMeta''
+// and simplifies the client initialization logic.
 function getGenAIClient(): GoogleGenAI {
     if (ai) {
         return ai;
     }
-    const apiKey = getApiKey();
+    const apiKey = process.env.API_KEY;
+
+    if (!apiKey) {
+        // Updated error message to instruct the user to configure the `API_KEY` environment variable.
+        throw new Error("A chave da API do Google não está configurada. Para corrigir, defina a variável de ambiente `API_KEY` nas configurações do seu site na sua plataforma de hospedagem e faça o deploy novamente.");
+    }
     ai = new GoogleGenAI({ apiKey });
     return ai;
 }
