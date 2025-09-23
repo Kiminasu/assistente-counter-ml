@@ -3,12 +3,15 @@ export interface Hero {
   id: string;
   apiId: number;
   name: string;
-  role: string;
+  roles: Role[];
   imageUrl: string;
 }
 
 export const LANES = ['XP', 'Selva', 'Meio', 'Ouro', 'Rotação'] as const;
 export type Lane = typeof LANES[number];
+
+export const ROLES = ['Soldado', 'Mago', 'Atirador', 'Assassino', 'Tanque', 'Suporte'] as const;
+export type Role = typeof ROLES[number];
 
 export interface SpellSuggestion {
   nome: string;
@@ -21,6 +24,7 @@ export interface HeroSuggestion {
   nome: string;
   imageUrl: string;
   motivo: string;
+  avisos: string[];
   classificacao: 'ANULA' | 'VANTAGEM';
   estatistica: string;
   spells: SpellSuggestion[];
@@ -46,7 +50,8 @@ export interface MatchupData {
     enemyHero: Hero;
     winRate: number;
     classification: MatchupClassification;
-    analysis: string;
+    detailedAnalysis: string;
+    recommendedSpell: SpellSuggestion | null;
 }
 
 export type SlotType = 'yourPick' | 'enemyPick';

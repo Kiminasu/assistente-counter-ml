@@ -51,7 +51,7 @@ export async function fetchHeroes(): Promise<Record<string, Hero>> {
                     id: heroId,
                     apiId: apiId, // Storing the numerical ID
                     name: heroName,
-                    role: '', 
+                    roles: [], // Initialize roles array, to be populated later.
                     imageUrl: heroInfo.head,
                 };
             }

@@ -10,7 +10,7 @@ interface AnalysisPanelProps {
 }
 
 const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ isLoading, result, error, activeLane }) => {
-    const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
+    const [expandedIndex, setExpandedIndex] = useState<number | null>(0);
 
     const handleToggle = (index: number) => {
         setExpandedIndex(prevIndex => (prevIndex === index ? null : index));
@@ -27,11 +27,11 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ isLoading, result, error,
         }
 
         if (error) {
+            const isSpecificError = error.includes("Nenhum counter estatístico");
             return (
-                <div className="text-center text-red-400 p-8">
-                    <h3 className="text-xl font-bold">Ocorreu um Erro</h3>
-                    <p className="mt-2">Não foi possível gerar as sugestões. Isto pode ser um problema temporário com a IA ou a API de dados.</p>
-                    <p className="text-sm mt-1 text-gray-500">{error}</p>
+                <div className={`text-center p-8 ${isSpecificError ? 'text-yellow-400' : 'text-red-400'}`}>
+                    <h3 className="text-xl font-bold">{isSpecificError ? 'Nenhuma Sugestão Encontrada' : 'Ocorreu um Erro'}</h3>
+                    <p className="mt-2 text-sm">{error}</p>
                 </div>
             );
         }
@@ -69,11 +69,25 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ isLoading, result, error,
                             <div className={`transition-all duration-300 ease-in-out overflow-hidden max-h-0 ${isExpanded ? 'max-h-96' : ''}`}>
                                 <div className="px-4 pb-3 pt-1 border-t border-gray-700">
                                     <p className="text-sm text-gray-300 mt-2">{suggestion.motivo}</p>
+                                    
+                                    {suggestion.avisos && suggestion.avisos.length > 0 && (
+                                        <div className="mt-3">
+                                            <p className="text-xs uppercase font-bold text-yellow-400 mb-2">Avisos Importantes</p>
+                                            {suggestion.avisos.map((aviso, i) => (
+                                                 <div key={i} className="flex items-start gap-2 mt-1 pl-3 border-l-2 border-yellow-400">
+                                                    <svg className="w-4 h-4 text-yellow-400 flex-shrink-0 mt-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 3.001-1.742 3.001H4.42c-1.53 0-2.493-1.667-1.743-3.001l5.58-9.92zM10 13a1 1 0 110-2 1 1 0 010 2zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
+                                                    <p className="text-xs text-gray-300">{aviso}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+
                                     <div className="mt-3">
                                         <p className="text-xs uppercase font-bold text-gray-400 mb-2">Feitiços Recomendados</p>
                                         {suggestion.spells.map(spell => (
-                                            <div key={spell.nome} className="mt-1 pl-3 border-l-2 border-purple-400">
+                                            <div key={spell.nome} className="mt-2 pl-3 border-l-2 border-purple-400">
                                                 <p className="text-sm font-semibold text-purple-300">{spell.nome}</p>
+
                                                 <p className="text-xs text-gray-400">{spell.motivo}</p>
                                             </div>
                                         ))}
@@ -87,9 +101,11 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ isLoading, result, error,
                 <h2 className="text-xl font-bold text-center mt-6 mb-3 text-purple-300">Itens de Counter Recomendados</h2>
                 {result.sugestoesItens.map((suggestion, index) => {
                     return (
-                        <div key={index} className="p-3 bg-black bg-opacity-20 rounded-lg mb-3 animated-entry border-l-4 border-purple-500" style={{ animationDelay: `${(result.sugestoesHerois.length + index) * 100}ms`}}>
-                            <p className="font-bold text-lg text-purple-300">{suggestion.nome}</p>
-                            <p className="text-sm text-gray-300 mt-1">{suggestion.motivo}</p>
+                         <div key={index} className="p-3 bg-black bg-opacity-20 rounded-lg mb-3 animated-entry border-l-4 border-purple-500" style={{ animationDelay: `${(result.sugestoesHerois.length + index) * 100}ms`}}>
+                            <div className="flex-grow">
+                                <p className="font-bold text-lg text-purple-300">{suggestion.nome}</p>
+                                <p className="text-sm text-gray-300 mt-1">{suggestion.motivo}</p>
+                            </div>
                         </div>
                     );
                 })}

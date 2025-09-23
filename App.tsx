@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Hero, Lane, AnalysisResult, SlotType, LANES, HeroSuggestion, BanSuggestion, MatchupData, MatchupClassification } from './types';
+import { Hero, Lane, AnalysisResult, SlotType, LANES, ROLES, Role, HeroSuggestion, BanSuggestion, MatchupData, MatchupClassification } from './types';
 import { fetchHeroes, fetchCounters, fetchDirectMatchup } from './services/heroService';
-import { getStrategicAnalysis, getMatchupAnalysis } from './services/geminiService';
+import { getStrategicAnalysis, getDetailedMatchupAnalysis } from './services/geminiService';
 import { findClosestString } from './utils';
-import { ITEM_ICONS } from './constants';
+import { ITEM_ICONS, SPELL_ICONS, HERO_ROLES } from './constants';
 import LoadingOverlay from './components/LoadingOverlay';
 import AnalysisPanel from './components/AnalysisPanel';
 import LaneSelector from './components/LaneSelector';
@@ -11,6 +11,7 @@ import MatchupScreen from './components/MatchupScreen';
 import HeroSelectionModal from './components/HeroSelectionModal';
 import BanSuggestions from './components/BanSuggestions';
 import DirectMatchupPanel from './components/DirectMatchupPanel';
+import RoleSelector from './components/RoleSelector';
 
 const App: React.FC = () => {
     const [heroes, setHeroes] = useState<Record<string, Hero>>({});
@@ -19,7 +20,8 @@ const App: React.FC = () => {
 
     const [yourPick, setYourPick] = useState<string | null>(null);
     const [enemyPick, setEnemyPick] = useState<string | null>(null);
-    const [activeLane, setActiveLane] = useState<Lane>(LANES[0]);
+    const [activeLane, setActiveLane] = useState<Lane>(LANES[3]); // Default to 'Ouro' lane
+    const [selectedRole, setSelectedRole] = useState<Role>(ROLES[2]); // Default to 'Atirador' role
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [activeSlotType, setActiveSlotType] = useState<SlotType | null>(null);
@@ -39,6 +41,11 @@ const App: React.FC = () => {
         const loadHeroes = async () => {
             try {
                 const fetchedHeroes = await fetchHeroes();
+                
+                Object.values(fetchedHeroes).forEach(hero => {
+                    hero.roles = HERO_ROLES[hero.name] || [];
+                });
+
                 setHeroes(fetchedHeroes);
             } catch (error) {
                 const errorMessage = error instanceof Error ? error.message : 'Ocorreu um erro desconhecido.';
@@ -59,7 +66,7 @@ const App: React.FC = () => {
         }, {} as Record<number, Hero>);
     }, [heroes]);
 
-    const fetchAnalysis = useCallback(async (heroId: string, lane: Lane) => {
+    const fetchAnalysis = useCallback(async (heroId: string, lane: Lane, role: Role) => {
         const enemyHero = heroes[heroId];
         if (!enemyHero || !enemyHero.apiId) return;
         
@@ -69,42 +76,66 @@ const App: React.FC = () => {
         
         try {
             const counterData = await fetchCounters(enemyHero.apiId);
-
-            const significantCounters = counterData
-                .filter(c => c.increase_win_rate > 0.015)
+            const heroesInRole = Object.values(heroes).filter(h => h.roles.includes(role)).map(h => h.name);
+            const relevantCounterHeroes = counterData
+                .map(c => heroApiIdMap[c.heroid])
+                .filter((hero): hero is Hero => !!hero && heroesInRole.includes(hero.name))
+                .map(hero => {
+                    const stat = counterData.find(c => c.heroid === hero.apiId)!;
+                    return { ...hero, increase_win_rate: stat.increase_win_rate };
+                })
+                .filter(c => c.increase_win_rate > 0.01)
                 .sort((a, b) => b.increase_win_rate - a.increase_win_rate);
 
-            const potentialCounters = significantCounters
-                .map(counter => heroApiIdMap[counter.heroid]?.name)
-                .filter((name): name is string => !!name)
-                .slice(0, 5);
+            let potentialCounters: string[];
+            let isTheoretical = false;
 
-            if (potentialCounters.length === 0) {
-                 throw new Error("Não há dados estatísticos suficientes para gerar uma análise.");
+            if (relevantCounterHeroes.length > 0) {
+                potentialCounters = relevantCounterHeroes.map(h => h.name).slice(0, 4);
+            } else {
+                isTheoretical = true;
+                const heroesInRoleAsCounters = Object.values(heroes)
+                    .filter(h => h.roles.includes(role) && h.name !== enemyHero.name)
+                    .map(h => h.name);
+                
+                if (heroesInRoleAsCounters.length === 0) {
+                    throw new Error(`Nenhum herói da função '${role}' foi encontrado para análise.`);
+                }
+                potentialCounters = heroesInRoleAsCounters;
             }
             
-            const analysisFromAI = await getStrategicAnalysis(enemyHero.name, lane, potentialCounters);
+            const analysisFromAI = await getStrategicAnalysis(enemyHero.name, lane, potentialCounters, role, isTheoretical);
+
+            const validItemNames = Object.keys(ITEM_ICONS);
+            const validSpellNames = Object.keys(SPELL_ICONS);
 
             const heroSuggestions: HeroSuggestion[] = analysisFromAI.sugestoesHerois.map(aiSuggestion => {
                 const heroData = Object.values(heroes).find(h => h.name === aiSuggestion.nome);
-                const stat = counterData.find(c => heroApiIdMap[c.heroid]?.name === aiSuggestion.nome);
+                const stat = !isTheoretical ? relevantCounterHeroes.find(c => c.name === aiSuggestion.nome) : null;
                 const winRateIncrease = stat ? stat.increase_win_rate : 0;
                 
-                const classificacao: 'ANULA' | 'VANTAGEM' = winRateIncrease > 0.04 ? 'ANULA' : 'VANTAGEM';
+                const classificacao: 'ANULA' | 'VANTAGEM' = isTheoretical ? 'VANTAGEM' : (winRateIncrease > 0.04 ? 'ANULA' : 'VANTAGEM');
+
+                const correctedSpells = aiSuggestion.spells.map(spell => ({
+                    ...spell,
+                    nome: findClosestString(spell.nome, validSpellNames),
+                }));
+
                 return {
                     ...aiSuggestion,
+                    avisos: aiSuggestion.avisos || [],
+                    spells: correctedSpells,
                     imageUrl: heroData?.imageUrl || '',
                     classificacao,
-                    estatistica: `+${(winRateIncrease * 100).toFixed(1)}% vs. ${enemyHero.name}`
+                    estatistica: isTheoretical ? 'Análise Tática' : `+${(winRateIncrease * 100).toFixed(1)}% vs. ${enemyHero.name}`
                 };
             }).sort((a, b) => {
-                const statA = counterData.find(c => heroApiIdMap[c.heroid]?.name === a.nome)?.increase_win_rate || 0;
-                const statB = counterData.find(c => heroApiIdMap[c.heroid]?.name === b.nome)?.increase_win_rate || 0;
+                if (isTheoretical) return 0;
+                const statA = relevantCounterHeroes.find(c => c.name === a.nome)?.increase_win_rate || 0;
+                const statB = relevantCounterHeroes.find(c => c.name === b.nome)?.increase_win_rate || 0;
                 return statB - statA;
             });
 
-            // Correct item names before setting the state
-            const validItemNames = Object.keys(ITEM_ICONS);
             const correctedItems = analysisFromAI.sugestoesItens.map(item => ({
                 ...item,
                 nome: findClosestString(item.nome, validItemNames)
@@ -131,7 +162,8 @@ const App: React.FC = () => {
 
         try {
             const counterData = await fetchCounters(myHero.apiId);
-            const banSuggestions: BanSuggestion[] = counterData
+            const banSuggestionsData: BanSuggestion[] = counterData
+                .sort((a, b) => b.increase_win_rate - a.increase_win_rate)
                 .map(counter => {
                     const heroToBan = heroApiIdMap[counter.heroid];
                     if (!heroToBan) return null;
@@ -143,7 +175,7 @@ const App: React.FC = () => {
                 .filter((b): b is BanSuggestion => b !== null)
                 .slice(0, 5);
 
-            setBanSuggestions(banSuggestions);
+            setBanSuggestions(banSuggestionsData);
         } catch (error) {
             console.error("Erro ao buscar sugestões de ban:", error);
         } finally {
@@ -151,15 +183,14 @@ const App: React.FC = () => {
         }
     }, [heroes, heroApiIdMap]);
 
-
     useEffect(() => {
         if (enemyPick) {
-            fetchAnalysis(enemyPick, activeLane);
+            fetchAnalysis(enemyPick, activeLane, selectedRole);
         } else {
             setAnalysisResult(null);
             setAnalysisError(null);
         }
-    }, [enemyPick, activeLane, fetchAnalysis]);
+    }, [enemyPick, activeLane, selectedRole, fetchAnalysis]);
 
     useEffect(() => {
         if (yourPick) {
@@ -182,23 +213,24 @@ const App: React.FC = () => {
                 setMatchupData(null);
                 
                 try {
-                    const [stats, analysis] = await Promise.all([
-                        fetchDirectMatchup(yourHero.apiId, enemyHero.apiId),
-                        getMatchupAnalysis(yourHero.name, enemyHero.name, activeLane)
-                    ]);
-                    
+                    const stats = await fetchDirectMatchup(yourHero.apiId, enemyHero.apiId);
                     const winRate = stats?.increase_win_rate ?? 0;
-                    let classification: MatchupClassification = 'NEUTRO';
-                    if (winRate > 0.04) classification = 'ANULA';
-                    else if (winRate > 0.01) classification = 'VANTAGEM';
-                    else if (winRate < -0.01) classification = 'DESVANTAGEM';
+
+                    const analysis = await getDetailedMatchupAnalysis(yourHero.name, enemyHero.name, activeLane, winRate);
+                    
+                    const validSpellNames = Object.keys(SPELL_ICONS);
+                    const correctedSpell = {
+                        ...analysis.recommendedSpell,
+                        nome: findClosestString(analysis.recommendedSpell.nome, validSpellNames)
+                    };
 
                     setMatchupData({
                         yourHero,
                         enemyHero,
                         winRate,
-                        classification,
-                        analysis
+                        classification: analysis.classification,
+                        detailedAnalysis: analysis.detailedAnalysis,
+                        recommendedSpell: correctedSpell
                     });
 
                 } catch (error) {
@@ -242,38 +274,54 @@ const App: React.FC = () => {
 
     return (
         <>
-            <div className="w-full max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-                <div className="lg:order-1 order-2">
-                    <AnalysisPanel 
-                        isLoading={isAnalysisLoading}
-                        result={analysisResult}
-                        error={analysisError}
-                        activeLane={activeLane}
-                    />
-                </div>
-                
-                <main className="col-span-1 flex flex-col gap-4 sm:gap-6 lg:order-2 order-1">
-                    <LaneSelector activeLane={activeLane} onSelectLane={setActiveLane} />
-                    <MatchupScreen 
-                        yourPick={yourPick}
-                        enemyPick={enemyPick}
-                        heroes={heroes}
-                        onSlotClick={handleSlotClick}
-                    />
-                    <BanSuggestions
-                        suggestions={banSuggestions}
-                        isLoading={isBansLoading}
-                    />
-                </main>
+            <div className="w-full max-w-7xl mx-auto flex flex-col gap-4 sm:gap-6">
+                 <header className="text-center animated-entry">
+                    <h1 className="text-3xl sm:text-4xl font-black tracking-wider text-purple-300">
+                        Assistente de Counter MLBB
+                    </h1>
+                    <p className="text-sm sm:text-base text-gray-400 mt-2 max-w-3xl mx-auto">
+                        Analise confrontos, descubra os melhores counters e domine sua lane com sugestões táticas baseadas em dados.
+                    </p>
+                    <p className="text-xs text-gray-500 font-semibold mt-2">
+                        Desenvolvido por Lucas Kimi
+                    </p>
+                </header>
 
-                <div className="lg:order-3 order-3">
-                    <DirectMatchupPanel
-                        isLoading={isMatchupLoading}
-                        data={matchupData}
-                        error={matchupError}
-                    />
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+                    <div className="lg:order-1 order-2">
+                        <AnalysisPanel 
+                            isLoading={isAnalysisLoading}
+                            result={analysisResult}
+                            error={analysisError}
+                            activeLane={activeLane}
+                        />
+                    </div>
+                    
+                    <main className="col-span-1 flex flex-col gap-4 sm:gap-6 lg:order-2 order-1">
+                        <LaneSelector activeLane={activeLane} onSelectLane={setActiveLane} />
+                        <RoleSelector activeRole={selectedRole} onSelectRole={setSelectedRole} />
+                        <MatchupScreen 
+                            yourPick={yourPick}
+                            enemyPick={enemyPick}
+                            heroes={heroes}
+                            onSlotClick={handleSlotClick}
+                        />
+                        <BanSuggestions
+                            suggestions={banSuggestions}
+                            isLoading={isBansLoading}
+                        />
+                    </main>
+
+                    <div className="lg:order-3 order-3">
+                        <DirectMatchupPanel
+                            isLoading={isMatchupLoading}
+                            data={matchupData}
+                            error={matchupError}
+                        />
+                    </div>
                 </div>
             </div>
+
             <HeroSelectionModal 
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
