@@ -10,12 +10,12 @@ function getGenAIClient(): GoogleGenAI {
         return ai;
     }
     
-    // Fix: Using process.env.API_KEY as required by the guidelines. This resolves the TypeScript error 'Property 'env' does not exist on type 'ImportMeta''.
+    // FIX: Using `process.env.API_KEY` as per the coding guidelines to resolve the TypeScript error.
     const apiKey = process.env.API_KEY;
 
     if (!apiKey) {
-        // A mensagem de erro foi atualizada para refletir a variável correta (`API_KEY`).
-        throw new Error("A chave da API do Google não está configurada. Para corrigir, defina a variável de ambiente `API_KEY` nas configurações do seu site na sua plataforma de hospedagem e faça o deploy novamente.");
+        // The error message is now updated to guide the user to set the correct `API_KEY` variable.
+        throw new Error("A chave da API do Google não está configurada. Para corrigir, defina a variável de ambiente `API_KEY`.");
     }
     ai = new GoogleGenAI({ apiKey });
     return ai;
