@@ -11,12 +11,14 @@ function getGenAIClient(): GoogleGenAI {
         return genAIInstance;
     }
     
-    // Adicionado fallback para VITE_API_KEY para maior compatibilidade com ambientes de build (Netlify, Vercel).
-    const apiKey = process.env.API_KEY || process.env.VITE_API_KEY;
+    // CORREÇÃO: Esta é a única maneira correta de aceder a variáveis de ambiente do lado do cliente em projetos Vite.
+    // O build tool (Vite) irá substituir esta variável pelo valor que você definiu no Netlify/Vercel.
+    // FIX: Cast `import.meta` to `any` to allow access to `env` and fix TypeScript error.
+    const apiKey = (import.meta as any).env.VITE_API_KEY;
 
     if (!apiKey) {
-        // Mensagem de erro atualizada para ser mais clara e multiplataforma.
-        throw new Error("A chave da API do Google não está configurada. Para corrigir, defina a variável de ambiente `API_KEY` ou `VITE_API_KEY` nas configurações do seu site de hospedagem (ex: Netlify, Vercel) e faça o deploy novamente.");
+        // Mensagem de erro atualizada para ser mais clara e específica para a variável correta.
+        throw new Error("A chave da API do Google não está configurada. Para corrigir, defina a variável de ambiente `VITE_API_KEY` nas configurações do seu site de hospedagem (ex: Netlify, Vercel) e faça o deploy novamente.");
     }
     genAIInstance = new GoogleGenAI({ apiKey });
     return genAIInstance;
