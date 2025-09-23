@@ -11,12 +11,12 @@ function getGenAIClient(): GoogleGenAI {
         return genAIInstance;
     }
     
-    // Fix: Use process.env.API_KEY to get the API key as per the coding guidelines.
-    const apiKey = process.env.API_KEY;
+    // Adicionado fallback para VITE_API_KEY para maior compatibilidade com ambientes de build (Netlify, Vercel).
+    const apiKey = process.env.API_KEY || process.env.VITE_API_KEY;
 
     if (!apiKey) {
-        // Fix: Update error message to reflect the correct environment variable.
-        throw new Error("A chave da API do Google não está configurada. Para corrigir, defina a variável de ambiente `API_KEY` nas configurações do seu site de hospedagem (ex: Netlify) e faça o deploy novamente.");
+        // Mensagem de erro atualizada para ser mais clara e multiplataforma.
+        throw new Error("A chave da API do Google não está configurada. Para corrigir, defina a variável de ambiente `API_KEY` ou `VITE_API_KEY` nas configurações do seu site de hospedagem (ex: Netlify, Vercel) e faça o deploy novamente.");
     }
     genAIInstance = new GoogleGenAI({ apiKey });
     return genAIInstance;
