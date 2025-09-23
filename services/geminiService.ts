@@ -5,17 +5,16 @@ import { HeroDetails } from './heroService';
 
 let ai: GoogleGenAI | null = null;
 
-// FIX: Converted API key handling to use `process.env.API_KEY` as required by coding guidelines.
-// This resolves the TypeScript error 'Property 'env' does not exist on type 'ImportMeta''
-// and simplifies the client initialization logic.
 function getGenAIClient(): GoogleGenAI {
     if (ai) {
         return ai;
     }
+    
+    // Fix: Using process.env.API_KEY as required by the guidelines. This resolves the TypeScript error 'Property 'env' does not exist on type 'ImportMeta''.
     const apiKey = process.env.API_KEY;
 
     if (!apiKey) {
-        // Updated error message to instruct the user to configure the `API_KEY` environment variable.
+        // A mensagem de erro foi atualizada para refletir a variável correta (`API_KEY`).
         throw new Error("A chave da API do Google não está configurada. Para corrigir, defina a variável de ambiente `API_KEY` nas configurações do seu site na sua plataforma de hospedagem e faça o deploy novamente.");
     }
     ai = new GoogleGenAI({ apiKey });
