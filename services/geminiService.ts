@@ -10,11 +10,11 @@ function getGenAIClient(): GoogleGenAI {
         return ai;
     }
     
-    // FIX: Switched to process.env.API_KEY as per the coding guidelines to resolve the type error.
+    // FIX: Switched from import.meta.env.VITE_API_KEY to process.env.API_KEY to resolve the TypeScript error and align with coding guidelines.
     const apiKey = process.env.API_KEY;
 
     if (!apiKey) {
-        // FIX: Updated error message to reference API_KEY.
+        // FIX: Updated the error message to reference the correct environment variable, API_KEY.
         throw new Error("A chave da API do Google não está configurada. Para corrigir, defina a variável de ambiente `API_KEY` nas configurações do seu site de hospedagem e faça o deploy novamente.");
     }
     ai = new GoogleGenAI({ apiKey });
@@ -134,6 +134,7 @@ Analise CADA UM dos seguintes heróis, que são counters estatísticos, e siga a
         }
 
 
+        // FIX: Using the locally scoped 'genAI' client instance instead of the module-level 'ai'.
         const response = await genAI.models.generateContent({
             model: "gemini-2.5-flash",
             contents: userQuery,
@@ -228,6 +229,7 @@ INSTRUÇÕES:
 3. Forneça uma 'detailedAnalysis'. Comece a análise com a mesma palavra da 'classification' para consistência. Explique o motivo e dê 2 dicas táticas diretas.
 4. Recomende o melhor 'recommendedSpell' da lista [${spellList}].`;
 
+        // FIX: Using the locally scoped 'genAI' client instance instead of the module-level 'ai'.
         const response = await genAI.models.generateContent({
             model: "gemini-2.5-flash",
             contents: userQuery,
