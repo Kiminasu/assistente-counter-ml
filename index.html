@@ -4,11 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mítica Estratégia MLBB</title>
+    <link rel="icon" type="image/png" href="https://i.postimg.cc/ZK4nFyHG/mitica-logo-Photoroom.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Bangers&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg-dark: #0D0C1D; /* Deep Indigo */
@@ -37,10 +38,10 @@
         body::before {
             content: '';
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            top: -20%;
+            left: -20%;
+            right: -20%;
+            bottom: -20%;
             background-image:
                 radial-gradient(circle at 15% 25%, rgba(167, 139, 250, 0.1) 0%, transparent 40%),
                 radial-gradient(circle at 85% 75%, rgba(251, 191, 36, 0.08) 0%, transparent 40%);
@@ -58,9 +59,15 @@
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes zoomIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); }
+            100% { transform: translateY(0px); }
+        }
         
         .animated-entry { animation: fadeIn 0.5s ease-out forwards; }
         .modal-animation { animation: zoomIn 0.3s ease-out forwards; }
+        .animated-logo { animation: float 6s ease-in-out infinite; }
         
         .glassmorphism {
             background: rgba(13, 12, 29, 0.7);
@@ -90,20 +97,11 @@
         }
 
         .title-main {
-            font-family: 'Orbitron', sans-serif;
-            background: linear-gradient(90deg, #c4b5fd, #a78bfa, #fbcfe8, #c4b5fd);
-            background-size: 200% auto;
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            animation: text-shine 10s linear infinite;
-            text-shadow: 0 0 10px rgba(167, 139, 250, 0.7), 0 0 20px rgba(251, 191, 36, 0.4);
-        }
-
-        @keyframes text-shine {
-            to {
-                background-position: -200% center;
-            }
+            font-family: 'Bangers', cursive;
+            letter-spacing: 0.05em;
+            color: var(--color-secondary-accent);
+            -webkit-text-stroke: 1px #000;
+            text-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
         }
 
         /* Custom scrollbar for better aesthetics */
