@@ -1,9 +1,10 @@
 
 
 import { GoogleGenAI, Type } from "@google/genai";
-import { Lane, Role, SpellSuggestion, MatchupClassification } from "../types";
-import { ITEM_ICONS, SPELL_ICONS } from "../constants";
+import { Lane, Role, SpellSuggestion, MatchupClassification, GameItem } from "../types";
+import { SPELL_ICONS } from "../constants";
 import { HeroDetails } from './heroService';
+import { GAME_ITEMS } from '../components/data/items';
 
 let genAIInstance: GoogleGenAI | null = null;
 
@@ -38,6 +39,19 @@ Habilidades:
 ${skills}
 ${combos ? `\nCombos Táticos:${combos}` : ''}
     `.trim();
+};
+
+const formatItemsForPrompt = (items: GameItem[]): string => {
+    return items.map(item => {
+        const attributes = item.atributos.join(', ');
+        const abilities = item.habilidades.map(h => `- ${h.tipo} (${h.nome_habilidade || 'N/A'}): ${h.descricao}`).join('\n');
+        return `
+Nome do Item: ${item.nome}
+Categoria: ${item.categoria}
+Atributos: ${attributes}
+${abilities.length > 0 ? `Habilidades:\n${abilities}` : ''}
+        `.trim();
+    }).join('\n\n---\n\n');
 };
 
 export interface AnalysisPayload {
@@ -94,7 +108,7 @@ const analysisResponseSchema = {
             items: {
                 type: Type.OBJECT,
                 properties: {
-                    nome: { type: Type.STRING, description: "Nome do item, deve ser um da lista de itens fornecida." },
+                    nome: { type: Type.STRING, description: "Nome do item, deve ser um da lista de itens detalhada fornecida." },
                     motivo: { type: Type.STRING, description: "Motivo pelo qual este item é eficaz contra o oponente, com base em suas habilidades." }
                 },
                 required: ["nome", "motivo"]
@@ -113,7 +127,7 @@ export async function getStrategicAnalysis(
 ): Promise<AnalysisPayload> {
     try {
         const ai = getGenAIClient();
-        const itemList = Object.keys(ITEM_ICONS).filter(item => item !== 'default').join(', ');
+        const formattedItemList = formatItemsForPrompt(GAME_ITEMS);
         const spellList = Object.keys(SPELL_ICONS).filter(spell => spell !== 'default').join(', ');
         
         const enemyDetailsPrompt = formatHeroDetailsForPrompt(enemyHeroDetails);
@@ -126,15 +140,15 @@ export async function getStrategicAnalysis(
    a. Forneça um 'motivo' tático detalhado. Sua análise deve comparar diretamente as habilidades chave do counter com as do oponente. Exemplo: 'A habilidade X (nome da hab.) do counter permite escapar/anular o combo de atordoamento da Eudora porque...'. Foque em anulação de habilidades, timings críticos e vantagens de posicionamento.
    b. Forneça 1-2 'avisos' críticos, como habilidades do oponente que anulam sua vantagem ou combos que você precisa evitar.
    c. Sugira 1 ou 2 'spells' (feitiços) ideais da lista [${spellList}].
-2. Sugira 3 'sugestoesItens' de counter da lista [${itemList}] que sejam eficazes contra ${enemyHeroDetails.name} E APROPRIADOS para um herói da função '${selectedRole}' na lane '${lane}', explicando a interação com as habilidades dele.`;
+2. Sugira 3 'sugestoesItens' de counter da lista de itens detalhada abaixo. As suas escolhas devem ser as mais eficazes contra as habilidades específicas de ${enemyHeroDetails.name} E APROPRIADAS para um herói da função '${selectedRole}' na lane '${lane}'. No 'motivo', explique a interação direta do item com as habilidades do oponente. Exemplo: 'Couraça Antiga reduz o dano da habilidade Y do oponente em X%'.`;
         
         let userQuery = '';
         if (isTheoretical) {
             userQuery = `Oponente na lane '${lane}':\n${enemyDetailsPrompt}\n\nEu quero jogar com um herói da função '${selectedRole}'.
-Os dados estatísticos são limitados. Portanto, analise CADA UM dos heróis da lista a seguir, que foram pré-selecionados por seu alto potencial tático, e determine os melhores counters. Siga as instruções.\n\nHeróis para Análise:\n${countersDetailsPrompt}\n\n${commonInstructions}`;
+Os dados estatísticos são limitados. Portanto, analise CADA UM dos heróis da lista a seguir, que foram pré-selecionados por seu alto potencial tático, e determine os melhores counters. Siga as instruções.\n\nHeróis para Análise:\n${countersDetailsPrompt}\n\n${commonInstructions}\n\nLISTA DETALHADA DE ITENS DISPONÍVEIS:\n${formattedItemList}`;
         } else {
             userQuery = `Oponente na lane '${lane}':\n${enemyDetailsPrompt}\n\nEu quero jogar com um herói da função '${selectedRole}'.
-Analise CADA UM dos seguintes heróis, que são counters estatísticos, e siga as instruções.\n\nHeróis para Análise:\n${countersDetailsPrompt}\n\n${commonInstructions}`;
+Analise CADA UM dos seguintes heróis, que são counters estatísticos, e siga as instruções.\n\nHeróis para Análise:\n${countersDetailsPrompt}\n\n${commonInstructions}\n\nLISTA DETALHADA DE ITENS DISPONÍVEIS:\n${formattedItemList}`;
         }
 
         const response = await ai.models.generateContent({

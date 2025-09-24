@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { AnalysisResult, Lane } from '../types';
-import { RATING_STYLES } from '../constants';
+import { RATING_STYLES, ITEM_ICONS } from '../constants';
 
 interface AnalysisPanelProps {
     isLoading: boolean;
@@ -114,9 +114,31 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ isLoading, result, error,
                 {result.sugestoesItens.map((suggestion, index) => {
                     return (
                          <div key={index} className="p-3 bg-black bg-opacity-20 rounded-lg mb-3 animated-entry border-l-4 border-purple-500" style={{ animationDelay: `${(result.sugestoesHerois.length + index) * 100}ms`}}>
-                            <div className="flex-grow">
-                                <p className="font-bold text-lg text-purple-300">{suggestion.nome}</p>
-                                <p className="text-sm text-gray-300 mt-1">{suggestion.motivo}</p>
+                            <div className="flex items-center gap-4">
+                                <img 
+                                    src={ITEM_ICONS[suggestion.nome] || ITEM_ICONS.default} 
+                                    alt={suggestion.nome} 
+                                    className="w-12 h-12 rounded-md flex-shrink-0"
+                                    onError={(e) => {
+                                        const target = e.target as HTMLImageElement;
+                                        target.onerror = null; 
+                                        target.src='https://placehold.co/48x48/1a1c29/FFFFFF?text=?';
+                                    }}
+                                />
+                                <div className="flex-grow">
+                                    <div className="flex justify-between items-center gap-2">
+                                        <p className="font-bold text-lg text-purple-300">{suggestion.nome}</p>
+                                        {suggestion.preco > 0 && (
+                                            <div className="flex items-center gap-1 text-yellow-400 bg-black bg-opacity-30 px-2 py-1 rounded-full flex-shrink-0">
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.5 7.5a.5.5 0 00-1 0v5a.5.5 0 001 0V9.354a2.5 2.5 0 113-1.118v.07a.5.5 0 001 0V8.25a3.5 3.5 0 10-5 2.38V7.5z" clipRule="evenodd" />
+                                                </svg>
+                                                <span className="font-bold text-sm leading-none">{suggestion.preco}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <p className="text-sm text-gray-300 mt-1">{suggestion.motivo}</p>
+                                </div>
                             </div>
                         </div>
                     );

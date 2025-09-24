@@ -1,12 +1,13 @@
 
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Hero, Lane, AnalysisResult, SlotType, LANES, ROLES, Role, HeroSuggestion, BanSuggestion, MatchupData } from './types';
+import { Hero, Lane, AnalysisResult, SlotType, LANES, ROLES, Role, HeroSuggestion, BanSuggestion, MatchupData, ItemSuggestion } from './types';
 import { fetchHeroes, fetchCounters, fetchHeroDetails, HeroDetails } from './services/heroService';
 import { getStrategicAnalysis, getDetailedMatchupAnalysis } from './services/geminiService';
 import { findClosestString } from './utils';
-import { ITEM_ICONS, SPELL_ICONS, HERO_ROLES } from './constants';
+import { SPELL_ICONS, HERO_ROLES } from './constants';
 import { HERO_EXPERT_RANK } from './components/data/heroData';
+import { GAME_ITEMS } from './components/data/items';
 import LoadingOverlay from './components/LoadingOverlay';
 import AnalysisPanel from './components/AnalysisPanel';
 import LaneSelector from './components/LaneSelector';
@@ -139,7 +140,7 @@ const App: React.FC = () => {
             
             const analysisFromAI = await getStrategicAnalysis(enemyHeroDetails, lane, potentialCountersDetails, role, isTheoretical);
 
-            const validItemNames = Object.keys(ITEM_ICONS);
+            const validItemNames = GAME_ITEMS.map(item => item.nome);
             const validSpellNames = Object.keys(SPELL_ICONS);
 
             const heroSuggestions: HeroSuggestion[] = analysisFromAI.sugestoesHerois.map((aiSuggestion): HeroSuggestion => {
@@ -169,10 +170,15 @@ const App: React.FC = () => {
                 return statB - statA;
             });
 
-            const correctedItems = analysisFromAI.sugestoesItens.map(item => ({
-                ...item,
-                nome: findClosestString(item.nome, validItemNames)
-            }));
+            const correctedItems: ItemSuggestion[] = analysisFromAI.sugestoesItens.map(item => {
+                const correctedName = findClosestString(item.nome, validItemNames);
+                const gameItem = GAME_ITEMS.find(i => i.nome === correctedName);
+                return {
+                    nome: correctedName,
+                    motivo: item.motivo,
+                    preco: gameItem?.preco || 0,
+                };
+            });
 
             setAnalysisResult({
                 sugestoesHerois: heroSuggestions,

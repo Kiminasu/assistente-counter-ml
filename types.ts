@@ -1,4 +1,5 @@
 
+
 export interface Hero {
   id: string;
   apiId: number;
@@ -30,9 +31,25 @@ export interface HeroSuggestion {
   spells: SpellSuggestion[];
 }
 
+export interface GameItemAbility {
+  tipo: string;
+  nome_habilidade: string | null;
+  descricao: string;
+}
+
+export interface GameItem {
+  id: number;
+  nome: string;
+  preco: number;
+  categoria: string;
+  atributos: string[];
+  habilidades: GameItemAbility[];
+}
+
 export interface ItemSuggestion {
   nome: string;
   motivo: string;
+  preco: number;
 }
 
 export interface AnalysisResult {
