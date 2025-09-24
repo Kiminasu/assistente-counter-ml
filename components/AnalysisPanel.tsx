@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { AnalysisResult, Lane } from '../types';
-import { RATING_STYLES, ITEM_ICONS } from '../constants';
+import React, { useState, useEffect } from 'react';
+import { AnalysisResult, Lane, ItemSuggestion, HeroSuggestion } from '../types';
+import { RATING_STYLES, ITEM_ICONS, SPELL_ICONS } from '../constants';
 
 interface AnalysisPanelProps {
     isLoading: boolean;
@@ -10,17 +10,30 @@ interface AnalysisPanelProps {
 }
 
 const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ isLoading, result, error, activeLane }) => {
-    const [expandedIndex, setExpandedIndex] = useState<number | null>(0);
+    const [selectedSuggestion, setSelectedSuggestion] = useState<HeroSuggestion | null>(null);
+    const [selectedItem, setSelectedItem] = useState<ItemSuggestion | null>(null);
 
-    const handleToggle = (index: number) => {
-        setExpandedIndex(prevIndex => (prevIndex === index ? null : index));
+    useEffect(() => {
+        // Reseta as seleções quando um novo resultado de análise é recebido
+        setSelectedSuggestion(null);
+        setSelectedItem(null);
+    }, [result]);
+
+    const handleHeroClick = (suggestion: HeroSuggestion) => {
+        setSelectedItem(null); // Fecha a análise de item se estiver aberta
+        setSelectedSuggestion(current => (current?.nome === suggestion.nome ? null : suggestion));
+    };
+
+    const handleItemClick = (item: ItemSuggestion) => {
+        setSelectedSuggestion(null); // Fecha a análise de herói se estiver aberta
+        setSelectedItem(current => (current?.nome === item.nome ? null : item));
     };
 
     const renderContent = () => {
         if (isLoading) {
             return (
                 <div className="flex flex-col items-center justify-center h-full p-8 text-center">
-                    <div className="w-12 h-12 border-4 border-dashed rounded-full animate-spin border-purple-500"></div>
+                    <div className="w-12 h-12 border-4 border-dashed rounded-full animate-spin border-violet-400"></div>
                     <p className="mt-4 text-lg">Combinando dados e IA para a lane {activeLane}...</p>
                 </div>
             );
@@ -56,99 +69,169 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ isLoading, result, error,
                 </div>
             );
         }
+        
+        const groupedSuggestions = result.sugestoesHerois.reduce((acc, suggestion) => {
+            const classification = suggestion.classificacao;
+            if (!acc[classification]) {
+                acc[classification] = [];
+            }
+            acc[classification].push(suggestion);
+            return acc;
+        }, {} as Record<string, HeroSuggestion[]>);
+
+        const groupOrder: ('PERFEITO' | 'ANULA' | 'VANTAGEM')[] = ['PERFEITO', 'ANULA', 'VANTAGEM'];
+        
+        const classificationLabels: Record<string, string> = {
+            'PERFEITO': 'Recomendação Perfeita',
+            'ANULA': 'Heróis que Anulam (Lane)',
+            'VANTAGEM': 'Heróis com Vantagem (Lane)'
+        };
+
+        const renderHeroDetailCard = (suggestion: HeroSuggestion) => {
+            const styles = RATING_STYLES[suggestion.classificacao] || { text: 'text-gray-300', border: 'border-gray-400' };
+            return (
+                <div className={`p-3 mt-4 bg-black bg-opacity-30 rounded-lg animated-entry border-l-4 ${styles.border}`} style={{ animationDelay: '50ms'}}>
+                    <div className="flex-grow mb-2">
+                        <p className="font-bold text-lg">{suggestion.nome}</p>
+                        <div>
+                            <span className={`font-black text-sm ${styles.text}`}>{suggestion.classificacao}</span>
+                            <span className="text-xs text-gray-400 font-mono ml-2">{suggestion.estatistica}</span>
+                        </div>
+                    </div>
+
+                    <p className="text-sm text-gray-300">{suggestion.motivo}</p>
+                    
+                    {suggestion.avisos && suggestion.avisos.length > 0 && (
+                        <div className="mt-3">
+                            <p className="text-xs uppercase font-bold text-yellow-400 mb-2">Avisos Importantes</p>
+                            {suggestion.avisos.map((aviso, i) => (
+                                 <div key={i} className="flex items-start gap-2 mt-1 pl-3 border-l-2 border-yellow-400">
+                                    <svg className="w-4 h-4 text-yellow-400 flex-shrink-0 mt-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 3.001-1.742 3.001H4.42c-1.53 0-2.493-1.667-1.743-3.001l5.58-9.92zM10 13a1 1 0 110-2 1 1 0 010 2zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
+                                    <p className="text-xs text-gray-300">{aviso}</p>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    <div className="mt-3">
+                        <p className="text-xs uppercase font-bold text-gray-400 mb-2">Feitiços Recomendados</p>
+                        {suggestion.spells.map(spell => (
+                            <div key={spell.nome} className="mt-2 pl-3 border-l-2 border-violet-400 flex items-start gap-3">
+                                <img src={SPELL_ICONS[spell.nome] || SPELL_ICONS.default} alt={spell.nome} className="w-8 h-8 rounded-md mt-1 flex-shrink-0" />
+                                <div>
+                                    <p className="text-sm font-semibold text-violet-300">{spell.nome}</p>
+                                    <p className="text-xs text-gray-400">{spell.motivo}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        }
 
         return (
             <>
-                <h2 className="text-xl font-bold text-center mb-3 text-purple-300">Heróis Sugeridos</h2>
-                {result.sugestoesHerois.map((suggestion, index) => {
-                    const styles = RATING_STYLES[suggestion.classificacao] || { text: 'text-gray-300', border: 'border-gray-400' };
-                    const isExpanded = expandedIndex === index;
+                {groupOrder.map(groupName => {
+                    const suggestionsInGroup = groupedSuggestions[groupName];
+                    if (!suggestionsInGroup) return null;
+
+                    const isDetailVisible = selectedSuggestion && suggestionsInGroup.some(s => s.nome === selectedSuggestion.nome);
+
                     return (
-                        <div key={index} className={`bg-black bg-opacity-20 rounded-lg mb-2 animated-entry border-l-4 ${styles.border}`} style={{ animationDelay: `${index * 100}ms`}}>
-                            <div className="flex items-center p-3 cursor-pointer" onClick={() => handleToggle(index)}>
-                                <img src={suggestion.imageUrl} alt={suggestion.nome} className="w-12 h-12 rounded-full flex-shrink-0 mr-4" />
-                                <div className="flex-grow">
-                                    <p className="font-bold text-lg">{suggestion.nome}</p>
-                                    <div>
-                                        <span className={`font-black text-sm ${styles.text}`}>{suggestion.classificacao}</span>
-                                        <span className="text-xs text-gray-400 font-mono ml-2">{suggestion.estatistica}</span>
-                                    </div>
-                                </div>
-                                <div className={`text-2xl transform transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}>
-                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-                                </div>
+                        <div key={groupName} className="mb-4">
+                            <h3 className={`font-bold mb-3 ${RATING_STYLES[groupName]?.text || 'text-gray-300'} ${groupName === 'PERFEITO' ? 'text-xl text-amber-300 text-center' : 'pl-2'}`}>
+                                {classificationLabels[groupName]}
+                            </h3>
+                            <div className={`grid grid-cols-4 sm:grid-cols-6 gap-3 ${groupName === 'PERFEITO' ? 'flex justify-center' : ''}`}>
+                                {suggestionsInGroup.slice(0, 6).map((suggestion) => {
+                                    const isSelected = selectedSuggestion?.nome === suggestion.nome;
+                                    const styles = RATING_STYLES[suggestion.classificacao];
+                                    const heroImageSize = groupName === 'PERFEITO' ? 'w-20 h-20' : 'w-14 h-14';
+                                    return (
+                                        <div 
+                                            key={suggestion.nome} 
+                                            className="flex flex-col items-center text-center cursor-pointer group"
+                                            onClick={() => handleHeroClick(suggestion)}
+                                            aria-label={`Analisar ${suggestion.nome}`}
+                                            role="button"
+                                            aria-pressed={isSelected}
+                                        >
+                                            <img 
+                                                src={suggestion.imageUrl} 
+                                                alt={suggestion.nome} 
+                                                className={`${heroImageSize} rounded-full object-cover border-4 transition-all duration-200 group-hover:scale-110 ${styles.border} ${isSelected ? 'ring-4 ring-white/80 ring-offset-2 ring-offset-slate-900' : ''}`}
+                                            />
+                                            <span className={`text-xs mt-1 font-medium transition-colors ${isSelected ? 'text-white' : 'text-gray-400'}`}>{suggestion.nome}</span>
+                                        </div>
+                                    );
+                                })}
                             </div>
-                            <div className={`transition-all duration-300 ease-in-out overflow-hidden max-h-0 ${isExpanded ? 'max-h-96' : ''}`}>
-                                <div className="px-4 pb-3 pt-1 border-t border-gray-700">
-                                    <p className="text-sm text-gray-300 mt-2">{suggestion.motivo}</p>
-                                    
-                                    {suggestion.avisos && suggestion.avisos.length > 0 && (
-                                        <div className="mt-3">
-                                            <p className="text-xs uppercase font-bold text-yellow-400 mb-2">Avisos Importantes</p>
-                                            {suggestion.avisos.map((aviso, i) => (
-                                                 <div key={i} className="flex items-start gap-2 mt-1 pl-3 border-l-2 border-yellow-400">
-                                                    <svg className="w-4 h-4 text-yellow-400 flex-shrink-0 mt-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 3.001-1.742 3.001H4.42c-1.53 0-2.493-1.667-1.743-3.001l5.58-9.92zM10 13a1 1 0 110-2 1 1 0 010 2zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
-                                                    <p className="text-xs text-gray-300">{aviso}</p>
-                                                </div>
-                                            ))}
+
+                            {isDetailVisible && selectedSuggestion && renderHeroDetailCard(selectedSuggestion)}
+                        </div>
+                    );
+                })}
+
+                <h2 className="text-xl font-bold text-center mt-6 mb-3 text-amber-300">Itens de Counter Recomendados</h2>
+                <div className="grid grid-cols-4 sm:grid-cols-6 gap-3">
+                    {result.sugestoesItens.map((item, index) => {
+                         const isSelected = selectedItem?.nome === item.nome;
+                         return (
+                            <div 
+                                key={index} 
+                                className="flex flex-col items-center text-center cursor-pointer group"
+                                onClick={() => handleItemClick(item)}
+                                aria-label={`Analisar ${item.nome}`}
+                                role="button"
+                                aria-pressed={isSelected}
+                            >
+                                <img 
+                                    src={ITEM_ICONS[item.nome] || ITEM_ICONS.default} 
+                                    alt={item.nome} 
+                                    className={`w-14 h-14 rounded-lg object-cover border-4 transition-all duration-200 group-hover:scale-110 border-violet-500 ${isSelected ? 'ring-4 ring-white/80 ring-offset-2 ring-offset-slate-900' : ''}`}
+                                />
+                                <span className={`text-xs mt-1 font-medium transition-colors ${isSelected ? 'text-white' : 'text-gray-400'}`}>{item.nome}</span>
+                            </div>
+                         )
+                    })}
+                </div>
+                
+                {selectedItem && (
+                    <div className="p-3 mt-4 bg-black bg-opacity-30 rounded-lg animated-entry border-l-4 border-violet-500" style={{ animationDelay: '50ms'}}>
+                        <div className="flex items-center gap-4">
+                             <img 
+                                src={ITEM_ICONS[selectedItem.nome] || ITEM_ICONS.default} 
+                                alt={selectedItem.nome} 
+                                className="w-12 h-12 rounded-md flex-shrink-0"
+                                onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.onerror = null; 
+                                    target.src='https://placehold.co/48x48/1a1c29/FFFFFF?text=?';
+                                }}
+                            />
+                            <div className="flex-grow">
+                                <div className="flex justify-between items-center gap-2">
+                                    <p className="font-bold text-lg text-amber-300">{selectedItem.nome}</p>
+                                    {selectedItem.preco > 0 && (
+                                        <div className="flex items-center gap-1 text-yellow-400 bg-black bg-opacity-30 px-2 py-1 rounded-full flex-shrink-0">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.5 7.5a.5.5 0 00-1 0v5a.5.5 0 001 0V9.354a2.5 2.5 0 113-1.118v.07a.5.5 0 001 0V8.25a3.5 3.5 0 10-5 2.38V7.5z" clipRule="evenodd" />
+                                            </svg>
+                                            <span className="font-bold text-sm leading-none">{selectedItem.preco}</span>
                                         </div>
                                     )}
-
-                                    <div className="mt-3">
-                                        <p className="text-xs uppercase font-bold text-gray-400 mb-2">Feitiços Recomendados</p>
-                                        {suggestion.spells.map(spell => (
-                                            <div key={spell.nome} className="mt-2 pl-3 border-l-2 border-purple-400">
-                                                <p className="text-sm font-semibold text-purple-300">{spell.nome}</p>
-
-                                                <p className="text-xs text-gray-400">{spell.motivo}</p>
-                                            </div>
-                                        ))}
-                                    </div>
                                 </div>
+                                <p className="text-sm text-gray-300 mt-1">{selectedItem.motivo}</p>
                             </div>
                         </div>
-                    );
-                })}
-
-                <h2 className="text-xl font-bold text-center mt-6 mb-3 text-purple-300">Itens de Counter Recomendados</h2>
-                {result.sugestoesItens.map((suggestion, index) => {
-                    return (
-                         <div key={index} className="p-3 bg-black bg-opacity-20 rounded-lg mb-3 animated-entry border-l-4 border-purple-500" style={{ animationDelay: `${(result.sugestoesHerois.length + index) * 100}ms`}}>
-                            <div className="flex items-center gap-4">
-                                <img 
-                                    src={ITEM_ICONS[suggestion.nome] || ITEM_ICONS.default} 
-                                    alt={suggestion.nome} 
-                                    className="w-12 h-12 rounded-md flex-shrink-0"
-                                    onError={(e) => {
-                                        const target = e.target as HTMLImageElement;
-                                        target.onerror = null; 
-                                        target.src='https://placehold.co/48x48/1a1c29/FFFFFF?text=?';
-                                    }}
-                                />
-                                <div className="flex-grow">
-                                    <div className="flex justify-between items-center gap-2">
-                                        <p className="font-bold text-lg text-purple-300">{suggestion.nome}</p>
-                                        {suggestion.preco > 0 && (
-                                            <div className="flex items-center gap-1 text-yellow-400 bg-black bg-opacity-30 px-2 py-1 rounded-full flex-shrink-0">
-                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-                                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.5 7.5a.5.5 0 00-1 0v5a.5.5 0 001 0V9.354a2.5 2.5 0 113-1.118v.07a.5.5 0 001 0V8.25a3.5 3.5 0 10-5 2.38V7.5z" clipRule="evenodd" />
-                                                </svg>
-                                                <span className="font-bold text-sm leading-none">{suggestion.preco}</span>
-                                            </div>
-                                        )}
-                                    </div>
-                                    <p className="text-sm text-gray-300 mt-1">{suggestion.motivo}</p>
-                                </div>
-                            </div>
-                        </div>
-                    );
-                })}
+                    </div>
+                )}
             </>
         );
     };
 
     return (
-        <aside className="col-span-1 glassmorphism p-4 rounded-xl animated-entry flex flex-col lg:h-[85vh] border-2 border-yellow-400 shadow-lg shadow-yellow-400/20">
+        <aside className="col-span-1 glassmorphism p-4 rounded-xl animated-entry flex flex-col lg:h-[85vh] border-2 panel-glow-primary">
             <h2 className="text-xl sm:text-2xl font-black text-center mb-4 tracking-wider flex-shrink-0">ANÁLISE E DADOS</h2>
             <div className="flex-1 overflow-y-auto pr-2 space-y-2">
                 {renderContent()}

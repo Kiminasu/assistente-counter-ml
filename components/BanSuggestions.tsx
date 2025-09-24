@@ -4,28 +4,37 @@ import { BanSuggestion } from '../types';
 interface BanSuggestionsProps {
     suggestions: BanSuggestion[];
     isLoading: boolean;
+    variant: '1v1' | '5v5';
 }
 
-const BanSuggestions: React.FC<BanSuggestionsProps> = ({ suggestions, isLoading }) => {
+const BanSuggestions: React.FC<BanSuggestionsProps> = ({ suggestions, isLoading, variant }) => {
     if (suggestions.length === 0 && !isLoading) {
         return (
-             <div className="glassmorphism p-4 rounded-xl animated-entry min-h-[9rem] flex items-center justify-center text-center border-2 border-yellow-400 shadow-lg shadow-yellow-400/20" style={{ animationDelay: '300ms' }}>
-                 <p className="text-gray-400 text-sm">Selecione seu herói para receber sugestões de banimento com base em suas fraquezas.</p>
+             <div className="glassmorphism p-4 rounded-xl animated-entry min-h-[9rem] flex items-center justify-center text-center border-2 panel-glow-primary" style={{ animationDelay: '300ms' }}>
+                 <p className="text-gray-400 text-sm">As sugestões são baseadas nos heróis com maior taxa de banimento. Ajuste os filtros na aba "Ranking de Heróis" para refinar.</p>
              </div>
         );
     }
 
+    const containerClasses = variant === '1v1'
+        ? "flex flex-wrap items-start justify-center gap-x-6 gap-y-3 sm:gap-x-8 py-2"
+        : "flex flex-wrap items-start justify-center gap-x-2 gap-y-2 sm:gap-x-4 py-2";
+
+    const imageClasses = variant === '1v1'
+        ? "w-16 h-16 sm:w-20 sm:h-20"
+        : "w-12 h-12 sm:w-14 sm:h-14";
+
     return (
-        <div className="glassmorphism p-4 rounded-xl animated-entry min-h-[9rem] border-2 border-yellow-400 shadow-lg shadow-yellow-400/20" style={{ animationDelay: '300ms' }}>
-            <h2 className="text-xl font-bold text-center mb-3 text-red-300">SUGESTÕES DE BANIMENTO</h2>
+        <div className="glassmorphism p-4 rounded-xl animated-entry min-h-[9rem] border-2 panel-glow-primary" style={{ animationDelay: '300ms' }}>
+            <h2 className="text-lg font-bold text-center mb-2 text-red-300">SUGESTÕES DE BANIMENTO</h2>
             {isLoading ? (
                 <div className="flex justify-center items-center h-24">
                     <div className="w-8 h-8 border-2 border-dashed rounded-full animate-spin border-red-400"></div>
                 </div>
             ) : (
-                <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-3">
+                <div className={containerClasses}>
                     {suggestions.map(({ hero, reason }, index) => {
-                        const isPriority = index === 0;
+                        const isPriority = index < 3; // Highlight first few suggestions
                         return (
                             <div key={hero.id} className="group relative flex flex-col items-center text-center">
                                 {isPriority && (
@@ -36,7 +45,7 @@ const BanSuggestions: React.FC<BanSuggestionsProps> = ({ suggestions, isLoading 
                                 <img
                                     src={hero.imageUrl}
                                     alt={hero.name}
-                                    className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover border-2 group-hover:scale-110 transition-transform ${isPriority ? 'border-yellow-400' : 'border-red-800'}`}
+                                    className={`${imageClasses} rounded-full object-cover border-2 group-hover:scale-110 transition-transform ${isPriority ? 'border-yellow-400' : 'border-red-800'}`}
                                     onError={(e) => {
                                         const target = e.target as HTMLImageElement;
                                         target.onerror = null; 

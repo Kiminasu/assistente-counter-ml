@@ -1,23 +1,27 @@
 import React from 'react';
-import { Lane, LANES } from '../types';
+import { LaneOrNone, LANES_WITH_NONE } from '../types';
+import { LANE_ICONS } from '../constants';
 
 interface LaneSelectorProps {
-    activeLane: Lane;
-    onSelectLane: (lane: Lane) => void;
+    activeLane: LaneOrNone;
+    onSelectLane: (lane: LaneOrNone) => void;
+    isDisabled?: boolean;
 }
 
-const LaneSelector: React.FC<LaneSelectorProps> = ({ activeLane, onSelectLane }) => {
+const LaneSelector: React.FC<LaneSelectorProps> = ({ activeLane, onSelectLane, isDisabled = false }) => {
     return (
-        <div className="glassmorphism p-4 rounded-xl animated-entry border-2 border-yellow-400 shadow-lg shadow-yellow-400/20" style={{ animationDelay: '100ms' }}>
+        <div className={`glassmorphism p-4 rounded-xl animated-entry border-2 panel-glow-primary transition-opacity duration-300 ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}>
             <h2 className="text-xl font-bold text-center mb-3">SELECIONE A LANE</h2>
-            <div className="grid grid-cols-5 gap-1 sm:gap-2">
-                {LANES.map(lane => (
+            <div className="flex flex-wrap justify-center gap-2">
+                {LANES_WITH_NONE.map(lane => (
                     <button 
                         key={lane}
                         onClick={() => onSelectLane(lane)}
-                        className={`lane-btn font-semibold py-2 rounded text-sm sm:text-base ${activeLane === lane ? 'active' : 'bg-gray-700 hover:bg-gray-600'}`}
+                        disabled={isDisabled}
+                        className={`lane-btn font-semibold text-sm py-2 px-3 rounded-lg flex items-center gap-2 transition-colors duration-200 ${activeLane === lane ? 'active' : 'bg-slate-800 hover:bg-slate-700'} disabled:opacity-70 disabled:hover:bg-slate-800 disabled:cursor-not-allowed`}
                     >
-                        {lane}
+                        <img src={LANE_ICONS[lane]} alt={lane} className="w-5 h-5 object-contain" />
+                        <span>{lane}</span>
                     </button>
                 ))}
             </div>

@@ -1,4 +1,13 @@
-import { Role } from './types';
+import { Lane, Role, LaneOrNone } from './types';
+
+export const LANE_ICONS: Record<LaneOrNone, string> = {
+    'OURO': 'https://i.postimg.cc/rsHmgdzW/icon-lane-1.png',
+    'EXP': 'https://i.postimg.cc/Dfp87N5Z/icon-lane-2.png',
+    'MEIO': 'https://i.postimg.cc/zvvvnwD8/icon-lane-3.png',
+    'ROTAÇÃO': 'https://i.postimg.cc/VL3vCbxP/icon-lane-4.png',
+    'SELVA': 'https://i.postimg.cc/fT3kyvgv/icon-lane-5.png',
+    'NENHUMA': 'https://i.postimg.cc/0QxwFHxf/sem-lane.png'
+};
 
 export const ITEM_ICONS: Record<string, string> = {
     "Couraça Antiga": "https://i.postimg.cc/9F5wRPmG/item-01.png",
@@ -79,25 +88,40 @@ export const ITEM_ICONS: Record<string, string> = {
 };
 
 export const SPELL_ICONS: Record<string, string> = {
-    "Executar": "https://lain.mlbb.ninja/assets/spells/execute.png",
-    "Caçar": "https://lain.mlbb.ninja/assets/spells/retribution.png",
-    "Inspirar": "https://lain.mlbb.ninja/assets/spells/inspire.png",
-    "Petrificar": "https://lain.mlbb.ninja/assets/spells/petrify.png",
-    "Purificar": "https://lain.mlbb.ninja/assets/spells/purify.png",
-    "Teleporte": "https://lain.mlbb.ninja/assets/spells/arrival.png",
-    "Vingança": "https://lain.mlbb.ninja/assets/spells/vengeance.png",
-    "Proteção": "https://lain.mlbb.ninja/assets/spells/aegis.png",
-    "Avançar": "https://lain.mlbb.ninja/assets/spells/sprint.png",
-    "Curar": "https://lain.mlbb.ninja/assets/spells/healing-spell.png",
-    "Lampejo": "https://lain.mlbb.ninja/assets/spells/flicker.png",
-    "default": "https://lain.mlbb.ninja/assets/spells/flicker.png"
+    "Executar": "https://i.postimg.cc/xqrJGssM/icon-feitico-batalh-02.png",
+    "Caçar": "https://i.postimg.cc/gk63whM3/icon-feitico-batalh-03.png",
+    "Caçar de Fogo": "https://i.postimg.cc/RZ7fdBxF/icon-feitico-batalh-04.png",
+    "Caçar de Gelo": "https://i.postimg.cc/L8KLjs7w/icon-feitico-batalh-05.png",
+    "Caçar Sangrento": "https://i.postimg.cc/8CTvn0Tb/icon-feitico-batalh-06.png",
+    "Inspirar": "https://i.postimg.cc/4dd9XH77/icon-feitico-batalh-07.png",
+    "Avançar": "https://i.postimg.cc/jjvfV45Y/icon-feitico-batalh-08.png",
+    "Revitalizar": "https://i.postimg.cc/3RcDNrmL/icon-feitico-batalh-09.png",
+    "Proteção": "https://i.postimg.cc/SxCLP9Cm/icon-feitico-batalh-10.png",
+    "Petrificar": "https://i.postimg.cc/6QhrWNMS/icon-feitico-batalh-11.png",
+    "Purificar": "https://i.postimg.cc/9f2PHfYZ/icon-feitico-batalh-12.png",
+    "Tiro de Chamas": "https://i.postimg.cc/90DZYwc5/icon-feitico-batalh-13.png",
+    "Lampejo": "https://i.postimg.cc/1tCDFrhr/icon-feitico-batalh-14.png",
+    "Teleporte": "https://i.postimg.cc/L5GfC4sq/icon-feitico-batalh-15.png",
+    "Vingança": "https://i.postimg.cc/pVSDXCB2/icon-feitico-batalh-16.png",
+    "Curar": "https://i.postimg.cc/nzcvMw5L/icon-feitico-batalh-17.png",
+    "default": "https://i.postimg.cc/1tCDFrhr/icon-feitico-batalh-14.png"
 };
 
 export const RATING_STYLES: Record<string, { text: string; border: string }> = {
+    "PERFEITO": { text: "text-amber-300", border: "border-amber-300" },
     "ANULA": { text: "text-green-400", border: "border-green-400" },
-    "VANTAGEM": { text: "text-blue-400", border: "border-blue-400" },
+    "VANTAGEM": { text: "text-indigo-400", border: "border-indigo-400" },
     "DESVANTAGEM": { text: "text-red-400", border: "border-red-400" },
     "NEUTRO": { text: "text-gray-400", border: "border-gray-400" },
+};
+
+export const ROLE_TAGS: Record<Role, string[]> = {
+    'Assassino': ['Burst', 'Mobilidade', 'Finalização'],
+    'Mago': ['Dano Mágico', 'Controle', 'Dano em Área'],
+    'Atirador': ['Dano Contínuo', 'DPS Físico', 'Longo Alcance'],
+    'Soldado': ['Dano/Sustain', 'Lutador', 'Versátil'],
+    'Tanque': ['Durabilidade', 'Iniciação', 'CC Pesado'],
+    'Suporte': ['Utilidade', 'Cura/Escudo', 'Proteção']
 };
 
 // Base de dados de funções de heróis para permitir a filtragem e sugestões contextuais.

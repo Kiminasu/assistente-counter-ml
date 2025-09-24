@@ -62,7 +62,7 @@ export const GAME_ITEMS: GameItem[] = [
     "id": 5,
     "nome": "Lâmina do Azure",
     "preco": 600,
-    "categoria": "Mágico",
+    "categoria": "Dano Mágico",
     "atributos": [
       "+25 Regeneração de Mana",
       "+5% Redução de Recarga"
@@ -79,7 +79,7 @@ export const GAME_ITEMS: GameItem[] = [
     "id": 6,
     "nome": "Fúria do Berserker",
     "preco": 2390,
-    "categoria": "Ataque",
+    "categoria": "Dano Físico",
     "atributos": [
       "+65 Ataque Físico",
       "+25% de Chance de Crítico"
@@ -139,7 +139,7 @@ export const GAME_ITEMS: GameItem[] = [
     "id": 9,
     "nome": "Lâmina do Desespero",
     "preco": 3010,
-    "categoria": "Ataque",
+    "categoria": "Dano Físico",
     "atributos": [
       "+160 Ataque Físico",
       "+5% Velocidade de Movimento"
@@ -156,7 +156,7 @@ export const GAME_ITEMS: GameItem[] = [
     "id": 10,
     "nome": "Lâmina dos Sete Mares",
     "preco": 1950,
-    "categoria": "Ataque",
+    "categoria": "Dano Físico",
     "atributos": [
       "+70 Ataque Físico",
       "+250 HP"
@@ -178,7 +178,7 @@ export const GAME_ITEMS: GameItem[] = [
     "id": 11,
     "nome": "Asas Sanguinárias",
     "preco": 2100,
-    "categoria": "Mágico",
+    "categoria": "Dano Mágico",
     "atributos": [
       "+90 Poder Mágico"
     ],
@@ -212,7 +212,7 @@ export const GAME_ITEMS: GameItem[] = [
     "id": 13,
     "nome": "Relógio do Destino",
     "preco": 2030,
-    "categoria": "Mágico",
+    "categoria": "Dano Mágico",
     "atributos": [
       "+45 Poder Mágico",
       "+400 HP",
@@ -236,7 +236,7 @@ export const GAME_ITEMS: GameItem[] = [
     "id": 14,
     "nome": "Energia Concentrada",
     "preco": 2020,
-    "categoria": "Mágico",
+    "categoria": "Dano Mágico",
     "atributos": [
       "+70 Poder Mágico",
       "+400 HP"
@@ -258,7 +258,7 @@ export const GAME_ITEMS: GameItem[] = [
     "id": 15,
     "nome": "Foice da Corrosão",
     "preco": 2050,
-    "categoria": "Ataque",
+    "categoria": "Dano Físico",
     "atributos": [
       "+30 Ataque Físico",
       "+30% Velocidade de Ataque",
@@ -298,7 +298,7 @@ export const GAME_ITEMS: GameItem[] = [
     "id": 17,
     "nome": "Espada do Caçador de Demônios",
     "preco": 2180,
-    "categoria": "Ataque",
+    "categoria": "Dano Físico",
     "atributos": [
       "+35 Ataque Físico",
       "+20% Velocidade de Ataque"
@@ -337,7 +337,7 @@ export const GAME_ITEMS: GameItem[] = [
     "id": 19,
     "nome": "Glaive Divino",
     "preco": 1970,
-    "categoria": "Mágico",
+    "categoria": "Dano Mágico",
     "atributos": [
       "+65 Poder Mágico"
     ],
@@ -397,7 +397,7 @@ export const GAME_ITEMS: GameItem[] = [
     "id": 22,
     "nome": "Gema Elegante",
     "preco": 700,
-    "categoria": "Mágico",
+    "categoria": "Dano Mágico",
     "atributos": [
       "+300 HP",
       "+380 Mana"
@@ -414,7 +414,7 @@ export const GAME_ITEMS: GameItem[] = [
     "id": 23,
     "nome": "Talismã Encantado",
     "preco": 1870,
-    "categoria": "Mágico",
+    "categoria": "Dano Mágico",
     "atributos": [
       "+50 Poder Mágico",
       "+250 HP",
@@ -437,7 +437,7 @@ export const GAME_ITEMS: GameItem[] = [
     "id": 24,
     "nome": "Batalha Infinita",
     "preco": 2330,
-    "categoria": "Ataque",
+    "categoria": "Dano Físico",
     "atributos": [
       "+60 Ataque Físico",
       "+250 HP",
@@ -463,7 +463,7 @@ export const GAME_ITEMS: GameItem[] = [
     "id": 25,
     "nome": "Véu Exótico",
     "preco": 600,
-    "categoria": "Mágico",
+    "categoria": "Dano Mágico",
     "atributos": [
       "+30 Poder Mágico",
       "+5% Velocidade de Movimento"
@@ -474,7 +474,7 @@ export const GAME_ITEMS: GameItem[] = [
     "id": 26,
     "nome": "Pena dos Céus",
     "preco": 2030,
-    "categoria": "Mágico",
+    "categoria": "Dano Mágico",
     "atributos": [
       "+55 Poder Mágico",
       "+20% Velocidade de Ataque",
@@ -498,7 +498,7 @@ export const GAME_ITEMS: GameItem[] = [
     "id": 27,
     "nome": "Frasco do Oásis",
     "preco": 1850,
-    "categoria": "Mágico",
+    "categoria": "Dano Mágico",
     "atributos": [
       "+60 Poder Mágico",
       "+300 HP",
@@ -539,7 +539,7 @@ export const GAME_ITEMS: GameItem[] = [
     "id": 29,
     "nome": "Martelo da Fúria",
     "preco": 830,
-    "categoria": "Ataque",
+    "categoria": "Dano Físico",
     "atributos": [
       "+35 Ataque Físico"
     ],
@@ -555,7 +555,7 @@ export const GAME_ITEMS: GameItem[] = [
     "id": 30,
     "nome": "Varinha Genial",
     "preco": 2000,
-    "categoria": "Mágico",
+    "categoria": "Dano Mágico",
     "atributos": [
       "+75 Poder Mágico",
       "+5% Velocidade de Movimento"
@@ -577,7 +577,7 @@ export const GAME_ITEMS: GameItem[] = [
     "id": 31,
     "nome": "Varinha Brilhante",
     "preco": 2150,
-    "categoria": "Mágico",
+    "categoria": "Dano Mágico",
     "atributos": [
       "+75 Poder Mágico",
       "+400 HP",
@@ -600,7 +600,7 @@ export const GAME_ITEMS: GameItem[] = [
     "id": 32,
     "nome": "Bastão Dourado",
     "preco": 2000,
-    "categoria": "Ataque",
+    "categoria": "Dano Físico",
     "atributos": [
       "+55 Ataque Físico",
       "+15% Velocidade de Ataque"
@@ -622,7 +622,7 @@ export const GAME_ITEMS: GameItem[] = [
     "id": 33,
     "nome": "Lança do Grande Dragão",
     "preco": 2140,
-    "categoria": "Ataque",
+    "categoria": "Dano Físico",
     "atributos": [
       "+70 Ataque Físico",
       "+10% Redução de Recarga",
@@ -657,7 +657,7 @@ export const GAME_ITEMS: GameItem[] = [
     "id": 35,
     "nome": "Garras de Haas",
     "preco": 2020,
-    "categoria": "Ataque",
+    "categoria": "Dano Físico",
     "atributos": [
       "+30 Ataque Físico",
       "+15% Velocidade de Ataque",
@@ -680,7 +680,7 @@ export const GAME_ITEMS: GameItem[] = [
     "id": 36,
     "nome": "Cristal Sagrado",
     "preco": 3000,
-    "categoria": "Mágico",
+    "categoria": "Dano Mágico",
     "atributos": [
       "+185 Poder Mágico"
     ],
@@ -696,7 +696,7 @@ export const GAME_ITEMS: GameItem[] = [
     "id": 37,
     "nome": "Machado de Caça",
     "preco": 2010,
-    "categoria": "Ataque",
+    "categoria": "Dano Físico",
     "atributos": [
       "+80 Ataque Físico",
       "+10% Redução de Recarga"
@@ -718,7 +718,7 @@ export const GAME_ITEMS: GameItem[] = [
     "id": 38,
     "nome": "Varinha da Rainha de Gelo",
     "preco": 2040,
-    "categoria": "Mágico",
+    "categoria": "Dano Mágico",
     "atributos": [
       "+75 Poder Mágico",
       "+10% Vampirismo Mágico",
@@ -754,7 +754,7 @@ export const GAME_ITEMS: GameItem[] = [
     "id": 40,
     "nome": "Espada da Legião",
     "preco": 910,
-    "categoria": "Ataque",
+    "categoria": "Dano Físico",
     "atributos": [
       "+60 Ataque Físico"
     ],
@@ -764,7 +764,7 @@ export const GAME_ITEMS: GameItem[] = [
     "id": 41,
     "nome": "Cetro Relâmpago",
     "preco": 2250,
-    "categoria": "Mágico",
+    "categoria": "Dano Mágico",
     "atributos": [
       "+75 Poder Mágico",
       "+400 Mana",
@@ -782,7 +782,7 @@ export const GAME_ITEMS: GameItem[] = [
     "id": 42,
     "nome": "Lâmina Mágica",
     "preco": 1050,
-    "categoria": "Ataque",
+    "categoria": "Dano Físico",
     "atributos": [
       "+40 Ataque Físico",
       "+18 Defesa Mágica"
@@ -810,7 +810,7 @@ export const GAME_ITEMS: GameItem[] = [
     "id": 44,
     "nome": "Varinha Mágica",
     "preco": 820,
-    "categoria": "Mágico",
+    "categoria": "Dano Mágico",
     "atributos": [
       "+45 Poder Mágico"
     ],
@@ -820,7 +820,7 @@ export const GAME_ITEMS: GameItem[] = [
     "id": 45,
     "nome": "Arma Maléfica",
     "preco": 2120,
-    "categoria": "Ataque",
+    "categoria": "Dano Físico",
     "atributos": [
       "+40 Ataque Físico",
       "+20% Velocidade de Ataque"
@@ -842,7 +842,7 @@ export const GAME_ITEMS: GameItem[] = [
     "id": 46,
     "nome": "Rugido Maléfico",
     "preco": 2060,
-    "categoria": "Ataque",
+    "categoria": "Dano Físico",
     "atributos": [
       "+60 Ataque Físico"
     ],
@@ -879,7 +879,7 @@ export const GAME_ITEMS: GameItem[] = [
     "id": 48,
     "nome": "Recipiente Místico",
     "preco": 500,
-    "categoria": "Mágico",
+    "categoria": "Dano Mágico",
     "atributos": [
       "+15 Poder Mágico",
       "+8% Vampirismo Mágico"
@@ -890,7 +890,7 @@ export const GAME_ITEMS: GameItem[] = [
     "id": 49,
     "nome": "Machadinha de Ogro",
     "preco": 650,
-    "categoria": "Ataque",
+    "categoria": "Dano Físico",
     "atributos": [
       "+25 Ataque Físico",
       "+230 HP"
@@ -979,7 +979,7 @@ export const GAME_ITEMS: GameItem[] = [
     "id": 54,
     "nome": "Lança Regular",
     "preco": 600,
-    "categoria": "Ataque",
+    "categoria": "Dano Físico",
     "atributos": [
       "+20 Ataque Físico",
       "+10% Velocidade de Ataque"
@@ -990,7 +990,7 @@ export const GAME_ITEMS: GameItem[] = [
     "id": 55,
     "nome": "Meteoro do Desprezo",
     "preco": 900,
-    "categoria": "Ataque",
+    "categoria": "Dano Físico",
     "atributos": [
       "+15% Velocidade de Ataque",
       "+10% Chance de Crítico"
@@ -1001,7 +1001,7 @@ export const GAME_ITEMS: GameItem[] = [
     "id": 56,
     "nome": "Meteoro de Ouro Rosa",
     "preco": 1820,
-    "categoria": "Ataque",
+    "categoria": "Dano Físico",
     "atributos": [
       "+60 Ataque Físico",
       "+23 Defesa Mágica",
@@ -1019,7 +1019,7 @@ export const GAME_ITEMS: GameItem[] = [
     "id": 57,
     "nome": "Alabarda dos Mares",
     "preco": 2050,
-    "categoria": "Ataque",
+    "categoria": "Dano Físico",
     "atributos": [
       "+80 Ataque Físico",
       "+20% Velocidade de Ataque"
@@ -1069,7 +1069,7 @@ export const GAME_ITEMS: GameItem[] = [
     "id": 60,
     "nome": "Cetro de Starlium",
     "preco": 2220,
-    "categoria": "Mágico",
+    "categoria": "Dano Mágico",
     "atributos": [
       "+70 Poder Mágico",
       "+10% Redução de Recarga",
@@ -1109,7 +1109,7 @@ export const GAME_ITEMS: GameItem[] = [
     "id": 63,
     "nome": "Besta Veloz",
     "preco": 1000,
-    "categoria": "Ataque",
+    "categoria": "Dano Físico",
     "atributos": [
       "+20% Velocidade de Ataque"
     ],
@@ -1149,7 +1149,7 @@ export const GAME_ITEMS: GameItem[] = [
     "id": 65,
     "nome": "Tomo do Mal",
     "preco": 950,
-    "categoria": "Mágico",
+    "categoria": "Dano Mágico",
     "atributos": [
       "+35 Poder Mágico",
       "+20 Regeneração de Mana",
@@ -1195,7 +1195,7 @@ export const GAME_ITEMS: GameItem[] = [
     "id": 68,
     "nome": "Machado de Guerra",
     "preco": 2100,
-    "categoria": "Ataque",
+    "categoria": "Dano Físico",
     "atributos": [
       "+35 Ataque Físico",
       "+400 HP",
@@ -1231,7 +1231,7 @@ export const GAME_ITEMS: GameItem[] = [
     "id": 70,
     "nome": "Vento da Natureza",
     "preco": 1910,
-    "categoria": "Ataque",
+    "categoria": "Dano Físico",
     "atributos": [
       "+30 Ataque Físico",
       "+20% Velocidade de Ataque",
@@ -1249,7 +1249,7 @@ export const GAME_ITEMS: GameItem[] = [
     "id": 71,
     "nome": "Andarilho do Vento",
     "preco": 1880,
-    "categoria": "Ataque",
+    "categoria": "Dano Físico",
     "atributos": [
       "+35% Velocidade de Ataque",
       "+20% Chance de Crítico",
@@ -1285,7 +1285,7 @@ export const GAME_ITEMS: GameItem[] = [
     "id": 73,
     "nome": "Lanterna dos Desejos",
     "preco": 2250,
-    "categoria": "Mágico",
+    "categoria": "Dano Mágico",
     "atributos": [
       "+75 Poder Mágico",
       "+400 Mana",

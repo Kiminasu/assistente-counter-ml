@@ -8,8 +8,11 @@ export interface Hero {
   imageUrl: string;
 }
 
-export const LANES = ['XP', 'Selva', 'Meio', 'Ouro', 'Rotação'] as const;
+export const LANES = ['EXP', 'SELVA', 'MEIO', 'OURO', 'ROTAÇÃO'] as const;
 export type Lane = typeof LANES[number];
+
+export const LANES_WITH_NONE = ['EXP', 'SELVA', 'MEIO', 'OURO', 'ROTAÇÃO', 'NENHUMA'] as const;
+export type LaneOrNone = typeof LANES_WITH_NONE[number];
 
 export const ROLES = ['Soldado', 'Mago', 'Atirador', 'Assassino', 'Tanque', 'Suporte'] as const;
 export type Role = typeof ROLES[number];
@@ -26,7 +29,7 @@ export interface HeroSuggestion {
   imageUrl: string;
   motivo: string;
   avisos: string[];
-  classificacao: 'ANULA' | 'VANTAGEM';
+  classificacao: 'ANULA' | 'VANTAGEM' | 'PERFEITO';
   estatistica: string;
   spells: SpellSuggestion[];
 }
@@ -71,4 +74,61 @@ export interface MatchupData {
     recommendedSpell: SpellSuggestion | null;
 }
 
-export type SlotType = 'yourPick' | 'enemyPick';
+export type Team = 'ally' | 'enemy';
+
+export const RANKS = ['all', 'epic', 'legend', 'mythic', 'honor', 'glory'] as const;
+export type RankCategory = typeof RANKS[number];
+
+export const RANK_DAYS = [1, 3, 7, 15, 30] as const;
+export type RankDays = typeof RANK_DAYS[number];
+
+export const SORT_FIELDS = {
+    win_rate: 'Taxa de Vitória',
+    pick_rate: 'Taxa de Escolha',
+    ban_rate: 'Taxa de Ban',
+} as const;
+export type SortField = keyof typeof SORT_FIELDS;
+
+export interface HeroRankInfo {
+    hero: Hero;
+    winRate: number;
+    pickRate: number;
+    banRate: number;
+}
+
+// FIX: Export the HeroDailyRate interface.
+export interface HeroDailyRate {
+  date: string;
+  win_rate: number;
+}
+
+export interface NextPickSuggestion {
+  heroName: string;
+  role: Role;
+  reason: string;
+  imageUrl: string;
+}
+
+export interface StrategicItemSuggestion {
+  name: string;
+  reason: string;
+  preco: number;
+}
+
+export interface TeamCompositionStats {
+  physicalDamage: number;
+  magicDamage: number;
+  tankiness: number;
+  control: number;
+}
+
+export interface DraftAnalysisResult {
+  advantageScore: number;
+  advantageReason: string;
+  allyComposition: TeamCompositionStats;
+  enemyComposition: TeamCompositionStats;
+  teamStrengths: string[];
+  teamWeaknesses: string[];
+  nextPickSuggestion: NextPickSuggestion | null;
+  strategicItems: StrategicItemSuggestion[];
+}
