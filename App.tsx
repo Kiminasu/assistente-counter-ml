@@ -709,32 +709,13 @@ const App: React.FC = () => {
 
                     {/* Bottom Section: Detailed Analysis */}
                     <div ref={analysisSectionRef} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        {/* Mobile Order Wrapper */}
-                        <div className="lg:order-1 flex flex-col gap-6">
-                            <div className="order-2 lg:order-1">
-                                <TabbedPanel tabs={tabs} />
-                            </div>
-                            <div className="order-1 lg:order-2">
-                                <AnalysisPanel 
-                                    isLoading={is1v1AnalysisLoading}
-                                    result={analysisResult}
-                                    error={analysisError}
-                                    activeLane={activeLane as Lane}
-                                />
-                            </div>
-                        </div>
-                        {/* Desktop Order Wrapper */}
-                        <div className="hidden lg:flex lg:flex-col lg:gap-6">
-                             <AnalysisPanel 
-                                isLoading={is1v1AnalysisLoading}
-                                result={analysisResult}
-                                error={analysisError}
-                                activeLane={activeLane as Lane}
-                            />
-                        </div>
-                        <div className="hidden lg:flex lg:flex-col">
-                             <TabbedPanel tabs={tabs} />
-                        </div>
+                        <AnalysisPanel 
+                            isLoading={is1v1AnalysisLoading}
+                            result={analysisResult}
+                            error={analysisError}
+                            activeLane={activeLane as Lane}
+                        />
+                        <TabbedPanel tabs={tabs} />
                     </div>
                 </div>
             );
