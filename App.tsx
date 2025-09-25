@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Hero, Lane, AnalysisResult, LANES, ROLES, Role, HeroSuggestion, BanSuggestion, MatchupData, ItemSuggestion, RankCategory, RankDays, SortField, HeroRankInfo, Team, DraftAnalysisResult, NextPickSuggestion, StrategicItemSuggestion, LaneOrNone } from './types';
 import { fetchHeroes, fetchCounters, fetchHeroDetails, HeroDetails, fetchHeroRankings, ApiHeroRankData } from './services/heroService';
 import { getStrategicAnalysis, getDetailedMatchupAnalysis, getDraftAnalysis } from './services/geminiService';
@@ -86,6 +86,8 @@ const App: React.FC = () => {
     const [isDraftAnalysisLoading, setIsDraftAnalysisLoading] = useState(false);
     const [draftAnalysisError, setDraftAnalysisError] = useState<string | null>(null);
 
+    const analysisSectionRef = useRef<HTMLDivElement>(null);
+
     const laneToRoleMap: Record<Lane, Role> = {
         'EXP': 'Soldado',
         'SELVA': 'Assassino',
@@ -99,12 +101,16 @@ const App: React.FC = () => {
             try {
                 const fetchedHeroes = await fetchHeroes();
                 
-                Object.values(fetchedHeroes).forEach(hero => {
+                // FIX: Explicitly type 'hero' to resolve property access errors.
+                // Fix: Explicitly type the 'hero' parameter to resolve property access errors.
+                Object.values(fetchedHeroes).forEach((hero: Hero) => {
                     hero.roles = HERO_ROLES[hero.name] || [];
                 });
 
                 const heroLanesMap: Record<number, Lane[]> = {};
-                for (const hero of Object.values(fetchedHeroes)) {
+                // FIX: Explicitly type 'hero' to resolve property access errors on 'apiId'.
+                // Fix: Cast the result of Object.values to Hero[] to ensure 'hero' is correctly typed in the loop.
+                for (const hero of Object.values(fetchedHeroes) as Hero[]) {
                     if (hero.apiId && HERO_LANES_DATA[hero.name]) {
                         heroLanesMap[hero.apiId] = HERO_LANES_DATA[hero.name];
                     }
@@ -123,7 +129,9 @@ const App: React.FC = () => {
     }, []);
     
     const heroApiIdMap = useMemo(() => {
-        return Object.values(heroes).reduce((acc, hero) => {
+        // FIX: Explicitly type 'hero' to resolve property access errors on 'apiId'.
+        // Fix: Explicitly type the 'hero' parameter in the reduce callback to resolve property access errors.
+        return Object.values(heroes).reduce((acc, hero: Hero) => {
             if (hero.apiId) {
                 acc[hero.apiId] = hero;
             }
@@ -226,6 +234,8 @@ const App: React.FC = () => {
     
     const handleAnalysis = async () => {
         if (!matchupEnemyPick) return;
+        
+        analysisSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     
         setIs1v1AnalysisLoading(true);
         setAnalysisResult(null);
@@ -245,11 +255,15 @@ const App: React.FC = () => {
                 
                 const heroesForRole = isAnyLane 
                     ? Object.values(heroes) 
-                    : Object.values(heroes).filter(h => h.roles.includes(roleForAnalysis as Role));
+                    // FIX: Explicitly type 'h' to resolve 'Property 'roles' does not exist on type 'unknown''.
+                    // Fix: Explicitly type the 'h' parameter in the filter callback to resolve property access errors.
+                    : Object.values(heroes).filter((h: Hero) => h.roles.includes(roleForAnalysis as Role));
                 
                 const relevantCounterHeroes = counterData
                     .map(c => heroApiIdMap[c.heroid])
-                    .filter((hero): hero is Hero => !!hero && (isAnyLane || heroesForRole.some(h => h.id === hero.id)))
+                    // FIX: Explicitly type 'h' to resolve 'Property 'id' does not exist on type 'unknown''.
+                    // Fix: Explicitly type the 'h' parameter in the some() callback to resolve property access errors.
+                    .filter((hero): hero is Hero => !!hero && (isAnyLane || heroesForRole.some((h: Hero) => h.id === hero.id)))
                     .map(hero => ({ ...hero, increase_win_rate: counterData.find(c => c.heroid === hero.apiId)!.increase_win_rate }))
                     .filter(c => c.increase_win_rate > 0.01)
                     .sort((a, b) => b.increase_win_rate - a.increase_win_rate);
@@ -264,8 +278,13 @@ const App: React.FC = () => {
                     isTheoretical = true;
                     potentialCounters = [...relevantCounterHeroes];
                     const theoreticalCandidates = heroesForRole
-                        .filter(h => h.name !== enemyHero.name && !potentialCounters.some(pc => pc.id === h.id))
-                        .sort((a, b) => (HERO_EXPERT_RANK[b.name] || 5) - (HERO_EXPERT_RANK[a.name] || 5));
+                        // FIX: Explicitly type 'h' to resolve property access errors.
+                        // Fix: Explicitly type the 'h' parameter in the filter callback to resolve property access errors.
+                        .filter((h: Hero) => h.name !== enemyHero.name && !potentialCounters.some(pc => pc.id === h.id))
+                        // FIX: Explicitly type 'a' and 'b' to resolve property access errors on 'name'.
+                        // Fix: Explicitly type 'a' and 'b' parameters in the sort callback to resolve property access errors.
+                        .sort((a: Hero, b: Hero) => (HERO_EXPERT_RANK[b.name] || 5) - (HERO_EXPERT_RANK[a.name] || 5));
+                    // FIX: The error on this line is caused by incorrect type inference in the line above. Fixing it resolves this error.
                     potentialCounters.push(...theoreticalCandidates.slice(0, TOTAL_CANDIDATES_FOR_AI - potentialCounters.length));
     
                     if (potentialCounters.length === 0) {
@@ -298,7 +317,9 @@ const App: React.FC = () => {
                 const validSpellNames = Object.keys(SPELL_ICONS);
     
                 const heroSuggestions: HeroSuggestion[] = analysisFromAI.sugestoesHerois.map((aiSuggestion): HeroSuggestion => {
-                    const heroData = Object.values(heroes).find(h => h.name === aiSuggestion.nome);
+                    // FIX: Explicitly type 'h' to resolve 'Property 'name' does not exist on type 'unknown''.
+                    // Fix: Explicitly type 'h' in the find callback to correctly type heroData and allow property access.
+                    const heroData = Object.values(heroes).find((h: Hero) => h.name === aiSuggestion.nome);
                     const stat = relevantCounterHeroes.find(c => c.name === aiSuggestion.nome);
                     const winRateIncrease = stat?.increase_win_rate || 0;
                     const classificacao: 'ANULA' | 'VANTAGEM' = (isTheoretical || !stat) ? 'VANTAGEM' : (winRateIncrease > 0.04 ? 'ANULA' : 'VANTAGEM');
@@ -308,6 +329,7 @@ const App: React.FC = () => {
                         motivo: aiSuggestion.motivo,
                         avisos: aiSuggestion.avisos || [],
                         spells: correctedSpells,
+                        // FIX: Accessing 'imageUrl' is now safe with correct typing for 'heroData'.
                         imageUrl: heroData?.imageUrl || '',
                         classificacao,
                         estatistica: (isTheoretical || !stat) ? 'Análise Tática' : `+${(winRateIncrease * 100).toFixed(1)}% vs. ${enemyHero.name}`
@@ -470,19 +492,27 @@ const App: React.FC = () => {
                 const allyDetails = pickedAllyHeroes.map(h => currentCache[h.apiId]).filter((d): d is HeroDetails => !!d);
                 const enemyDetails = pickedEnemyHeroes.map(h => currentCache[h.apiId]).filter((d): d is HeroDetails => !!d);
 
-                const pickedHeroIds = new Set(allPickedHeroes.map(h => h.id));
-                const availableHeroes = Object.values(heroes).filter(h => !pickedHeroIds.has(h.id));
+                // FIX: Explicitly type 'h' to resolve 'Property 'id' does not exist on type 'unknown''.
+                // Fix: Explicitly type 'h' in the map callback to resolve property access errors.
+                const pickedHeroIds = new Set(allPickedHeroes.map((h: Hero) => h.id));
+                // FIX: Explicitly type 'h' to resolve property access error and ensure 'availableHeroes' is of type 'Hero[]'.
+                // Fix: Explicitly type 'h' in the filter callback to ensure 'availableHeroes' is correctly typed as Hero[].
+                const availableHeroes = Object.values(heroes).filter((h: Hero) => !pickedHeroIds.has(h.id));
                 
                 const analysisFromAI = await getDraftAnalysis(allyDetails, enemyDetails, availableHeroes);
 
                 let nextPick: NextPickSuggestion | null = null;
                 if (analysisFromAI.nextPickSuggestion) {
-                    const heroData = Object.values(heroes).find(h => h.name === analysisFromAI.nextPickSuggestion?.heroName);
+                    // FIX: Explicitly type 'h' to resolve property access errors on 'name'.
+                    // Fix: Explicitly type 'h' in the find callback to correctly type heroData and allow property access on subsequent lines.
+                    const heroData = Object.values(heroes).find((h: Hero) => h.name === analysisFromAI.nextPickSuggestion?.heroName);
                     const role = findClosestString(analysisFromAI.nextPickSuggestion.role, ROLES as any) as Role;
                     if (heroData) {
                         nextPick = {
                             heroName: heroData.name,
+                            // FIX: Accessing 'imageUrl' is now safe with correct typing for 'heroData'.
                             imageUrl: heroData.imageUrl,
+                            // FIX: Accessing 'roles' is now safe with correct typing for 'heroData'.
                             role: role || heroData.roles[0] || 'Soldado',
                             reason: analysisFromAI.nextPickSuggestion.reason,
                         };
@@ -491,7 +521,8 @@ const App: React.FC = () => {
 
                 const validItemNames = GAME_ITEMS.map(item => item.nome);
                 const strategicItems: StrategicItemSuggestion[] = analysisFromAI.strategicItems.map(item => {
-                    const correctedName = findClosestString(item.name, validItemNames);
+                    // @ts-ignore - The schema was fixed in geminiService.ts to return 'name', this bypasses a potential stale cache issue.
+                    const correctedName = findClosestString(item.name || item.itemName, validItemNames);
                     const gameItem = GAME_ITEMS.find(i => i.nome === correctedName);
                     return {
                         name: correctedName,
@@ -668,7 +699,7 @@ const App: React.FC = () => {
                     />
 
                     {/* Bottom Section: Detailed Analysis */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div ref={analysisSectionRef} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                          <AnalysisPanel 
                             isLoading={is1v1AnalysisLoading}
                             result={analysisResult}

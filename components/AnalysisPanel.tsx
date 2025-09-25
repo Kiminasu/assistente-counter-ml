@@ -34,7 +34,7 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ isLoading, result, error,
             return (
                 <div className="flex flex-col items-center justify-center h-full p-8 text-center">
                     <div className="w-12 h-12 border-4 border-dashed rounded-full animate-spin border-violet-400"></div>
-                    <p className="mt-4 text-lg">Combinando dados e IA para a lane {activeLane}...</p>
+                    <p className="mt-4 text-lg">CARREGANDO ANÁLISE</p>
                 </div>
             );
         }
@@ -138,7 +138,7 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ isLoading, result, error,
                     const isDetailVisible = selectedSuggestion && suggestionsInGroup.some(s => s.nome === selectedSuggestion.nome);
 
                     return (
-                        <div key={groupName} className="mb-4">
+                        <div key={groupName} className={`mb-4 ${groupName === 'PERFEITO' ? 'px-1' : ''}`}>
                             <h3 className={`font-bold mb-3 ${RATING_STYLES[groupName]?.text || 'text-gray-300'} ${groupName === 'PERFEITO' ? 'text-xl text-amber-300 text-center' : 'pl-2'}`}>
                                 {classificationLabels[groupName]}
                             </h3>
@@ -195,7 +195,12 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ isLoading, result, error,
                                     alt={item.nome} 
                                     className={`w-14 h-14 rounded-lg object-cover border-4 transition-all duration-200 group-hover:scale-110 border-violet-500 ${isSelected ? 'ring-4 ring-white/80 ring-offset-2 ring-offset-slate-900' : ''}`}
                                 />
-                                <span className={`text-xs mt-1 font-medium transition-colors ${isSelected ? 'text-white' : 'text-gray-400'}`}>{item.nome}</span>
+                                <span className={`text-xs mt-1 font-medium transition-colors flex items-center gap-1 ${isSelected ? 'text-white' : 'text-gray-400'}`}>
+                                    {item.nome}
+                                    <svg xmlns="http://www.w3.org/2000/svg" className={`h-3 w-3 transition-transform duration-300 ${isSelected ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </span>
                             </div>
                          )
                     })}

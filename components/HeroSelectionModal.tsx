@@ -1,5 +1,4 @@
 
-
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Hero, Lane, LANES } from '../types';
 import { LANE_ICONS } from '../constants';
@@ -20,27 +19,35 @@ const HeroSelectionModal: React.FC<HeroSelectionModalProps> = ({ isOpen, onClose
     const laneFilters: (Lane | 'Todas')[] = ['Todas', ...LANES];
 
     const filteredHeroes = useMemo(() => {
-        const heroesArray = Object.values(heroes);
+        // FIX: Explicitly type heroesArray to ensure correct type inference downstream.
+        const heroesArray: Hero[] = Object.values(heroes);
 
         const searchFiltered = searchTerm
-            ? heroesArray.filter(hero => hero.name.toLowerCase().includes(searchTerm.toLowerCase()))
+            // FIX: Explicitly type 'hero' to resolve 'Property 'name' does not exist on type 'unknown''.
+            ? heroesArray.filter((hero: Hero) => hero.name.toLowerCase().includes(searchTerm.toLowerCase()))
             : heroesArray;
 
         const laneFiltered = selectedLane === 'Todas'
             ? searchFiltered
-            : searchFiltered.filter(hero => {
+            // FIX: Explicitly type 'hero' to resolve 'Property 'apiId' does not exist on type 'unknown''.
+            : searchFiltered.filter((hero: Hero) => {
                 const lanesForHero = heroLanes[hero.apiId];
                 return lanesForHero && lanesForHero.includes(selectedLane);
             });
 
-        return laneFiltered.sort((a, b) => a.name.localeCompare(b.name));
+        // FIX: Explicitly type 'a' and 'b' to resolve 'Property 'name' does not exist on type 'unknown''.
+        return laneFiltered.sort((a: Hero, b: Hero) => a.name.localeCompare(b.name));
     }, [heroes, searchTerm, selectedLane, heroLanes]);
 
     useEffect(() => {
         if (isOpen) {
             setSearchTerm('');
             setSelectedLane('Todas');
-            setTimeout(() => searchInputRef.current?.focus(), 100);
+            // Apenas foca no input em dispositivos não-touch para evitar abrir o teclado no celular
+            const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+            if (!isTouchDevice) {
+                setTimeout(() => searchInputRef.current?.focus(), 100);
+            }
         }
     }, [isOpen]);
 

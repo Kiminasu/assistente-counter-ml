@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { MatchupData, Hero, Role } from '../types';
 import { RATING_STYLES, HERO_ROLES, ROLE_TAGS, SPELL_ICONS } from '../constants';
@@ -35,7 +34,7 @@ const DirectMatchupPanel: React.FC<DirectMatchupPanelProps> = ({ isLoading, data
             return (
                 <div className="flex flex-col items-center justify-center h-full">
                     <div className="w-10 h-10 border-2 border-dashed rounded-full animate-spin border-violet-400"></div>
-                    <p className="mt-3 text-sm text-gray-300">A analisar o confronto...</p>
+                    <p className="mt-3 text-sm text-gray-300">CARREGANDO CONFRONTO</p>
                 </div>
             );
         }

@@ -1,5 +1,6 @@
 
 
+
 import { GoogleGenAI, Type } from "@google/genai";
 import { Lane, Role, SpellSuggestion, MatchupClassification, GameItem, ROLES, Hero, DraftAnalysisResult, LaneOrNone } from "../types";
 import { SPELL_ICONS } from "../constants";
@@ -35,13 +36,13 @@ const formatHeroDetailsForPrompt = (details: HeroDetails): string => {
         let label = '';
         const totalSkills = details.skills.length;
         if (index === 0) {
-            label = '(Passiva)';
+            label = 'Passiva';
         } else if (index === totalSkills - 1) {
-            label = '(Ultimate)';
+            label = 'Ultimate';
         } else {
-            label = `(Habilidade ${index})`;
+            label = `Habilidade ${index}`;
         }
-        return `- ${s.skillname} ${label}: ${s.skilldesc}`;
+        return `- ${label}: ${s.skilldesc}`;
     }).join('\n');
     
     const combos = details.combos?.map(c => `\n- Combo (${c.title}): ${c.desc}`).join('') || '';
@@ -154,7 +155,7 @@ export async function getStrategicAnalysis(
 
         const commonInstructions = `
 1. Para cada herói counter sugerido:
-   a. Forneça um 'motivo' tático detalhado. Sua análise deve comparar diretamente as habilidades chave do counter com as do oponente, mencionando o número da habilidade (ex: Habilidade 1, Ultimate) quando aplicável para ser didático. Sua análise DEVE considerar: dano base, escalonamento de dano (ex: +80% do Ataque Físico), e tipo de dano (Físico, Mágico, Verdadeiro) de CADA habilidade para determinar a eficácia do counter. Exemplo: 'A Habilidade 2 do counter permite escapar/anular o combo da Eudora porque...'. Foque em anulação de habilidades, timings críticos e vantagens de posicionamento.
+   a. Forneça um 'motivo' tático detalhado. Sua análise deve comparar diretamente as habilidades chave do counter com as do oponente, mencionando a numeração da habilidade (ex: Habilidade 1, Ultimate) para ser didático. Sua análise DEVE considerar: dano base, escalonamento de dano (ex: +80% do Ataque Físico), e tipo de dano (Físico, Mágico, Verdadeiro) de CADA habilidade para determinar a eficácia do counter. Exemplo: 'A Habilidade 2 do counter permite escapar/anular o combo da Eudora porque...'. Foque em anulação de habilidades, timings críticos e vantagens de posicionamento.
    b. Forneça 1-2 'avisos' críticos, como habilidades do oponente que anulam sua vantagem ou combos que você precisa evitar.
    c. Sugira 1 ou 2 'spells' (feitiços) ideais da lista [${spellList}].
 2. Sugira 3 'sugestoesItens' de counter da lista de itens detalhada abaixo. As suas escolhas devem ser as mais eficazes contra as habilidades específicas de ${enemyHeroDetails.name} E APROPRIADAS para ${itemRoleContext} ${laneContext}. No 'motivo', explique a interação direta do item com as habilidades do oponente. Exemplo: 'Couraça Antiga reduz o dano da habilidade Y do oponente em X%'.`;
@@ -255,7 +256,7 @@ Dados Estatísticos: Meu herói (${yourHeroDetails.name}) tem ${winRateDescripti
 
 INSTRUÇÕES:
 1. ${consistencyInstruction}
-2. Determine a 'classification' final ('ANULA', 'VANTAGEM', 'DESVANTAGEM', 'NEUTRO'). Use a análise teórica das habilidades e combos como fator decisivo. Sua 'detailedAnalysis' DEVE se basear na interação das habilidades, mencionando o número da habilidade (ex: Habilidade 1, Ultimate) para ser didático, e incluir dano base, escalonamento, tipo de dano e tempos de recarga.
+2. Determine a 'classification' final ('ANULA', 'VANTAGEM', 'DESVANTAGEM', 'NEUTRO'). Use a análise teórica das habilidades e combos como fator decisivo. Sua 'detailedAnalysis' DEVE se basear na interação das habilidades, mencionando a numeração da habilidade (ex: Habilidade 1, Ultimate) para ser didático, e incluir dano base, escalonamento, tipo de dano e tempos de recarga.
 3. Forneça uma 'detailedAnalysis'. Comece a análise com a mesma palavra da 'classification' para consistência. Explique o motivo e dê 2 dicas táticas diretas.
 4. Recomende o melhor 'recommendedSpell' da lista [${spellList}].`;
 
@@ -330,10 +331,12 @@ const draftAnalysisSchema = {
             items: {
                 type: Type.OBJECT,
                 properties: {
-                    itemName: { type: Type.STRING, description: "Nome do item, deve ser um da lista de itens fornecida." },
+                    // FIX: Changed 'itemName' to 'name' to match the StrategicItemSuggestion type.
+                    name: { type: Type.STRING, description: "Nome do item, deve ser um da lista de itens fornecida." },
                     reason: { type: Type.STRING, description: "Motivo pelo qual este item é importante para a composição do time contra os inimigos." }
                 },
-                required: ["itemName", "reason"]
+                // FIX: Changed 'itemName' to 'name' to match the StrategicItemSuggestion type.
+                required: ["name", "reason"]
             }
         }
     },
@@ -377,7 +380,7 @@ Lista de Itens para sugestão:
 [${itemNames}]
 
 INSTRUÇÕES:
-1. Analise a composição do Time Aliado contra o Time Inimigo. Considere as interações de habilidades, mencionando o número da habilidade (ex: Habilidade 1, Ultimate), incluindo dano base, escalonamento, tipo de dano e tempos de recarga. Se um time não tiver heróis, considere isso na análise.
+1. Analise a composição do Time Aliado contra o Time Inimigo. Considere as interações de habilidades, mencionando a numeração da habilidade (ex: Habilidade 1, Ultimate), incluindo dano base, escalonamento, tipo de dano e tempos de recarga. Se um time não tiver heróis, considere isso na análise.
 2. Forneça um 'advantageScore' numérico de -10 (vantagem clara para o inimigo) a 10 (vantagem clara para o aliado).
 3. Forneça um 'advantageReason' tático e conciso que explique a pontuação.
 4. Preencha 'allyComposition' e 'enemyComposition', atribuindo uma pontuação de 1 a 10 para cada categoria (dano físico, dano mágico, tanque/sobrevivência, controle de grupo) com base no potencial combinado dos heróis selecionados.

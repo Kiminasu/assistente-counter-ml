@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect } from 'react';
 import { Hero } from '../types';
 import { fetchHeroRelations, HeroRelation } from '../services/heroService';
@@ -77,7 +75,7 @@ const SynergyPanel: React.FC<SynergyPanelProps> = ({ selectedHeroId, heroes, her
             return (
                 <div className="flex flex-col items-center justify-center h-full">
                     <div className="w-10 h-10 border-2 border-dashed rounded-full animate-spin border-violet-400"></div>
-                    <p className="mt-3 text-sm text-gray-300">A procurar sinergias...</p>
+                    <p className="mt-3 text-sm text-gray-300">CARREGANDO SINERGIAS</p>
                 </div>
             );
         }

@@ -107,11 +107,15 @@ const HeroRankings: React.FC<HeroRankingsProps> = ({
             <h2 className="text-2xl sm:text-3xl font-black text-center mb-4 tracking-wider flex-shrink-0 text-amber-300">RANKING DE HERÓIS</h2>
             <div className="mb-4">
                 <CollapsibleTutorial title="Como Usar o Ranking">
-                    <p className="text-xs sm:text-sm text-gray-300">
-                        Use os filtros para descobrir os heróis mais fortes do meta.
-                        <br />
-                        <strong>ELO</strong> define o ranking, <strong>PERÍODO</strong> os últimos dias e <strong>ORDENAR POR</strong> o status principal.
-                    </p>
+                    <div className="text-xs sm:text-sm text-gray-300 space-y-2">
+                        <p>
+                            Use os filtros para descobrir os heróis mais fortes do meta.
+                            <strong>ELO</strong> define o ranking, <strong>PERÍODO</strong> os últimos dias e <strong>ORDENAR POR</strong> o status principal.
+                        </p>
+                        <p>
+                            <strong>V:</strong> Taxa de Vitória, <strong>E:</strong> Taxa de Escolha, <strong>B:</strong> Taxa de Banimento.
+                        </p>
+                    </div>
                 </CollapsibleTutorial>
             </div>
             <div className="space-y-3 px-4">
