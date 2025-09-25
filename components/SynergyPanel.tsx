@@ -13,6 +13,7 @@ const HeroListItem: React.FC<{ hero: Hero | undefined }> = ({ hero }) => {
     return (
         <div className="flex flex-col items-center text-center">
             <img
+                loading="lazy"
                 src={hero.imageUrl}
                 alt={hero.name}
                 className="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover border-2 border-gray-600 group-hover:border-violet-500 transition-colors"

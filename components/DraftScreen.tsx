@@ -11,7 +11,8 @@ interface DraftScreenProps {
     enemyPicks: (string | null)[];
     heroes: Record<string, Hero>;
     onSlotClick: (team: Team, index: number) => void;
-    banSuggestions: BanSuggestion[];
+    counterBanSuggestions: BanSuggestion[];
+    metaBanSuggestions: BanSuggestion[];
     isBanLoading: boolean;
     draftAnalysis: DraftAnalysisResult | null;
     isDraftAnalysisLoading: boolean;
@@ -25,7 +26,8 @@ const DraftScreen: React.FC<DraftScreenProps> = ({
     enemyPicks, 
     heroes, 
     onSlotClick, 
-    banSuggestions, 
+    counterBanSuggestions,
+    metaBanSuggestions, 
     isBanLoading,
     draftAnalysis,
     isDraftAnalysisLoading,
@@ -86,7 +88,8 @@ const DraftScreen: React.FC<DraftScreenProps> = ({
                     </p>
                 </CollapsibleTutorial>
                 <BanSuggestions
-                    suggestions={banSuggestions}
+                    counterSuggestions={counterBanSuggestions}
+                    metaSuggestions={metaBanSuggestions}
                     isLoading={isBanLoading}
                     variant="5v5"
                 />

@@ -49,7 +49,8 @@ const App: React.FC = () => {
     const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
     const [analysisError, setAnalysisError] = useState<string | null>(null);
 
-    const [banSuggestions, setBanSuggestions] = useState<BanSuggestion[]>([]);
+    const [counterBanSuggestions, setCounterBanSuggestions] = useState<BanSuggestion[]>([]);
+    const [metaBanSuggestions, setMetaBanSuggestions] = useState<BanSuggestion[]>([]);
 
     const [matchupData, setMatchupData] = useState<MatchupData | null>(null);
     const [matchupError, setMatchupError] = useState<string | null>(null);
@@ -88,26 +89,24 @@ const App: React.FC = () => {
 
     const analysisSectionRef = useRef<HTMLDivElement>(null);
 
-    const laneToRoleMap: Record<Lane, Role> = {
+    const laneToRoleMap: Record<Lane, Role> = useMemo(() => ({
         'EXP': 'Soldado',
         'SELVA': 'Assassino',
         'MEIO': 'Mago',
         'OURO': 'Atirador',
         'ROTAÇÃO': 'Suporte'
-    };
+    }), []);
 
     useEffect(() => {
         const loadInitialData = async () => {
             try {
                 const fetchedHeroes = await fetchHeroes();
                 
-                // FIX: Explicitly type the 'hero' parameter to resolve property access errors.
                 Object.values(fetchedHeroes).forEach((hero: Hero) => {
                     hero.roles = HERO_ROLES[hero.name] || [];
                 });
 
                 const heroLanesMap: Record<number, Lane[]> = {};
-                // FIX: Cast the result of Object.values to Hero[] to ensure 'hero' is correctly typed in the loop.
                 for (const hero of Object.values(fetchedHeroes) as Hero[]) {
                     if (hero.apiId && HERO_LANES_DATA[hero.name]) {
                         heroLanesMap[hero.apiId] = HERO_LANES_DATA[hero.name];
@@ -127,7 +126,6 @@ const App: React.FC = () => {
     }, []);
     
     const heroApiIdMap = useMemo(() => {
-        // FIX: Explicitly type the 'hero' parameter in the reduce callback to resolve property access errors.
         return Object.values(heroes).reduce((acc, hero: Hero) => {
             if (hero.apiId) {
                 acc[hero.apiId] = hero;
@@ -148,7 +146,7 @@ const App: React.FC = () => {
                 
                 const mappedRankings: HeroRankInfo[] = rankingsData
                     .map(data => {
-                        const hero = Object.values(heroes).find(h => h.apiId === data.main_heroid);
+                        const hero = heroApiIdMap[data.main_heroid];
                         if (!hero) return null;
 
                         return {
@@ -170,18 +168,19 @@ const App: React.FC = () => {
         };
 
         fetchRankings();
-    }, [rankDays, rankCategory, sortField, heroes]);
+    }, [rankDays, rankCategory, sortField, heroes, heroApiIdMap]);
     
     useEffect(() => {
         const calculateBanSuggestions = async () => {
             if (heroRankings.length === 0) {
-                setBanSuggestions([]);
+                setMetaBanSuggestions([]);
+                setCounterBanSuggestions([]);
                 return;
             }
-    
-            const yourHero = matchupAllyPick ? heroes[matchupAllyPick] : null;
+
             const rankLabel: Record<RankCategory, string> = { all: "Todos", epic: "Épico", legend: "Lenda", mythic: "Mítico", honor: "Honra", glory: "Glória" };
-    
+
+            // 1. Calculate Meta Bans (always available)
             const metaBans = [...heroRankings]
                 .sort((a, b) => b.banRate - a.banRate)
                 .slice(0, 8)
@@ -189,52 +188,79 @@ const App: React.FC = () => {
                     hero: rankInfo.hero,
                     reason: `Taxa de banimento de ${(rankInfo.banRate * 100).toFixed(1)}% no elo ${rankLabel[rankCategory]}.`
                 }));
-    
-            if (!yourHero || !yourHero.apiId) {
-                setBanSuggestions(metaBans);
-                return;
-            }
-    
+            setMetaBanSuggestions(metaBans);
+
+            // 2. Calculate Counter Bans (context-dependent)
+            let personalCounters: BanSuggestion[] = [];
             try {
-                const counterData = await fetchCounters(yourHero.apiId);
-                const personalCounters = counterData
-                    .sort((a, b) => b.increase_win_rate - a.increase_win_rate)
-                    .slice(0, 3)
-                    .map(data => {
-                        const hero = heroApiIdMap[data.heroid];
-                        if (!hero) return null;
-                        return {
-                            hero,
-                            reason: `Forte counter para ${yourHero.name} (+${(data.increase_win_rate * 100).toFixed(1)}% de vitória).`
-                        };
-                    })
-                    .filter((s): s is BanSuggestion => s !== null);
-    
-                const combinedSuggestions = [...personalCounters];
-                const personalCounterIds = new Set(personalCounters.map(s => s.hero.id));
-                
-                for (const metaBan of metaBans) {
-                    if (combinedSuggestions.length >= 8) break;
-                    if (!personalCounterIds.has(metaBan.hero.id)) {
-                        combinedSuggestions.push(metaBan);
+                if (gameMode === '1v1') {
+                    const yourHero = matchupAllyPick ? heroes[matchupAllyPick] : null;
+                    if (yourHero?.apiId) {
+                        const counterData = await fetchCounters(yourHero.apiId);
+                        personalCounters = counterData
+                            .sort((a, b) => b.increase_win_rate - a.increase_win_rate)
+                            .slice(0, 8)
+                            .map(data => {
+                                const hero = heroApiIdMap[data.heroid];
+                                if (!hero) return null;
+                                return {
+                                    hero,
+                                    reason: `Forte counter para ${yourHero.name} (+${(data.increase_win_rate * 100).toFixed(1)}% de vitória).`
+                                };
+                            })
+                            .filter((s): s is BanSuggestion => s !== null);
+                    }
+                } else if (gameMode === '5v5') {
+                    const pickedEnemyHeroes = draftEnemyPicks
+                        .map(id => id ? heroes[id] : null)
+                        .filter((h): h is Hero => h !== null && !!h.apiId);
+
+                    if (pickedEnemyHeroes.length > 0) {
+                        const counterPromises = pickedEnemyHeroes.map(hero => fetchCounters(hero.apiId));
+                        const allCountersData = await Promise.all(counterPromises);
+                        
+                        const aggregatedCounters: Record<number, { hero: Hero; count: number; totalWinRate: number }> = {};
+
+                        allCountersData.flat().forEach(counter => {
+                            const hero = heroApiIdMap[counter.heroid];
+                            if (!hero) return;
+
+                            if (aggregatedCounters[counter.heroid]) {
+                                aggregatedCounters[counter.heroid].count++;
+                                aggregatedCounters[counter.heroid].totalWinRate += counter.increase_win_rate;
+                            } else {
+                                aggregatedCounters[counter.heroid] = { hero, count: 1, totalWinRate: counter.increase_win_rate };
+                            }
+                        });
+
+                        personalCounters = Object.values(aggregatedCounters)
+                            .sort((a, b) => {
+                                if (b.count !== a.count) return b.count - a.count;
+                                return (b.totalWinRate / b.count) - (a.totalWinRate / a.count);
+                            })
+                            .slice(0, 8)
+                            .map(agg => ({
+                                hero: agg.hero,
+                                reason: `Counter para ${agg.count} herói(s) inimigo(s) com média de +${((agg.totalWinRate / agg.count) * 100).toFixed(1)}% de vitória.`
+                            }));
                     }
                 }
-                setBanSuggestions(combinedSuggestions);
             } catch (error) {
                 console.error("Erro ao buscar counters para sugestão de ban:", error);
-                setBanSuggestions(metaBans); // Fallback para meta bans
+                personalCounters = []; // Clear personal counters on error
             }
+            setCounterBanSuggestions(personalCounters);
         };
-    
+
         calculateBanSuggestions();
-    }, [heroRankings, rankCategory, matchupAllyPick, heroes, heroApiIdMap]);
+    }, [heroRankings, rankCategory, matchupAllyPick, draftEnemyPicks, gameMode, heroes, heroApiIdMap]);
     
-    const handleAnalysis = async () => {
+    const handleAnalysis = useCallback(async () => {
         if (!matchupEnemyPick) return;
         
         setTimeout(() => {
             analysisSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 0);
+        }, 100);
     
         setIs1v1AnalysisLoading(true);
         setAnalysisResult(null);
@@ -252,14 +278,13 @@ const App: React.FC = () => {
                 const roleForAnalysis: Role | 'Qualquer' = isAnyLane ? 'Qualquer' : laneToRoleMap[lane as Lane];
                 const counterData = await fetchCounters(enemyHero.apiId);
                 
+                // FIX: Cast Object.values(heroes) to Hero[] to ensure correct type inference.
                 const heroesForRole = isAnyLane 
-                    ? Object.values(heroes) 
-                    // FIX: Explicitly type the 'h' parameter in the filter callback to resolve property access errors.
-                    : Object.values(heroes).filter((h: Hero) => h.roles.includes(roleForAnalysis as Role));
+                    ? (Object.values(heroes) as Hero[])
+                    : (Object.values(heroes) as Hero[]).filter((h: Hero) => h.roles.includes(roleForAnalysis as Role));
                 
                 const relevantCounterHeroes = counterData
                     .map(c => heroApiIdMap[c.heroid])
-                    // FIX: Explicitly type the 'h' parameter in the some() callback to resolve property access errors.
                     .filter((hero): hero is Hero => !!hero && (isAnyLane || heroesForRole.some((h: Hero) => h.id === hero.id)))
                     .map(hero => ({ ...hero, increase_win_rate: counterData.find(c => c.heroid === hero.apiId)!.increase_win_rate }))
                     .filter(c => c.increase_win_rate > 0.01)
@@ -275,9 +300,7 @@ const App: React.FC = () => {
                     isTheoretical = true;
                     potentialCounters = [...relevantCounterHeroes];
                     const theoreticalCandidates = heroesForRole
-                        // FIX: Explicitly type the 'h' parameter in the filter callback to resolve property access errors.
                         .filter((h: Hero) => h.name !== enemyHero.name && !potentialCounters.some(pc => pc.id === h.id))
-                        // FIX: Explicitly type 'a' and 'b' parameters in the sort callback to resolve property access errors.
                         .sort((a: Hero, b: Hero) => (HERO_EXPERT_RANK[b.name] || 5) - (HERO_EXPERT_RANK[a.name] || 5));
                     potentialCounters.push(...theoreticalCandidates.slice(0, TOTAL_CANDIDATES_FOR_AI - potentialCounters.length));
     
@@ -311,10 +334,11 @@ const App: React.FC = () => {
                 const validSpellNames = Object.keys(SPELL_ICONS);
     
                 const heroSuggestions: HeroSuggestion[] = analysisFromAI.sugestoesHerois.map((aiSuggestion): HeroSuggestion => {
-                    // FIX: Explicitly type 'h' in the find callback to correctly type heroData and allow property access.
-                    const heroData = Object.values(heroes).find((h: Hero) => h.name === aiSuggestion.nome);
+                    // FIX: Cast Object.values(heroes) to Hero[] to ensure correct type inference for heroData.
+                    const heroData = (Object.values(heroes) as Hero[]).find((h: Hero) => h.name === aiSuggestion.nome);
                     const stat = relevantCounterHeroes.find(c => c.name === aiSuggestion.nome);
                     const winRateIncrease = stat?.increase_win_rate || 0;
+                    // FIX: Corrected typo 'VANTAGAGE' to 'VANTAGEM'.
                     const classificacao: 'ANULA' | 'VANTAGEM' = (isTheoretical || !stat) ? 'VANTAGEM' : (winRateIncrease > 0.04 ? 'ANULA' : 'VANTAGEM');
                     const correctedSpells = aiSuggestion.spells.map(spell => ({ ...spell, nome: findClosestString(spell.nome, validSpellNames) }));
                     return {
@@ -358,7 +382,6 @@ const App: React.FC = () => {
                         const sortedSuggestions = heroSuggestions.sort((a, b) => (relevantCounterHeroes.find(c => c.name === b.nome)?.increase_win_rate || 0) - (relevantCounterHeroes.find(c => c.name === a.nome)?.increase_win_rate || 0));
 
                         if (sortedSuggestions.length > 0) {
-                            // Promove o melhor counter estatístico a 'PERFEITO'.
                             const perfectSuggestion = { ...sortedSuggestions[0], classificacao: 'PERFEITO' as const };
                             const otherSuggestions = sortedSuggestions.slice(1);
                             
@@ -367,7 +390,6 @@ const App: React.FC = () => {
                                 sugestoesItens: correctedItems 
                             });
                         } else {
-                            // Lida com o caso de não haver sugestões.
                             setAnalysisResult({ sugestoesHerois: sortedSuggestions, sugestoesItens: correctedItems });
                         }
                     } else {
@@ -448,7 +470,7 @@ const App: React.FC = () => {
         } finally {
             setIs1v1AnalysisLoading(false);
         }
-    };
+    }, [matchupEnemyPick, matchupAllyPick, heroes, activeLane, heroDetailsCache, heroApiIdMap, laneToRoleMap]);
     
     useEffect(() => {
         if (gameMode !== '5v5' || Object.keys(heroes).length === 0) return;
@@ -484,17 +506,16 @@ const App: React.FC = () => {
                 const allyDetails = pickedAllyHeroes.map(h => currentCache[h.apiId]).filter((d): d is HeroDetails => !!d);
                 const enemyDetails = pickedEnemyHeroes.map(h => currentCache[h.apiId]).filter((d): d is HeroDetails => !!d);
 
-                // FIX: Explicitly type 'h' in the map callback to resolve property access errors.
                 const pickedHeroIds = new Set(allPickedHeroes.map((h: Hero) => h.id));
-                // FIX: Explicitly type 'h' in the filter callback to ensure 'availableHeroes' is correctly typed as Hero[].
-                const availableHeroes = Object.values(heroes).filter((h: Hero) => !pickedHeroIds.has(h.id));
+                // FIX: Cast Object.values(heroes) to Hero[] to ensure correct type inference for availableHeroes.
+                const availableHeroes = (Object.values(heroes) as Hero[]).filter((h: Hero) => !pickedHeroIds.has(h.id));
                 
                 const analysisFromAI = await getDraftAnalysis(allyDetails, enemyDetails, availableHeroes);
 
                 let nextPick: NextPickSuggestion | null = null;
                 if (analysisFromAI.nextPickSuggestion) {
-                    // FIX: Explicitly type 'h' in the find callback to correctly type heroData and allow property access on subsequent lines.
-                    const heroData = Object.values(heroes).find((h: Hero) => h.name === analysisFromAI.nextPickSuggestion?.heroName);
+                    // FIX: Cast Object.values(heroes) to Hero[] to ensure correct type inference for heroData.
+                    const heroData = (Object.values(heroes) as Hero[]).find((h: Hero) => h.name === analysisFromAI.nextPickSuggestion?.heroName);
                     const role = findClosestString(analysisFromAI.nextPickSuggestion.role, ROLES as any) as Role;
                     if (heroData) {
                         nextPick = {
@@ -536,12 +557,12 @@ const App: React.FC = () => {
 
     }, [draftAllyPicks, draftEnemyPicks, gameMode, heroes, heroDetailsCache]);
 
-    const handleSlotClick = (team: Team, index: number) => {
+    const handleSlotClick = useCallback((team: Team, index: number) => {
         setActiveSlot({ team, index });
         setIsModalOpen(true);
-    };
+    }, []);
 
-    const handleHeroSelect = (heroId: string) => {
+    const handleHeroSelect = useCallback((heroId: string) => {
         if (!activeSlot) return;
 
         const { team, index } = activeSlot;
@@ -571,16 +592,16 @@ const App: React.FC = () => {
         
         setIsModalOpen(false);
         setActiveSlot(null);
-    };
+    }, [activeSlot, gameMode, draftAllyPicks, draftEnemyPicks]);
     
-    const handleClearDraft = () => {
+    const handleClearDraft = useCallback(() => {
         setDraftAllyPicks(Array(5).fill(null));
         setDraftEnemyPicks(Array(5).fill(null));
         setDraftAnalysis(null);
         setDraftAnalysisError(null);
-    };
+    }, []);
 
-    const tabs = [
+    const tabs = useMemo(() => [
         {
             label: "Confronto Direto",
             content: <DirectMatchupPanel isLoading={is1v1AnalysisLoading} data={matchupData} error={matchupError} />
@@ -593,7 +614,7 @@ const App: React.FC = () => {
                 heroApiIdMap={heroApiIdMap}
             />
         }
-    ];
+    ], [is1v1AnalysisLoading, matchupData, matchupError, matchupAllyPick, heroes, heroApiIdMap]);
 
     if (isLoadingHeroes) {
         return <LoadingOverlay message={'CARREGANDO'} />;
@@ -680,20 +701,40 @@ const App: React.FC = () => {
 
                     {/* Ban Suggestions Section */}
                     <BanSuggestions
-                        suggestions={banSuggestions}
+                        counterSuggestions={counterBanSuggestions}
+                        metaSuggestions={metaBanSuggestions}
                         isLoading={isRankingsLoading}
                         variant="1v1"
                     />
 
                     {/* Bottom Section: Detailed Analysis */}
                     <div ref={analysisSectionRef} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                         <AnalysisPanel 
-                            isLoading={is1v1AnalysisLoading}
-                            result={analysisResult}
-                            error={analysisError}
-                            activeLane={activeLane as Lane}
-                        />
-                        <TabbedPanel tabs={tabs} />
+                        {/* Mobile Order Wrapper */}
+                        <div className="lg:order-1 flex flex-col gap-6">
+                            <div className="order-2 lg:order-1">
+                                <TabbedPanel tabs={tabs} />
+                            </div>
+                            <div className="order-1 lg:order-2">
+                                <AnalysisPanel 
+                                    isLoading={is1v1AnalysisLoading}
+                                    result={analysisResult}
+                                    error={analysisError}
+                                    activeLane={activeLane as Lane}
+                                />
+                            </div>
+                        </div>
+                        {/* Desktop Order Wrapper */}
+                        <div className="hidden lg:flex lg:flex-col lg:gap-6">
+                             <AnalysisPanel 
+                                isLoading={is1v1AnalysisLoading}
+                                result={analysisResult}
+                                error={analysisError}
+                                activeLane={activeLane as Lane}
+                            />
+                        </div>
+                        <div className="hidden lg:flex lg:flex-col">
+                             <TabbedPanel tabs={tabs} />
+                        </div>
                     </div>
                 </div>
             );
@@ -705,7 +746,8 @@ const App: React.FC = () => {
                     enemyPicks={draftEnemyPicks}
                     heroes={heroes}
                     onSlotClick={handleSlotClick}
-                    banSuggestions={banSuggestions}
+                    counterBanSuggestions={counterBanSuggestions}
+                    metaSuggestions={metaBanSuggestions}
                     isBanLoading={isRankingsLoading}
                     draftAnalysis={draftAnalysis}
                     isDraftAnalysisLoading={isDraftAnalysisLoading}

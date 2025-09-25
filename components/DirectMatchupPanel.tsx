@@ -88,11 +88,11 @@ const DirectMatchupPanel: React.FC<DirectMatchupPanelProps> = ({ isLoading, data
             <div className="p-4 flex flex-col h-full animated-entry">
                 <div className="grid grid-cols-2 gap-4 text-center">
                     <div>
-                        <img src={yourHero.imageUrl} alt={yourHero.name} className="w-16 h-16 sm:w-20 sm:h-20 rounded-full mx-auto border-4 border-blue-500"/>
+                        <img loading="lazy" src={yourHero.imageUrl} alt={yourHero.name} className="w-16 h-16 sm:w-20 sm:h-20 rounded-full mx-auto border-4 border-blue-500"/>
                         <p className="font-bold mt-2 text-sm sm:text-base">{yourHero.name}</p>
                     </div>
                      <div>
-                        <img src={enemyHero.imageUrl} alt={enemyHero.name} className="w-16 h-16 sm:w-20 sm:h-20 rounded-full mx-auto border-4 border-red-500"/>
+                        <img loading="lazy" src={enemyHero.imageUrl} alt={enemyHero.name} className="w-16 h-16 sm:w-20 sm:h-20 rounded-full mx-auto border-4 border-red-500"/>
                         <p className="font-bold mt-2 text-sm sm:text-base">{enemyHero.name}</p>
                     </div>
                 </div>
@@ -113,7 +113,7 @@ const DirectMatchupPanel: React.FC<DirectMatchupPanelProps> = ({ isLoading, data
                     <div className="mt-4 pt-4 border-t border-gray-700">
                         <h3 className="text-sm uppercase font-bold text-gray-400 mb-2">Feitiço Recomendado</h3>
                          <div className="p-2 bg-black bg-opacity-20 rounded-lg border-l-4 border-violet-400 flex items-start gap-3">
-                            <img src={SPELL_ICONS[recommendedSpell.nome] || SPELL_ICONS.default} alt={recommendedSpell.nome} className="w-10 h-10 rounded-md flex-shrink-0" />
+                            <img loading="lazy" src={SPELL_ICONS[recommendedSpell.nome] || SPELL_ICONS.default} alt={recommendedSpell.nome} className="w-10 h-10 rounded-md flex-shrink-0" />
                             <div>
                                 <p className="font-bold text-violet-300">{recommendedSpell.nome}</p>
                                 <p className="text-xs text-gray-400 mt-1">{recommendedSpell.motivo}</p>

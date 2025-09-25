@@ -19,23 +19,19 @@ const HeroSelectionModal: React.FC<HeroSelectionModalProps> = ({ isOpen, onClose
     const laneFilters: (Lane | 'Todas')[] = ['Todas', ...LANES];
 
     const filteredHeroes = useMemo(() => {
-        // FIX: Explicitly type heroesArray to ensure correct type inference downstream.
         const heroesArray: Hero[] = Object.values(heroes);
 
         const searchFiltered = searchTerm
-            // FIX: Explicitly type 'hero' to resolve 'Property 'name' does not exist on type 'unknown''.
             ? heroesArray.filter((hero: Hero) => hero.name.toLowerCase().includes(searchTerm.toLowerCase()))
             : heroesArray;
 
         const laneFiltered = selectedLane === 'Todas'
             ? searchFiltered
-            // FIX: Explicitly type 'hero' to resolve 'Property 'apiId' does not exist on type 'unknown''.
             : searchFiltered.filter((hero: Hero) => {
                 const lanesForHero = heroLanes[hero.apiId];
                 return lanesForHero && lanesForHero.includes(selectedLane);
             });
 
-        // FIX: Explicitly type 'a' and 'b' to resolve 'Property 'name' does not exist on type 'unknown''.
         return laneFiltered.sort((a: Hero, b: Hero) => a.name.localeCompare(b.name));
     }, [heroes, searchTerm, selectedLane, heroLanes]);
 
@@ -43,7 +39,6 @@ const HeroSelectionModal: React.FC<HeroSelectionModalProps> = ({ isOpen, onClose
         if (isOpen) {
             setSearchTerm('');
             setSelectedLane('Todas');
-            // Apenas foca no input em dispositivos não-touch para evitar abrir o teclado no celular
             const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
             if (!isTouchDevice) {
                 setTimeout(() => searchInputRef.current?.focus(), 100);
@@ -91,6 +86,7 @@ const HeroSelectionModal: React.FC<HeroSelectionModalProps> = ({ isOpen, onClose
                         filteredHeroes.map(hero => (
                             <div key={hero.id} onClick={() => onHeroSelect(hero.id)} className="flex flex-col items-center text-center cursor-pointer group">
                                 <img 
+                                    loading="lazy"
                                     src={hero.imageUrl} 
                                     alt={hero.name} 
                                     className="w-16 h-16 rounded-full object-cover border-2 border-transparent group-hover:border-violet-500 group-hover:scale-110 transition-all" 

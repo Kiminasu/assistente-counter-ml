@@ -92,7 +92,7 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ isLoading, result, error,
             return (
                 <div className={`p-3 mt-4 bg-black bg-opacity-30 rounded-lg animated-entry border-l-4 ${styles.border}`} style={{ animationDelay: '50ms'}}>
                     <div className="flex-grow mb-2">
-                        <p className="font-bold text-lg">{suggestion.nome}</p>
+                        <p className="font-bold text-lg mt-2">{suggestion.nome}</p>
                         <div>
                             <span className={`font-black text-sm ${styles.text}`}>{suggestion.classificacao}</span>
                             <span className="text-xs text-gray-400 font-mono ml-2">{suggestion.estatistica}</span>
@@ -117,7 +117,7 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ isLoading, result, error,
                         <p className="text-xs uppercase font-bold text-gray-400 mb-2">Feitiços Recomendados</p>
                         {suggestion.spells.map(spell => (
                             <div key={spell.nome} className="mt-2 pl-3 border-l-2 border-violet-400 flex items-start gap-3">
-                                <img src={SPELL_ICONS[spell.nome] || SPELL_ICONS.default} alt={spell.nome} className="w-8 h-8 rounded-md mt-1 flex-shrink-0" />
+                                <img loading="lazy" src={SPELL_ICONS[spell.nome] || SPELL_ICONS.default} alt={spell.nome} className="w-8 h-8 rounded-md mt-1 flex-shrink-0" />
                                 <div>
                                     <p className="text-sm font-semibold text-violet-300">{spell.nome}</p>
                                     <p className="text-xs text-gray-400">{spell.motivo}</p>
@@ -142,11 +142,16 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ isLoading, result, error,
                             <h3 className={`font-bold mb-3 ${RATING_STYLES[groupName]?.text || 'text-gray-300'} ${groupName === 'PERFEITO' ? 'text-xl text-amber-300 text-center' : 'pl-2'}`}>
                                 {classificationLabels[groupName]}
                             </h3>
+                            {groupName === 'PERFEITO' && (
+                                <p className="text-xs text-center text-gray-400 -mt-2 mb-3 max-w-sm mx-auto">
+                                    Esta sugestão representa o counter ideal contra o oponente, independente da lane, com base em dados e táticas.
+                                </p>
+                            )}
                             <div className={`${groupName === 'PERFEITO' ? 'flex justify-center' : 'grid grid-cols-4 sm:grid-cols-6 gap-3'}`}>
                                 {suggestionsInGroup.slice(0, 6).map((suggestion) => {
                                     const isSelected = selectedSuggestion?.nome === suggestion.nome;
                                     const styles = RATING_STYLES[suggestion.classificacao];
-                                    const heroImageSize = groupName === 'PERFEITO' ? 'w-20 h-20' : 'w-14 h-14';
+                                    const heroImageSize = groupName === 'PERFEITO' ? 'w-24 h-24 sm:w-28 sm:h-28' : 'w-14 h-14';
                                     return (
                                         <div 
                                             key={suggestion.nome} 
@@ -156,12 +161,15 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ isLoading, result, error,
                                             role="button"
                                             aria-pressed={isSelected}
                                         >
-                                            <img 
-                                                src={suggestion.imageUrl} 
-                                                alt={suggestion.nome} 
-                                                className={`${heroImageSize} rounded-full object-cover border-4 transition-all duration-200 group-hover:scale-110 ${styles.border} ${isSelected ? 'ring-4 ring-white/80 ring-offset-2 ring-offset-slate-900' : ''} flex-shrink-0`}
-                                            />
-                                            <span className={`text-xs mt-1 font-medium transition-colors flex items-center gap-1 ${isSelected ? 'text-white' : 'text-gray-400'}`}>
+                                            <div className="relative">
+                                                <img 
+                                                    loading="lazy"
+                                                    src={suggestion.imageUrl} 
+                                                    alt={suggestion.nome} 
+                                                    className={`${heroImageSize} rounded-full object-cover border-4 transition-all duration-200 group-hover:scale-110 ${styles.border} ${isSelected ? 'ring-4 ring-white/80 ring-offset-2 ring-offset-slate-900' : ''} flex-shrink-0`}
+                                                />
+                                            </div>
+                                            <span className={`text-xs mt-2 font-medium transition-colors flex items-center gap-1 ${isSelected ? 'text-white' : 'text-gray-400'}`}>
                                                 {suggestion.nome}
                                                 <svg xmlns="http://www.w3.org/2000/svg" className={`h-3 w-3 transition-transform duration-300 ${isSelected ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                                                     <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
@@ -191,11 +199,12 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ isLoading, result, error,
                                 aria-pressed={isSelected}
                             >
                                 <img 
+                                    loading="lazy"
                                     src={ITEM_ICONS[item.nome] || ITEM_ICONS.default} 
                                     alt={item.nome} 
                                     className={`w-14 h-14 rounded-lg object-cover border-4 transition-all duration-200 group-hover:scale-110 border-violet-500 ${isSelected ? 'ring-4 ring-white/80 ring-offset-2 ring-offset-slate-900' : ''}`}
                                 />
-                                <span className={`text-xs mt-1 font-medium transition-colors flex items-start justify-center gap-1 w-full ${isSelected ? 'text-white' : 'text-gray-400'}`}>
+                                <span className={`text-xs mt-2 font-medium transition-colors flex items-center justify-center gap-1 w-full ${isSelected ? 'text-white' : 'text-gray-400'}`}>
                                     <span className="break-words text-center">{item.nome}</span>
                                     <svg xmlns="http://www.w3.org/2000/svg" className={`h-3 w-3 transition-transform duration-300 flex-shrink-0 mt-0.5 ${isSelected ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                                       <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
@@ -210,6 +219,7 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ isLoading, result, error,
                     <div className="p-3 mt-4 bg-black bg-opacity-30 rounded-lg animated-entry border-l-4 border-violet-500" style={{ animationDelay: '50ms'}}>
                         <div className="flex items-center gap-4">
                              <img 
+                                loading="lazy"
                                 src={ITEM_ICONS[selectedItem.nome] || ITEM_ICONS.default} 
                                 alt={selectedItem.nome} 
                                 className="w-12 h-12 rounded-md flex-shrink-0"
@@ -221,7 +231,7 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ isLoading, result, error,
                             />
                             <div className="flex-grow">
                                 <div className="flex justify-between items-center gap-2">
-                                    <p className="font-bold text-lg text-amber-300">{selectedItem.nome}</p>
+                                    <p className="font-bold text-lg text-amber-300 mt-2">{selectedItem.nome}</p>
                                     {selectedItem.preco > 0 && (
                                         <div className="flex items-center gap-1 text-yellow-400 bg-black bg-opacity-30 px-2 py-1 rounded-full flex-shrink-0">
                                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
@@ -242,7 +252,7 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ isLoading, result, error,
 
     return (
         <aside className="col-span-1 glassmorphism p-4 rounded-xl animated-entry flex flex-col lg:h-[85vh] border-2 panel-glow-primary">
-            <h2 className="text-xl sm:text-2xl font-black text-center mb-4 tracking-wider flex-shrink-0">ANÁLISE E DADOS</h2>
+            <h2 className="text-xl sm:text-2xl font-black text-center mb-4 tracking-wider flex-shrink-0">Análise Tática da IA</h2>
             <div className="flex-1 overflow-y-auto pr-2 space-y-2">
                 {renderContent()}
             </div>

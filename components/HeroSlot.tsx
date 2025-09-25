@@ -21,6 +21,7 @@ const HeroSlot: React.FC<HeroSlotProps> = ({ type, heroId, heroes, onClick, labe
             {hero ? (
                 <>
                     <img 
+                        loading="lazy"
                         src={hero.imageUrl} 
                         alt={hero.name} 
                         className="w-12 h-12 sm:w-14 sm:h-14 rounded-md object-cover" 
@@ -42,4 +43,4 @@ const HeroSlot: React.FC<HeroSlotProps> = ({ type, heroId, heroes, onClick, labe
     );
 };
 
-export default HeroSlot;
+export default React.memo(HeroSlot);

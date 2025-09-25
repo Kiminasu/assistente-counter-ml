@@ -49,6 +49,7 @@ const ItemDatabaseScreen: React.FC = () => {
                     >
                         <div className="flex items-center gap-4">
                             <img 
+                                loading="lazy"
                                 src={ITEM_ICONS[item.nome] || ITEM_ICONS.default} 
                                 alt={item.nome} 
                                 className="w-16 h-16 rounded-lg flex-shrink-0 bg-black/30 p-1"
