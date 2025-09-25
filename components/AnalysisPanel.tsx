@@ -138,11 +138,11 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ isLoading, result, error,
                     const isDetailVisible = selectedSuggestion && suggestionsInGroup.some(s => s.nome === selectedSuggestion.nome);
 
                     return (
-                        <div key={groupName} className={`mb-4 ${groupName === 'PERFEITO' ? 'px-1' : ''}`}>
+                        <div key={groupName} className="mb-4">
                             <h3 className={`font-bold mb-3 ${RATING_STYLES[groupName]?.text || 'text-gray-300'} ${groupName === 'PERFEITO' ? 'text-xl text-amber-300 text-center' : 'pl-2'}`}>
                                 {classificationLabels[groupName]}
                             </h3>
-                            <div className={`grid grid-cols-4 sm:grid-cols-6 gap-3 ${groupName === 'PERFEITO' ? 'flex justify-center' : ''}`}>
+                            <div className={`${groupName === 'PERFEITO' ? 'flex justify-center' : 'grid grid-cols-4 sm:grid-cols-6 gap-3'}`}>
                                 {suggestionsInGroup.slice(0, 6).map((suggestion) => {
                                     const isSelected = selectedSuggestion?.nome === suggestion.nome;
                                     const styles = RATING_STYLES[suggestion.classificacao];
@@ -159,7 +159,7 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ isLoading, result, error,
                                             <img 
                                                 src={suggestion.imageUrl} 
                                                 alt={suggestion.nome} 
-                                                className={`${heroImageSize} rounded-full object-cover border-4 transition-all duration-200 group-hover:scale-110 ${styles.border} ${isSelected ? 'ring-4 ring-white/80 ring-offset-2 ring-offset-slate-900' : ''}`}
+                                                className={`${heroImageSize} rounded-full object-cover border-4 transition-all duration-200 group-hover:scale-110 ${styles.border} ${isSelected ? 'ring-4 ring-white/80 ring-offset-2 ring-offset-slate-900' : ''} flex-shrink-0`}
                                             />
                                             <span className={`text-xs mt-1 font-medium transition-colors flex items-center gap-1 ${isSelected ? 'text-white' : 'text-gray-400'}`}>
                                                 {suggestion.nome}
@@ -195,9 +195,9 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ isLoading, result, error,
                                     alt={item.nome} 
                                     className={`w-14 h-14 rounded-lg object-cover border-4 transition-all duration-200 group-hover:scale-110 border-violet-500 ${isSelected ? 'ring-4 ring-white/80 ring-offset-2 ring-offset-slate-900' : ''}`}
                                 />
-                                <span className={`text-xs mt-1 font-medium transition-colors flex items-center gap-1 ${isSelected ? 'text-white' : 'text-gray-400'}`}>
-                                    {item.nome}
-                                    <svg xmlns="http://www.w3.org/2000/svg" className={`h-3 w-3 transition-transform duration-300 ${isSelected ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                <span className={`text-xs mt-1 font-medium transition-colors flex items-start justify-center gap-1 w-full ${isSelected ? 'text-white' : 'text-gray-400'}`}>
+                                    <span className="break-words text-center">{item.nome}</span>
+                                    <svg xmlns="http://www.w3.org/2000/svg" className={`h-3 w-3 transition-transform duration-300 flex-shrink-0 mt-0.5 ${isSelected ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                                       <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                                     </svg>
                                 </span>
