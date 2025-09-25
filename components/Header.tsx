@@ -16,8 +16,8 @@ const Header: React.FC<HeaderProps> = ({ activeMode, onSetMode }) => {
     };
 
     const modes: { id: GameMode; label: string }[] = [
-        { id: '1v1', label: 'Análise 1v1' },
-        { id: '5v5', label: 'Draft 5v5' },
+        { id: '1v1', label: 'Análise 1vs1' },
+        { id: '5v5', label: 'Draft 5vs5' },
         { id: 'ranking', label: 'Ranking' },
         { id: 'item', label: 'Itens' },
     ];

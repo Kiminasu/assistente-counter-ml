@@ -34,14 +34,13 @@
             background-color: var(--bg-dark);
             color: var(--text-light);
             background-image: radial-gradient(ellipse at bottom, #111827 0%, #0D0C1D 100%);
-            background-attachment: fixed;
             overflow-x: hidden;
             position: relative;
         }
 
-        body::before {
+        html::before {
             content: '';
-            position: absolute;
+            position: fixed;
             top: -20%;
             left: -20%;
             right: -20%;
