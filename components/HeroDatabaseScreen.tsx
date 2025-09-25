@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Hero, Lane, LANES } from '../types';
 import { LANE_ICONS } from '../constants';
@@ -13,6 +14,31 @@ const HeroDatabaseScreen: React.FC<HeroDatabaseScreenProps> = ({ heroes, heroLan
     const [selectedLane, setSelectedLane] = useState<Lane | 'Todas'>('Todas');
     const [selectedHeroId, setSelectedHeroId] = useState<string | null>(null);
     const searchInputRef = useRef<HTMLInputElement>(null);
+    const gridRef = useRef<HTMLDivElement>(null);
+    const [gridColumns, setGridColumns] = useState(7); // Um padrão sensato
+
+    useEffect(() => {
+        const gridEl = gridRef.current;
+        if (!gridEl) return;
+
+        const observer = new ResizeObserver(() => {
+            const computedStyle = window.getComputedStyle(gridEl);
+            const columnCount = computedStyle.getPropertyValue("grid-template-columns").split(" ").length;
+            if (columnCount > 0) {
+                setGridColumns(columnCount);
+            }
+        });
+
+        observer.observe(gridEl);
+        // Verificação inicial
+        const computedStyle = window.getComputedStyle(gridEl);
+        const columnCount = computedStyle.getPropertyValue("grid-template-columns").split(" ").length;
+        if (columnCount > 0) {
+            setGridColumns(columnCount);
+        }
+        
+        return () => observer.disconnect();
+    }, []);
 
     const laneFilters: (Lane | 'Todas')[] = ['Todas', ...LANES];
 
@@ -34,7 +60,7 @@ const HeroDatabaseScreen: React.FC<HeroDatabaseScreenProps> = ({ heroes, heroLan
     }, [heroes, searchTerm, selectedLane, heroLanes]);
     
     const handleHeroClick = (heroId: string) => {
-        setSelectedHeroId(heroId);
+        setSelectedHeroId(prevId => (prevId === heroId ? null : heroId));
     };
 
     useEffect(() => {
@@ -43,6 +69,22 @@ const HeroDatabaseScreen: React.FC<HeroDatabaseScreenProps> = ({ heroes, heroLan
             searchInputRef.current?.focus();
         }
     }, []);
+
+    const itemsToRender = useMemo(() => {
+        const items: (Hero | { type: 'panel' })[] = [...filteredHeroes];
+        if (selectedHeroId) {
+            const heroIndex = filteredHeroes.findIndex(h => h.id === selectedHeroId);
+            if (heroIndex > -1) {
+                const endOfRowIndex = Math.min(
+                    (Math.floor(heroIndex / gridColumns) + 1) * gridColumns,
+                    filteredHeroes.length
+                );
+                items.splice(endOfRowIndex, 0, { type: 'panel' });
+            }
+        }
+        return items;
+    }, [filteredHeroes, selectedHeroId, gridColumns]);
+
 
     return (
         <div className="w-full max-w-6xl mx-auto animated-entry">
@@ -76,38 +118,52 @@ const HeroDatabaseScreen: React.FC<HeroDatabaseScreenProps> = ({ heroes, heroLan
                 </div>
             </div>
 
-            <div className="mt-6 grid grid-cols-4 sm:grid-cols-5 md:grid-cols-7 lg:grid-cols-9 gap-4">
-                 {filteredHeroes.length > 0 ? (
-                    filteredHeroes.map((hero, index) => (
-                        <div 
-                            key={hero.id} 
-                            onClick={() => handleHeroClick(hero.id)} 
-                            className="flex flex-col items-center text-center cursor-pointer group animated-entry"
-                            style={{ animationDelay: `${Math.min(index * 20, 500)}ms` }}
-                        >
-                            <img 
-                                loading="lazy"
-                                src={hero.imageUrl} 
-                                alt={hero.name} 
-                                className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-2 border-slate-700 group-hover:border-violet-500 group-hover:scale-110 transition-all" 
-                            />
-                            <span className="text-xs sm:text-sm mt-2 font-medium">{hero.name}</span>
-                        </div>
-                    ))
+            <div ref={gridRef} className="mt-6 grid grid-cols-4 sm:grid-cols-5 md:grid-cols-7 lg:grid-cols-9 gap-4">
+                 {itemsToRender.length > 0 ? (
+                    itemsToRender.map((item, index) => {
+                        if ('type' in item && item.type === 'panel') {
+                            return (
+                                <div key="detail-panel" className="col-span-full my-2">
+                                    <HeroDetailModal 
+                                        heroId={selectedHeroId}
+                                        heroes={heroes}
+                                    />
+                                </div>
+                            );
+                        }
+
+                        const hero = item as Hero;
+                        const isSelected = hero.id === selectedHeroId;
+
+                        return (
+                            <div 
+                                key={hero.id} 
+                                onClick={() => handleHeroClick(hero.id)} 
+                                className="flex flex-col items-center text-center cursor-pointer group animated-entry"
+                                style={{ animationDelay: `${Math.min(index * 20, 500)}ms` }}
+                            >
+                                <img 
+                                    loading="lazy"
+                                    src={hero.imageUrl} 
+                                    alt={hero.name} 
+                                    className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-2 border-slate-700 group-hover:border-violet-500 group-hover:scale-110 transition-all" 
+                                />
+                                <span className="text-xs sm:text-sm mt-2 font-medium">{hero.name}</span>
+                                 <svg 
+                                    xmlns="http://www.w3.org/2000/svg" 
+                                    className={`h-4 w-4 mt-1 text-amber-300 transition-transform duration-300 ${isSelected ? 'rotate-180' : ''}`} 
+                                    fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </div>
+                        );
+                    })
                 ) : (
                     <div className="col-span-full text-center text-gray-400 py-16">
                         Nenhum herói encontrado com os filtros aplicados.
                     </div>
                 )}
             </div>
-            
-            {selectedHeroId && (
-                <HeroDetailModal 
-                    heroId={selectedHeroId} 
-                    heroes={heroes} 
-                    onClose={() => setSelectedHeroId(null)} 
-                />
-            )}
         </div>
     );
 };

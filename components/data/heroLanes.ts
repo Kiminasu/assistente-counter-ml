@@ -7,6 +7,7 @@ export const HERO_LANES_DATA: Record<string, Lane[]> = {
   "Nana": ["MEIO", "ROTAÇÃO"],
   "Tigreal": ["ROTAÇÃO"],
   "Alucard": ["SELVA", "EXP"],
+  "Alpha": ["EXP", "SELVA"],
   "Karina": ["SELVA"],
   "Akai": ["SELVA", "ROTAÇÃO"],
   "Franco": ["ROTAÇÃO"],
@@ -110,5 +111,6 @@ export const HERO_LANES_DATA: Record<string, Lane[]> = {
   "Ixia": ["OURO"],
   "Nolan": ["SELVA"],
   "Cici": ["EXP"],
-  "Chip": ["ROTAÇÃO"]
+  "Chip": ["ROTAÇÃO"],
+  "Zhuxin": ["MEIO"]
 };

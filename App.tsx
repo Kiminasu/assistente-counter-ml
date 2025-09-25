@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Hero, Lane, AnalysisResult, LANES, ROLES, Role, HeroSuggestion, BanSuggestion, MatchupData, ItemSuggestion, RankCategory, RankDays, SortField, HeroRankInfo, Team, DraftAnalysisResult, NextPickSuggestion, StrategicItemSuggestion, LaneOrNone } from './types';
-import { fetchHeroes, fetchCounters, fetchHeroDetails, HeroDetails, fetchHeroRankings, ApiHeroRankData } from './services/heroService';
+// FIX: Moved HeroDetails import from heroService.ts to types.ts to fix import error.
+import { Hero, Lane, AnalysisResult, LANES, ROLES, Role, HeroSuggestion, BanSuggestion, MatchupData, ItemSuggestion, RankCategory, RankDays, SortField, HeroRankInfo, Team, DraftAnalysisResult, NextPickSuggestion, StrategicItemSuggestion, LaneOrNone, HeroDetails } from './types';
+import { fetchHeroes, fetchCounters, fetchHeroDetails, fetchHeroRankings, ApiHeroRankData } from './services/heroService';
 import { getStrategicAnalysis, getDetailedMatchupAnalysis, getDraftAnalysis } from './services/geminiService';
 import { findClosestString } from './utils';
 import { SPELL_ICONS, HERO_ROLES } from './constants';
@@ -26,6 +27,8 @@ import SynergyExplorerScreen from './components/SynergyExplorerScreen';
 import HeroDatabaseScreen from './components/HeroDatabaseScreen';
 
 type GameMode = '1v1' | '5v5' | 'ranking' | 'item' | 'synergy' | 'heroes';
+
+const NUMBER_OF_BAN_SUGGESTIONS = 8;
 
 const App: React.FC = () => {
     const [heroes, setHeroes] = useState<Record<string, Hero>>({});
@@ -81,6 +84,7 @@ const App: React.FC = () => {
 
     const [heroRankings, setHeroRankings] = useState<HeroRankInfo[]>([]);
     const [isRankingsLoading, setIsRankingsLoading] = useState(false);
+    const [isMetaBansLoading, setIsMetaBansLoading] = useState(false);
     const [rankingsError, setRankingsError] = useState<string | null>(null);
     const [rankDays, setRankDays] = useState<RankDays>(7);
     const [rankCategory, setRankCategory] = useState<RankCategory>('mythic');
@@ -139,7 +143,8 @@ const App: React.FC = () => {
         }, {} as Record<number, Hero>);
     }, [heroes]);
 
-     useEffect(() => {
+    // Efeito para buscar rankings para a tela de "Ranking"
+    useEffect(() => {
         if (Object.keys(heroes).length === 0) return;
 
         const fetchRankings = async () => {
@@ -174,28 +179,50 @@ const App: React.FC = () => {
 
         fetchRankings();
     }, [rankDays, rankCategory, sortField, heroes, heroApiIdMap]);
-    
+
+    // Efeito para buscar e definir as sugestões de banimento "Meta" de forma independente
     useEffect(() => {
-        const calculateBanSuggestions = async () => {
-            if (heroRankings.length === 0) {
+        if (Object.keys(heroes).length === 0) return;
+
+        const fetchAndSetMetaBans = async () => {
+            setIsMetaBansLoading(true);
+            try {
+                const metaRankCategory: RankCategory = 'mythic';
+                const metaRankDays: RankDays = 7;
+                // Busca por taxa de escolha ('appearance_rate') para mais estabilidade da API, e ordena por ban_rate no cliente.
+                const rankingsData: ApiHeroRankData[] = await fetchHeroRankings(metaRankDays, metaRankCategory, 'appearance_rate');
+                
+                const rankLabel: Record<RankCategory, string> = { all: "Todos", epic: "Épico", legend: "Lenda", mythic: "Mítico", honor: "Honra", glory: "Glória" };
+
+                const metaBans = rankingsData
+                    .sort((a, b) => b.main_hero_ban_rate - a.main_hero_ban_rate)
+                    .map(data => {
+                        const hero = heroApiIdMap[data.main_heroid];
+                        if (!hero) return null;
+                        return {
+                            hero,
+                            reason: `Taxa de banimento de ${(data.main_hero_ban_rate * 100).toFixed(1)}% no elo ${rankLabel[metaRankCategory]}.`
+                        };
+                    })
+                    .filter((s): s is BanSuggestion => s !== null)
+                    .slice(0, NUMBER_OF_BAN_SUGGESTIONS);
+
+                setMetaBanSuggestions(metaBans);
+            } catch (error) {
+                console.error("Falha ao buscar sugestões de banimento meta:", error);
                 setMetaBanSuggestions([]);
-                setCounterBanSuggestions([]);
-                return;
+            } finally {
+                setIsMetaBansLoading(false);
             }
+        };
 
-            const rankLabel: Record<RankCategory, string> = { all: "Todos", epic: "Épico", legend: "Lenda", mythic: "Mítico", honor: "Honra", glory: "Glória" };
+        fetchAndSetMetaBans();
+    }, [heroes, heroApiIdMap]);
 
-            // 1. Calculate Meta Bans (always available)
-            const metaBans = [...heroRankings]
-                .sort((a, b) => b.banRate - a.banRate)
-                .slice(0, 8)
-                .map(rankInfo => ({
-                    hero: rankInfo.hero,
-                    reason: `Taxa de banimento de ${(rankInfo.banRate * 100).toFixed(1)}% no elo ${rankLabel[rankCategory]}.`
-                }));
-            setMetaBanSuggestions(metaBans);
 
-            // 2. Calculate Counter Bans (context-dependent)
+    // Efeito para calcular as sugestões de banimento "Counter"
+    useEffect(() => {
+        const calculateCounterBans = async () => {
             let personalCounters: BanSuggestion[] = [];
             try {
                 if (gameMode === '1v1') {
@@ -204,7 +231,7 @@ const App: React.FC = () => {
                         const counterData = await fetchCounters(yourHero.apiId);
                         personalCounters = counterData
                             .sort((a, b) => b.increase_win_rate - a.increase_win_rate)
-                            .slice(0, 8)
+                            .slice(0, NUMBER_OF_BAN_SUGGESTIONS)
                             .map(data => {
                                 const hero = heroApiIdMap[data.heroid];
                                 if (!hero) return null;
@@ -243,7 +270,7 @@ const App: React.FC = () => {
                                 if (b.count !== a.count) return b.count - a.count;
                                 return (b.totalWinRate / b.count) - (a.totalWinRate / a.count);
                             })
-                            .slice(0, 8)
+                            .slice(0, NUMBER_OF_BAN_SUGGESTIONS)
                             .map(agg => ({
                                 hero: agg.hero,
                                 reason: `Countera ${agg.count} herói(s) aliado(s). Ameaça: +${((agg.totalWinRate / agg.count) * 100).toFixed(1)}% de vitória.`
@@ -252,13 +279,13 @@ const App: React.FC = () => {
                 }
             } catch (error) {
                 console.error("Erro ao buscar counters para sugestão de ban:", error);
-                personalCounters = []; // Clear personal counters on error
+                personalCounters = [];
             }
             setCounterBanSuggestions(personalCounters);
         };
 
-        calculateBanSuggestions();
-    }, [heroRankings, rankCategory, matchupAllyPick, draftAllyPicks, gameMode, heroes, heroApiIdMap]);
+        calculateCounterBans();
+    }, [matchupAllyPick, draftAllyPicks, gameMode, heroes, heroApiIdMap]);
     
     const handleAnalysis = useCallback(async () => {
         if (!matchupEnemyPick) return;
@@ -710,7 +737,7 @@ const App: React.FC = () => {
                     <BanSuggestions
                         counterSuggestions={counterBanSuggestions}
                         metaSuggestions={metaBanSuggestions}
-                        isLoading={isRankingsLoading}
+                        isLoading={isMetaBansLoading}
                         variant="1v1"
                     />
 
@@ -741,8 +768,8 @@ const App: React.FC = () => {
                     heroes={heroes}
                     onSlotClick={handleSlotClick}
                     counterBanSuggestions={counterBanSuggestions}
-                    metaSuggestions={metaBanSuggestions}
-                    isBanLoading={isRankingsLoading}
+                    metaBanSuggestions={metaBanSuggestions}
+                    isBanLoading={isMetaBansLoading}
                     draftAnalysis={draftAnalysis}
                     isDraftAnalysisLoading={isDraftAnalysisLoading}
                     draftAnalysisError={draftAnalysisError}

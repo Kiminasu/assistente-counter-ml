@@ -1,4 +1,6 @@
-import { Hero, Lane } from '../types';
+
+import { Hero, Lane, HeroDetails, HeroSkill, SkillCombo } from '../types';
+import { HERO_TRANSLATIONS } from '../components/data/heroTranslations';
 
 interface ApiHeroRecord {
   data: {
@@ -15,23 +17,6 @@ interface ApiHeroRecord {
 export interface CounterHeroData {
   heroid: number;
   increase_win_rate: number;
-}
-
-export interface HeroSkill {
-    skillname: string;
-    skilldesc: string;
-}
-
-export interface SkillCombo {
-    title: string;
-    desc: string;
-}
-
-export interface HeroDetails {
-    name: string;
-    summary: string;
-    skills: HeroSkill[];
-    combos: SkillCombo[];
 }
 
 export interface ApiHeroRankData {
@@ -205,45 +190,56 @@ async function fetchSkillCombos(heroApiId: number): Promise<SkillCombo[]> {
 }
 
 export async function fetchHeroDetails(heroApiId: number): Promise<HeroDetails> {
-    const apiUrl = `https://mlbb-stats.ridwaanhall.com/api/hero-detail/${heroApiId}/`;
-    const proxyUrl = 'https://corsproxy.io/?';
-    const fetchUrl = proxyUrl + encodeURIComponent(apiUrl);
+    const cacheKey = `hero_details_pt_${heroApiId}`;
+    const ttl = 24 * 60 * 60 * 1000; // 24 hours
 
-    try {
-        const [detailsResponse, combos] = await Promise.all([
-            fetch(fetchUrl),
-            fetchSkillCombos(heroApiId)
-        ]);
-        
-        if (!detailsResponse.ok) {
-            throw new Error(`A resposta da API de detalhes do herói não foi 'ok': ${detailsResponse.statusText}`);
+    return fetchWithCache(cacheKey, async () => {
+        const apiUrl = `https://mlbb-stats.ridwaanhall.com/api/hero-detail/${heroApiId}/`;
+        const proxyUrl = 'https://corsproxy.io/?';
+        const fetchUrl = proxyUrl + encodeURIComponent(apiUrl);
+
+        try {
+            const detailsResponse = await fetch(fetchUrl);
+            if (!detailsResponse.ok) {
+                throw new Error(`A resposta da API de detalhes do herói não foi 'ok': ${detailsResponse.statusText}`);
+            }
+            const apiResponse = await detailsResponse.json();
+            const record = apiResponse?.data?.records?.[0]?.data;
+
+            if (!record) {
+                throw new Error('Os registos de detalhes do herói não foram encontrados na resposta da API.');
+            }
+            
+            const heroData = record.hero.data;
+            const heroName = heroData.name;
+
+            // Use pre-translated data if available
+            if (HERO_TRANSLATIONS[heroName]) {
+                return HERO_TRANSLATIONS[heroName];
+            }
+
+            // Fallback to English data if no translation is found
+            console.warn(`Nenhuma tradução encontrada para ${heroName}. A apresentar dados em inglês.`);
+            const combos = await fetchSkillCombos(heroApiId);
+            const skillList = heroData.heroskilllist?.[0]?.skilllist ?? [];
+
+            const skills: HeroSkill[] = skillList.map((skill: any) => ({
+                skillname: skill.skillname,
+                skilldesc: cleanSkillDescription(skill.skilldesc),
+            }));
+
+            return {
+                name: heroName,
+                summary: heroData.story,
+                skills: skills,
+                combos: combos,
+            };
+
+        } catch (error) {
+            console.error(`Falha ao buscar detalhes para o herói ID ${heroApiId}:`, error);
+            throw new Error("Não foi possível carregar os detalhes do herói.");
         }
-        const apiResponse = await detailsResponse.json();
-        const record = apiResponse?.data?.records?.[0]?.data;
-
-        if (!record) {
-            throw new Error('Os registos de detalhes do herói não foram encontrados na resposta da API.');
-        }
-        
-        const heroData = record.hero.data;
-        const skillList = heroData.heroskilllist?.[0]?.skilllist ?? [];
-
-        const skills = skillList.map((skill: any) => ({
-            skillname: skill.skillname,
-            skilldesc: cleanSkillDescription(skill.skilldesc),
-        }));
-
-        return {
-            name: heroData.name,
-            summary: heroData.story,
-            skills: skills,
-            combos: combos,
-        };
-
-    } catch (error) {
-        console.error(`Falha ao buscar detalhes para o herói ID ${heroApiId}:`, error);
-        throw new Error("Não foi possível carregar os detalhes do herói.");
-    }
+    }, ttl);
 }
 
 export async function fetchHeroRankings(

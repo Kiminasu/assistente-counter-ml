@@ -1,41 +1,35 @@
-import React, { useState, useEffect } from 'react';
-import { Hero } from '../types';
-import { fetchHeroDetails, HeroDetails, HeroSkill, SkillCombo } from '../services/heroService';
 
-interface HeroDetailModalProps {
+import React, { useState, useEffect } from 'react';
+import { Hero, HeroDetails, HeroSkill, SkillCombo } from '../types';
+import { HERO_TRANSLATIONS } from '../components/data/heroTranslations';
+
+interface HeroDetailPanelProps {
     heroId: string | null;
     heroes: Record<string, Hero>;
-    onClose: () => void;
 }
 
-const HeroDetailModal: React.FC<HeroDetailModalProps> = ({ heroId, heroes, onClose }) => {
+const HeroDetailPanel: React.FC<HeroDetailPanelProps> = ({ heroId, heroes }) => {
     const [details, setDetails] = useState<HeroDetails | null>(null);
-    const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     const hero = heroId ? heroes[heroId] : null;
 
     useEffect(() => {
-        if (!hero || !hero.apiId) {
-            setDetails(null);
-            return;
-        }
-
-        const fetchDetails = async () => {
-            setIsLoading(true);
-            setError(null);
-            try {
-                const data = await fetchHeroDetails(hero.apiId);
-                setDetails(data);
-            } catch (err) {
-                setError(err instanceof Error ? err.message : "Não foi possível carregar os detalhes do herói.");
-            } finally {
-                setIsLoading(false);
+        setError(null);
+        
+        if (hero) {
+            const heroData = HERO_TRANSLATIONS[hero.name];
+            if (heroData) {
+                setDetails(heroData);
+            } else {
+                setDetails(null);
+                setError(`Detalhes para ${hero.name} não foram encontrados.`);
             }
-        };
+        } else {
+            setDetails(null);
+        }
+    }, [hero, heroId]);
 
-        fetchDetails();
-    }, [hero]);
 
     const renderSkill = (skill: HeroSkill, index: number, totalSkills: number) => {
         let label = '';
@@ -44,7 +38,7 @@ const HeroDetailModal: React.FC<HeroDetailModalProps> = ({ heroId, heroes, onClo
         } else if (index === totalSkills - 1) {
             label = 'Ultimate';
         } else {
-            label = `Habilidade ${index}`;
+            label = `Habilidade ${index + 1}`;
         }
 
         return (
@@ -65,60 +59,55 @@ const HeroDetailModal: React.FC<HeroDetailModalProps> = ({ heroId, heroes, onClo
     if (!hero) return null;
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center p-4 z-50">
-            <div className="glassmorphism rounded-lg shadow-xl max-w-2xl w-full max-h-[85vh] flex flex-col border border-violet-500 modal-animation">
-                {/* Header */}
-                <div className="p-4 border-b border-gray-700 flex justify-between items-center flex-shrink-0">
-                    <div className="flex items-center gap-4">
-                        <img src={hero.imageUrl} alt={hero.name} className="w-16 h-16 rounded-full border-2 border-violet-400" />
-                        <div>
-                            <h2 className="text-2xl font-bold text-amber-300">{hero.name}</h2>
-                            <p className="text-sm text-gray-400">{hero.roles.join(' / ')}</p>
-                        </div>
+        <div 
+            className="glassmorphism rounded-lg shadow-xl max-w-4xl w-full mx-auto flex flex-col border border-violet-500 animated-entry"
+        >
+            <div className="p-4 border-b border-gray-700 flex justify-between items-center flex-shrink-0">
+                <div className="flex items-center gap-4">
+                    <img src={hero.imageUrl} alt={hero.name} className="w-16 h-16 rounded-full border-2 border-violet-400" />
+                    <div>
+                        <h2 className="text-2xl font-bold text-amber-300">{hero.name}</h2>
+                        <p className="text-sm text-gray-400">{hero.roles.join(' / ')}</p>
                     </div>
-                    <button onClick={onClose} className="text-3xl text-gray-400 hover:text-white">&times;</button>
                 </div>
+            </div>
 
-                {/* Content */}
-                <div className="p-4 overflow-y-auto space-y-4">
-                    {isLoading && (
-                        <div className="flex flex-col items-center justify-center h-full py-16">
-                            <div className="w-10 h-10 border-2 border-dashed rounded-full animate-spin border-violet-400"></div>
-                            <p className="mt-3 text-sm text-gray-300">A carregar detalhes...</p>
+            <div className="p-4 overflow-y-auto space-y-4 invisible-scrollbar max-h-[60vh]">
+                {error && (
+                    <div className="text-center text-red-400 p-4">
+                        <p className="font-semibold">Erro</p>
+                        <p className="text-xs mt-1">{error}</p>
+                    </div>
+                )}
+                {details ? (
+                    <div className="space-y-6">
+                        <div>
+                            <h3 className="text-lg font-bold mb-2">Resumo</h3>
+                            <p className="text-sm text-gray-300 bg-black bg-opacity-20 p-3 rounded-lg">{details.summary}</p>
                         </div>
-                    )}
-                    {error && (
-                        <div className="text-center text-red-400 p-4">
-                            <p className="font-semibold">Erro</p>
-                            <p className="text-xs mt-1">{error}</p>
-                        </div>
-                    )}
-                    {details && (
-                        <div className="space-y-6 animated-entry">
-                            <div>
-                                <h3 className="text-lg font-bold mb-2">Resumo</h3>
-                                <p className="text-sm text-gray-300 bg-black bg-opacity-20 p-3 rounded-lg">{details.summary}</p>
+                        <div>
+                            <h3 className="text-lg font-bold mb-2">Habilidades</h3>
+                            <div className="space-y-2">
+                                {details.skills.map((skill, index) => renderSkill(skill, index, details.skills.length))}
                             </div>
+                        </div>
+                        {details.combos && details.combos.length > 0 && (
                             <div>
-                                <h3 className="text-lg font-bold mb-2">Habilidades</h3>
+                                <h3 className="text-lg font-bold mb-2">Combos Táticos</h3>
                                 <div className="space-y-2">
-                                    {details.skills.map((skill, index) => renderSkill(skill, index, details.skills.length))}
+                                    {details.combos.map(renderCombo)}
                                 </div>
                             </div>
-                            {details.combos && details.combos.length > 0 && (
-                                <div>
-                                    <h3 className="text-lg font-bold mb-2">Combos Táticos</h3>
-                                    <div className="space-y-2">
-                                        {details.combos.map(renderCombo)}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    )}
-                </div>
+                        )}
+                    </div>
+                ) : !error && (
+                     <div className="flex flex-col items-center justify-center h-full py-16">
+                        <div className="w-10 h-10 border-2 border-dashed rounded-full animate-spin border-violet-400"></div>
+                    </div>
+                )}
             </div>
         </div>
     );
 };
 
-export default HeroDetailModal;
+export default HeroDetailPanel;

@@ -1,11 +1,6 @@
-
-
-
-
 import { GoogleGenAI, Type } from "@google/genai";
-import { Lane, Role, SpellSuggestion, MatchupClassification, GameItem, ROLES, Hero, DraftAnalysisResult, LaneOrNone, HeroStrategyAnalysis } from "../types";
+import { Lane, Role, SpellSuggestion, MatchupClassification, GameItem, ROLES, Hero, DraftAnalysisResult, LaneOrNone, HeroStrategyAnalysis, HeroDetails } from "../types";
 import { SPELL_ICONS } from "../constants";
-import { HeroDetails } from './heroService';
 import { GAME_ITEMS } from '../components/data/items';
 
 let genAIInstance: GoogleGenAI | null = null;
@@ -15,16 +10,12 @@ function getGenAIClient(): GoogleGenAI {
         return genAIInstance;
     }
     
-    // Para usar no Google AI Studio, a API Key é obtida de process.env.API_KEY
-    // const apiKey = process.env.API_KEY;
-
-    // Para deploy em serviços como Vercel/Netlify, use VITE_API_KEY
+    // A linha abaixo é para deploy em serviços como Vercel/Netlify que usam VITE
     const apiKey = (import.meta as any).env.VITE_API_KEY;
 
-
     if (!apiKey) {
-        // Mensagem de erro atualizada para o ambiente de deploy.
-        throw new Error("A chave da API do Google não está configurada. Para deploy, defina `VITE_API_KEY` no seu serviço de hospedagem. Para usar no Google AI Studio, defina a variável 'API_KEY' no painel 'Secrets' e ajuste o código.");
+        // Mensagem de erro atualizada para ambientes de frontend (Vite).
+        throw new Error("A chave da API do Google não está configurada. Certifique-se de que a variável de ambiente VITE_API_KEY está definida.");
     }
     genAIInstance = new GoogleGenAI({ apiKey });
     return genAIInstance;

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Hero, HeroStrategyAnalysis, ItemSuggestion } from '../types';
+// FIX: Moved HeroDetails import from heroService.ts to types.ts to fix import error.
+import { Hero, HeroStrategyAnalysis, ItemSuggestion, HeroDetails } from '../types';
 import { getHeroStrategyAnalysis } from '../services/geminiService';
-import { fetchHeroDetails, HeroDetails } from '../services/heroService';
+import { fetchHeroDetails } from '../services/heroService';
 import { findClosestString } from '../utils';
 import { GAME_ITEMS } from './data/items';
 import { ITEM_ICONS } from '../constants';

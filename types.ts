@@ -1,5 +1,4 @@
 
-
 export interface Hero {
   id: string;
   apiId: number;
@@ -138,4 +137,21 @@ export interface HeroStrategyAnalysis {
   situationalItems: ItemSuggestion[];
   playstyle: string;
   powerSpikes: string;
+}
+
+export interface HeroSkill {
+    skillname: string;
+    skilldesc: string;
+}
+
+export interface SkillCombo {
+    title: string;
+    desc: string;
+}
+
+export interface HeroDetails {
+    name: string;
+    summary: string;
+    skills: HeroSkill[];
+    combos: SkillCombo[];
 }

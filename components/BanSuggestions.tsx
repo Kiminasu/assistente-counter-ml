@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { BanSuggestion } from '../types';
 
 interface BanSuggestionsProps {
@@ -9,22 +9,43 @@ interface BanSuggestionsProps {
 }
 
 const BanSuggestions: React.FC<BanSuggestionsProps> = ({ counterSuggestions, metaSuggestions, isLoading, variant }) => {
-    const [activeTab, setActiveTab] = useState<'counter' | 'meta'>('meta');
+    // userSelectedTab rastreia a escolha explícita do utilizador. Nulo significa que nenhuma escolha foi feita.
+    const [userSelectedTab, setUserSelectedTab] = useState<'counter' | 'meta' | null>(null);
 
-    useEffect(() => {
-        // FIX: Adiciona uma verificação para garantir que counterSuggestions não seja indefinido antes de aceder ao seu comprimento.
-        if (counterSuggestions && counterSuggestions.length > 0) {
-            setActiveTab('counter');
-        } else {
-            setActiveTab('meta');
-        }
-    }, [counterSuggestions]);
+    const hasCounterSuggestions = counterSuggestions && counterSuggestions.length > 0;
     
-    // FIX: Adiciona um fallback para um array vazio para evitar falhas se as sugestões forem indefinidas.
-    const suggestions = (activeTab === 'counter' ? counterSuggestions : metaSuggestions) || [];
+    // Este efeito redefine a escolha do utilizador APENAS se ele estava no separador 'counter' e as sugestões de counter desaparecem.
+    // Isso permite que o componente volte ao separador 'meta' por defeito de forma elegante.
+    useEffect(() => {
+        if (!hasCounterSuggestions && userSelectedTab === 'counter') {
+            setUserSelectedTab(null);
+        }
+    }, [hasCounterSuggestions, userSelectedTab]);
 
-    const renderBans = () => {
-        if (suggestions.length === 0 && !isLoading) {
+    // Determina o separador ativo para renderização.
+    // Prioridade: 1. Escolha explícita do utilizador. 2. Padrão para 'counter' se disponível. 3. Padrão para 'meta'.
+    const activeTab = useMemo(() => {
+        if (userSelectedTab) {
+            return userSelectedTab;
+        }
+        if (hasCounterSuggestions) {
+            return 'counter';
+        }
+        return 'meta';
+    }, [userSelectedTab, hasCounterSuggestions]);
+
+    const suggestions = activeTab === 'counter' ? counterSuggestions : metaSuggestions;
+
+    const renderContent = () => {
+        if (isLoading) {
+            return (
+                <div className="flex justify-center items-center h-24">
+                    <div className="w-8 h-8 border-2 border-dashed rounded-full animate-spin border-red-400"></div>
+                </div>
+            );
+        }
+
+        if (!suggestions || suggestions.length === 0) {
              return (
                  <div className="h-24 flex items-center justify-center text-center">
                      <p className="text-gray-400 text-sm">Nenhuma sugestão de banimento disponível para esta seleção.</p>
@@ -36,14 +57,12 @@ const BanSuggestions: React.FC<BanSuggestionsProps> = ({ counterSuggestions, met
             ? "flex flex-wrap items-start justify-center gap-x-6 gap-y-3 sm:gap-x-8 py-2"
             : "flex flex-wrap items-start justify-center gap-x-2 gap-y-2 sm:gap-x-4 py-2";
 
-        const imageClasses = variant === '1v1'
-            ? "w-16 h-16 sm:w-20 sm:h-20"
-            : "w-12 h-12 sm:w-14 sm:h-14";
+        const imageClasses = variant === '1v1' ? "w-16 h-16 sm:w-20 sm:h-20" : "w-12 h-12 sm:w-14 sm:h-14";
         
         return (
              <div className={containerClasses}>
                 {suggestions.map(({ hero, reason }, index) => {
-                    const isPriority = index < 3; // Highlight first few suggestions
+                    const isPriority = index < 3;
                     return (
                         <div key={hero.id} className="group relative flex flex-col items-center text-center">
                             {isPriority && activeTab === 'meta' && (
@@ -75,21 +94,20 @@ const BanSuggestions: React.FC<BanSuggestionsProps> = ({ counterSuggestions, met
         );
     };
 
-
     return (
         <div className="glassmorphism p-4 rounded-xl animated-entry min-h-[9rem] border-2 panel-glow-primary flex flex-col" style={{ animationDelay: '300ms' }}>
             <div className="flex-shrink-0 flex items-center justify-between mb-2">
                  <h2 className="text-lg font-bold text-red-300">SUGESTÕES DE BANIMENTO</h2>
                  <div className="flex bg-black/30 p-0.5 rounded-md">
                     <button 
-                        onClick={() => setActiveTab('counter')}
-                        disabled={!counterSuggestions || counterSuggestions.length === 0}
+                        onClick={() => setUserSelectedTab('counter')}
+                        disabled={!hasCounterSuggestions}
                         className={`px-3 py-1 text-xs font-semibold rounded transition-colors ${activeTab === 'counter' ? 'bg-red-700 text-white' : 'text-gray-400 hover:bg-gray-700/50 disabled:text-gray-600 disabled:cursor-not-allowed'}`}
                     >
                         Counter
                     </button>
                     <button 
-                        onClick={() => setActiveTab('meta')}
+                        onClick={() => setUserSelectedTab('meta')}
                         className={`px-3 py-1 text-xs font-semibold rounded transition-colors ${activeTab === 'meta' ? 'bg-red-700 text-white' : 'text-gray-400 hover:bg-gray-700/50'}`}
                     >
                         Meta
@@ -97,13 +115,7 @@ const BanSuggestions: React.FC<BanSuggestionsProps> = ({ counterSuggestions, met
                  </div>
             </div>
             <div className="flex-grow">
-                {isLoading ? (
-                    <div className="flex justify-center items-center h-24">
-                        <div className="w-8 h-8 border-2 border-dashed rounded-full animate-spin border-red-400"></div>
-                    </div>
-                ) : (
-                    renderBans()
-                )}
+                {renderContent()}
             </div>
         </div>
     );
