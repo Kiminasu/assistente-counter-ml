@@ -24,8 +24,8 @@ const Header: React.FC<HeaderProps> = ({ activeMode, onSetMode }) => {
 
     return (
         <header className="text-center mb-8 animated-entry">
-            <img src="https://i.postimg.cc/ZK4nFyHG/mitica-logo-Photoroom.png" alt="Mítica Estratégia MLBB Logo" className="h-64 sm:h-80 lg:h-[27rem] mx-auto -mt-8 sm:-mt-10 lg:-mt-12 animated-logo" />
-            <h1 className="text-5xl sm:text-7xl lg:text-8xl font-black tracking-tight title-main -mt-14 sm:-mt-20 lg:-mt-24 relative animated-logo max-w-sm sm:max-w-none mx-auto">
+            <img src="https://i.postimg.cc/ZK4nFyHG/mitica-logo-Photoroom.png" alt="Mítica Estratégia MLBB Logo" className="h-56 sm:h-80 lg:h-[27rem] mx-auto -mt-6 sm:-mt-10 lg:-mt-12 animated-logo" />
+            <h1 className="text-4xl sm:text-7xl lg:text-8xl font-black tracking-tight title-main -mt-12 sm:-mt-20 lg:-mt-24 relative animated-logo max-w-sm sm:max-w-none mx-auto">
                 MÍTICA ESTRATÉGIA MLBB
             </h1>
              <p className="text-base sm:text-lg text-slate-300 mt-4 max-w-3xl mx-auto tracking-wide">

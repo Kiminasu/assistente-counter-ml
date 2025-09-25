@@ -161,7 +161,12 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ isLoading, result, error,
                                                 alt={suggestion.nome} 
                                                 className={`${heroImageSize} rounded-full object-cover border-4 transition-all duration-200 group-hover:scale-110 ${styles.border} ${isSelected ? 'ring-4 ring-white/80 ring-offset-2 ring-offset-slate-900' : ''}`}
                                             />
-                                            <span className={`text-xs mt-1 font-medium transition-colors ${isSelected ? 'text-white' : 'text-gray-400'}`}>{suggestion.nome}</span>
+                                            <span className={`text-xs mt-1 font-medium transition-colors flex items-center gap-1 ${isSelected ? 'text-white' : 'text-gray-400'}`}>
+                                                {suggestion.nome}
+                                                <svg xmlns="http://www.w3.org/2000/svg" className={`h-3 w-3 transition-transform duration-300 ${isSelected ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                                                </svg>
+                                            </span>
                                         </div>
                                     );
                                 })}
