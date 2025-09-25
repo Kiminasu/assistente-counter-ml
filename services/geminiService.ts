@@ -1,8 +1,9 @@
 
 
 
+
 import { GoogleGenAI, Type } from "@google/genai";
-import { Lane, Role, SpellSuggestion, MatchupClassification, GameItem, ROLES, Hero, DraftAnalysisResult, LaneOrNone } from "../types";
+import { Lane, Role, SpellSuggestion, MatchupClassification, GameItem, ROLES, Hero, DraftAnalysisResult, LaneOrNone, HeroStrategyAnalysis } from "../types";
 import { SPELL_ICONS } from "../constants";
 import { HeroDetails } from './heroService';
 import { GAME_ITEMS } from '../components/data/items';
@@ -407,5 +408,88 @@ INSTRUÇÕES:
     } catch (error) {
         console.error("Erro ao chamar a API Gemini para análise de draft:", error);
         throw new Error("Não foi possível gerar a análise do draft.");
+    }
+}
+
+const heroStrategySchema = {
+    type: Type.OBJECT,
+    properties: {
+        coreItems: {
+            type: Type.ARRAY,
+            description: "Lista de 3 itens essenciais (core build) para este herói.",
+            items: {
+                type: Type.OBJECT,
+                properties: {
+                    nome: { type: Type.STRING, description: "Nome do item, deve ser um da lista de itens fornecida." },
+                    motivo: { type: Type.STRING, description: "Motivo tático para este item ser essencial para o kit de habilidades do herói." }
+                },
+                required: ["nome", "motivo"]
+            }
+        },
+        situationalItems: {
+            type: Type.ARRAY,
+            description: "Lista de 2 itens situacionais para este herói.",
+            items: {
+                type: Type.OBJECT,
+                properties: {
+                    nome: { type: Type.STRING, description: "Nome do item, deve ser um da lista de itens fornecida." },
+                    motivo: { type: Type.STRING, description: "Motivo tático para a escolha deste item em situações específicas (ex: contra muito CC, contra cura, etc.)." }
+                },
+                required: ["nome", "motivo"]
+            }
+        },
+        playstyle: {
+            type: Type.STRING,
+            description: "Descrição concisa do estilo de jogo do herói (ex: 'Assassino de emboscada, focado em abater alvos frágeis no início/meio do jogo')."
+        },
+        powerSpikes: {
+            type: Type.STRING,
+            description: "Breve descrição dos picos de poder do herói (ex: 'Nível 4 com a ultimate, e ao completar o primeiro item de dano principal')."
+        }
+    },
+    required: ["coreItems", "situationalItems", "playstyle", "powerSpikes"]
+};
+
+export async function getHeroStrategyAnalysis(
+    heroDetails: HeroDetails,
+): Promise<HeroStrategyAnalysis> {
+    try {
+        const ai = getGenAIClient();
+        const itemNames = GAME_ITEMS.map(item => item.nome).join(', ');
+        const heroDetailsPrompt = formatHeroDetailsForPrompt(heroDetails);
+
+        const systemPrompt = "Você é um treinador de nível Mítico de Mobile Legends. Sua tarefa é fornecer uma análise estratégica completa de um herói, focando em itens e táticas de jogo. Responda APENAS com um objeto JSON válido que siga o schema. Seja direto, tático e use termos em português do Brasil.";
+
+        const userQuery = `
+HERÓI PARA ANÁLISE:
+${heroDetailsPrompt}
+
+Lista de Itens Disponíveis para Sugestão:
+[${itemNames}]
+
+INSTRUÇÕES:
+1.  Com base nas habilidades e função do ${heroDetails.name}, sugira 3 'coreItems' (itens essenciais) da lista. Forneça um 'motivo' tático para cada um.
+2.  Sugira 2 'situationalItems' (itens situacionais) da lista, explicando em que tipo de situação eles devem ser construídos.
+3.  Forneça uma descrição concisa do 'playstyle' (estilo de jogo) do herói.
+4.  Descreva brevemente os 'powerSpikes' (picos de poder) do herói, como níveis ou itens chave.`;
+
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: userQuery,
+            config: {
+                systemInstruction: systemPrompt,
+                responseMimeType: "application/json",
+                responseSchema: heroStrategySchema,
+                temperature: 0.2,
+                thinkingConfig: { thinkingBudget: 0 }
+            },
+        });
+
+        const jsonText = response.text.trim();
+        return JSON.parse(jsonText) as HeroStrategyAnalysis;
+
+    } catch (error) {
+        console.error(`Erro ao chamar a API Gemini para análise estratégica de ${heroDetails.name}:`, error);
+        throw new Error("Não foi possível gerar a análise estratégica do herói.");
     }
 }

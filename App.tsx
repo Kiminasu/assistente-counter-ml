@@ -22,8 +22,10 @@ import SynergyPanel from './components/SynergyPanel';
 import HeroSlot from './components/HeroSlot';
 import ItemDatabaseScreen from './components/ItemDatabaseScreen';
 import CollapsibleTutorial from './components/CollapsibleTutorial';
+import SynergyExplorerScreen from './components/SynergyExplorerScreen';
+import HeroDatabaseScreen from './components/HeroDatabaseScreen';
 
-type GameMode = '1v1' | '5v5' | 'ranking' | 'item';
+type GameMode = '1v1' | '5v5' | 'ranking' | 'item' | 'synergy' | 'heroes';
 
 const App: React.FC = () => {
     const [heroes, setHeroes] = useState<Record<string, Hero>>({});
@@ -41,10 +43,13 @@ const App: React.FC = () => {
     const [draftAllyPicks, setDraftAllyPicks] = useState<(string | null)[]>(Array(5).fill(null));
     const [draftEnemyPicks, setDraftEnemyPicks] = useState<(string | null)[]>(Array(5).fill(null));
 
+    // State for Synergy mode
+    const [synergyHeroPick, setSynergyHeroPick] = useState<string | null>(null);
+
     const [activeLane, setActiveLane] = useState<LaneOrNone>('NENHUMA'); 
 
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [activeSlot, setActiveSlot] = useState<{ team: Team; index: number } | null>(null);
+    const [activeSlot, setActiveSlot] = useState<{ team: Team | 'synergy'; index: number } | null>(null);
 
     const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
     const [analysisError, setAnalysisError] = useState<string | null>(null);
@@ -211,12 +216,12 @@ const App: React.FC = () => {
                             .filter((s): s is BanSuggestion => s !== null);
                     }
                 } else if (gameMode === '5v5') {
-                    const pickedEnemyHeroes = draftEnemyPicks
+                    const pickedAllyHeroes = draftAllyPicks
                         .map(id => id ? heroes[id] : null)
                         .filter((h): h is Hero => h !== null && !!h.apiId);
 
-                    if (pickedEnemyHeroes.length > 0) {
-                        const counterPromises = pickedEnemyHeroes.map(hero => fetchCounters(hero.apiId));
+                    if (pickedAllyHeroes.length > 0) {
+                        const counterPromises = pickedAllyHeroes.map(hero => fetchCounters(hero.apiId));
                         const allCountersData = await Promise.all(counterPromises);
                         
                         const aggregatedCounters: Record<number, { hero: Hero; count: number; totalWinRate: number }> = {};
@@ -241,7 +246,7 @@ const App: React.FC = () => {
                             .slice(0, 8)
                             .map(agg => ({
                                 hero: agg.hero,
-                                reason: `Counter para ${agg.count} herói(s) inimigo(s) com média de +${((agg.totalWinRate / agg.count) * 100).toFixed(1)}% de vitória.`
+                                reason: `Countera ${agg.count} herói(s) aliado(s). Ameaça: +${((agg.totalWinRate / agg.count) * 100).toFixed(1)}% de vitória.`
                             }));
                     }
                 }
@@ -253,7 +258,7 @@ const App: React.FC = () => {
         };
 
         calculateBanSuggestions();
-    }, [heroRankings, rankCategory, matchupAllyPick, draftEnemyPicks, gameMode, heroes, heroApiIdMap]);
+    }, [heroRankings, rankCategory, matchupAllyPick, draftAllyPicks, gameMode, heroes, heroApiIdMap]);
     
     const handleAnalysis = useCallback(async () => {
         if (!matchupEnemyPick) return;
@@ -557,7 +562,7 @@ const App: React.FC = () => {
 
     }, [draftAllyPicks, draftEnemyPicks, gameMode, heroes, heroDetailsCache]);
 
-    const handleSlotClick = useCallback((team: Team, index: number) => {
+    const handleSlotClick = useCallback((team: Team | 'synergy', index: number) => {
         setActiveSlot({ team, index });
         setIsModalOpen(true);
     }, []);
@@ -578,7 +583,7 @@ const App: React.FC = () => {
             setAnalysisError(null);
             setMatchupData(null); 
             setMatchupError(null);
-        } else { // 5v5 mode
+        } else if (gameMode === '5v5') {
             if (team === 'ally') {
                 const newPicks = [...draftAllyPicks];
                 newPicks[index] = heroId;
@@ -588,6 +593,8 @@ const App: React.FC = () => {
                 newPicks[index] = heroId;
                 setDraftEnemyPicks(newPicks);
             }
+        } else if (gameMode === 'synergy' && team === 'synergy') {
+            setSynergyHeroPick(heroId);
         }
         
         setIsModalOpen(false);
@@ -708,14 +715,20 @@ const App: React.FC = () => {
                     />
 
                     {/* Bottom Section: Detailed Analysis */}
-                    <div ref={analysisSectionRef} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <AnalysisPanel 
-                            isLoading={is1v1AnalysisLoading}
-                            result={analysisResult}
-                            error={analysisError}
-                            activeLane={activeLane as Lane}
-                        />
-                        <TabbedPanel tabs={tabs} />
+                    <div ref={analysisSectionRef} className="flex flex-col lg:grid lg:grid-cols-2 gap-6">
+                        {/* Tabs Panel - now visually first on mobile */}
+                        <div className="order-1 lg:order-2">
+                            <TabbedPanel tabs={tabs} />
+                        </div>
+                        {/* Analysis Panel - now visually second on mobile */}
+                        <div className="order-2 lg:order-1">
+                             <AnalysisPanel 
+                                isLoading={is1v1AnalysisLoading}
+                                result={analysisResult}
+                                error={analysisError}
+                                activeLane={activeLane as Lane}
+                            />
+                        </div>
                     </div>
                 </div>
             );
@@ -758,6 +771,17 @@ const App: React.FC = () => {
         }
         if (gameMode === 'item') {
             return <ItemDatabaseScreen />;
+        }
+        if (gameMode === 'synergy') {
+            return <SynergyExplorerScreen 
+                selectedHeroId={synergyHeroPick}
+                heroes={heroes}
+                heroApiIdMap={heroApiIdMap}
+                onHeroSelectClick={() => handleSlotClick('synergy', 0)}
+            />;
+        }
+        if (gameMode === 'heroes') {
+            return <HeroDatabaseScreen heroes={heroes} heroLanes={heroLanes} />;
         }
         return null;
     };

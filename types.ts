@@ -132,3 +132,10 @@ export interface DraftAnalysisResult {
   nextPickSuggestion: NextPickSuggestion | null;
   strategicItems: StrategicItemSuggestion[];
 }
+
+export interface HeroStrategyAnalysis {
+  coreItems: ItemSuggestion[];
+  situationalItems: ItemSuggestion[];
+  playstyle: string;
+  powerSpikes: string;
+}

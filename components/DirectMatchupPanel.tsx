@@ -1,6 +1,7 @@
 import React from 'react';
 import { MatchupData, Hero, Role } from '../types';
 import { RATING_STYLES, HERO_ROLES, ROLE_TAGS, SPELL_ICONS } from '../constants';
+import CollapsibleTutorial from './CollapsibleTutorial';
 
 interface DirectMatchupPanelProps {
     isLoading: boolean;
@@ -86,6 +87,16 @@ const DirectMatchupPanel: React.FC<DirectMatchupPanelProps> = ({ isLoading, data
 
         return (
             <div className="p-4 flex flex-col h-full animated-entry">
+                <div className="mb-4">
+                    <CollapsibleTutorial title="Entendendo o Confronto">
+                        <ul className="list-disc list-inside space-y-2 text-xs text-gray-300">
+                            <li><strong className="text-amber-300">Classificação:</strong> Avaliação da IA sobre quem tem a vantagem tática no confronto direto.</li>
+                            <li><strong className="text-gray-300">Dados Estatísticos:</strong> Variação na taxa de vitória com base em milhares de partidas reais.</li>
+                            <li><strong className="text-violet-300">Análise e Feitiço:</strong> Dicas de como as habilidades interagem e o feitiço ideal para a vitória.</li>
+                        </ul>
+                    </CollapsibleTutorial>
+                </div>
+
                 <div className="grid grid-cols-2 gap-4 text-center">
                     <div>
                         <img loading="lazy" src={yourHero.imageUrl} alt={yourHero.name} className="w-16 h-16 sm:w-20 sm:h-20 rounded-full mx-auto border-4 border-blue-500"/>

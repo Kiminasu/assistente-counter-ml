@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { AnalysisResult, Lane, ItemSuggestion, HeroSuggestion } from '../types';
 import { RATING_STYLES, ITEM_ICONS, SPELL_ICONS } from '../constants';
+import CollapsibleTutorial from './CollapsibleTutorial';
 
 interface AnalysisPanelProps {
     isLoading: boolean;
@@ -252,7 +253,17 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ isLoading, result, error,
 
     return (
         <aside className="col-span-1 glassmorphism p-4 rounded-xl animated-entry flex flex-col lg:h-[85vh] border-2 panel-glow-primary">
-            <h2 className="text-xl sm:text-2xl font-black text-center mb-4 tracking-wider flex-shrink-0">Análise Tática da IA</h2>
+            <h2 className="text-xl sm:text-2xl font-black text-center mb-2 tracking-wider flex-shrink-0">Análise Tática da IA</h2>
+            <div className="mb-4">
+                <CollapsibleTutorial title="Entendendo a Análise">
+                    <ul className="list-disc list-inside space-y-2 text-xs text-gray-300">
+                        <li><strong className="text-amber-300">Recomendação Perfeita:</strong> O counter ideal com base em dados, independentemente da lane.</li>
+                        <li><strong className="text-green-300">Heróis que Anulam:</strong> Counters que neutralizam as habilidades chave do inimigo na lane.</li>
+                        <li><strong className="text-indigo-400">Heróis com Vantagem:</strong> Opções fortes que possuem vantagem tática geral no confronto.</li>
+                        <li><strong className="text-violet-300">Itens de Counter:</strong> Itens essenciais para reduzir a eficácia do herói inimigo.</li>
+                    </ul>
+                </CollapsibleTutorial>
+            </div>
             <div className="flex-1 overflow-y-auto pr-2 space-y-2">
                 {renderContent()}
             </div>

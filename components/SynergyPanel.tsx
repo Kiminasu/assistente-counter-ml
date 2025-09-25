@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Hero } from '../types';
 import { fetchHeroRelations, HeroRelation } from '../services/heroService';
+import CollapsibleTutorial from './CollapsibleTutorial';
 
 interface SynergyPanelProps {
     selectedHeroId: string | null;
@@ -113,6 +114,15 @@ const SynergyPanel: React.FC<SynergyPanelProps> = ({ selectedHeroId, heroes, her
 
         return (
             <div className="p-4 space-y-6 animated-entry">
+                <div className="mb-4">
+                    <CollapsibleTutorial title="Entendendo as Sinergias">
+                        <ul className="list-disc list-inside space-y-2 text-xs text-gray-300">
+                            <li><strong className="text-blue-300">Bons Aliados:</strong> Heróis que têm ótima sinergia de habilidades com o seu.</li>
+                            <li><strong className="text-green-300">Forte Contra:</strong> Heróis que o seu personagem countera com eficácia.</li>
+                            <li><strong className="text-red-300">Fraco Contra:</strong> Heróis que são fortes contra o seu e devem ser evitados.</li>
+                        </ul>
+                    </CollapsibleTutorial>
+                </div>
                 <SynergySection title="Bons Aliados" colorClass="text-blue-300" heroIds={relations.assist.target_hero_id} heroApiIdMap={heroApiIdMap} />
                 <SynergySection title="Forte Contra" colorClass="text-green-300" heroIds={relations.strong.target_hero_id} heroApiIdMap={heroApiIdMap} />
                 <SynergySection title="Fraco Contra" colorClass="text-red-300" heroIds={relations.weak.target_hero_id} heroApiIdMap={heroApiIdMap} />
