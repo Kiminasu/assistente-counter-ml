@@ -571,8 +571,8 @@ const App: React.FC = () => {
 
                 const validItemNames = GAME_ITEMS.map(item => item.nome);
                 const strategicItems: StrategicItemSuggestion[] = analysisFromAI.strategicItems.map(item => {
-                    // @ts-ignore - The schema was fixed in geminiService.ts to return 'name', this bypasses a potential stale cache issue.
-                    const correctedName = findClosestString(item.name || item.itemName, validItemNames);
+                    // FIX: Removed @ts-ignore and fallback to `item.itemName` as the schema in geminiService now correctly specifies `name`.
+                    const correctedName = findClosestString(item.name, validItemNames);
                     const gameItem = GAME_ITEMS.find(i => i.nome === correctedName);
                     return {
                         name: correctedName,

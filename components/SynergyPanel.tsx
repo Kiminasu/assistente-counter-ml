@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-// FIX: Moved SynergyAnalysisPayload import from geminiService to here, as it's defined in types.ts.
 import { Hero, HeroDetails, SynergyAnalysisPayload } from '../types';
 import { fetchHeroRelations, HeroRelation, fetchHeroDetails } from '../services/heroService';
-// FIX: Removed SynergyAnalysisPayload import as it's not directly exported from geminiService.
 import { getSynergyAnalysis } from '../services/geminiService';
 import { MANUAL_SYNERGY_DATA } from './data/synergyData';
 import CollapsibleTutorial from './CollapsibleTutorial';
@@ -53,7 +51,6 @@ const SynergyPanel: React.FC<SynergyPanelProps> = ({ selectedHeroId, heroes, her
     const [supplementedRelations, setSupplementedRelations] = useState<{ assist: number[], strong: number[], weak: number[] } | null>(null);
 
     const heroNameMap = useMemo(() => {
-        // FIX: Explicitly typed the 'hero' parameter as 'Hero' to resolve the 'unknown' type error.
         return Object.values(heroes).reduce((acc, hero: Hero) => {
             acc[hero.name] = hero.apiId;
             return acc;
@@ -99,7 +96,7 @@ const SynergyPanel: React.FC<SynergyPanelProps> = ({ selectedHeroId, heroes, her
                         strongIds.push(...candidates.slice(0, needed));
                     }
                 }
-                setSupplementedRelations({ assist: assistIds, strong: strongIds, weak: weakIds });
+                setSupplementedRelations({ assist: [...new Set(assistIds)], strong: [...new Set(strongIds)], weak: weakIds });
 
             } catch (err) {
                 setRelationsError(err instanceof Error ? err.message : "Falha ao carregar os dados.");
@@ -186,22 +183,46 @@ const SynergyPanel: React.FC<SynergyPanelProps> = ({ selectedHeroId, heroes, her
                  <div className="mb-4">
                     <CollapsibleTutorial title="Entendendo as Sinergias">
                         <ul className="list-disc list-inside space-y-2 text-xs text-gray-300">
-                             <li><strong className="text-amber-300">Análise da IA:</strong> Estratégias profissionais sobre o estilo de jogo, combos e como counterar os oponentes.</li>
-                            <li><strong className="text-blue-300">Bons Aliados:</strong> Heróis que têm ótima sinergia de habilidades com o seu.</li>
+                             <li><strong className="text-blue-300">Bons Aliados:</strong> Heróis que têm ótima sinergia de habilidades com o seu.</li>
                             <li><strong className="text-green-300">Forte Contra:</strong> Heróis que o seu personagem countera com eficácia.</li>
                             <li><strong className="text-red-300">Fraco Contra:</strong> Heróis que são fortes contra o seu e devem ser evitados.</li>
+                            <li><strong className="text-amber-300">Análise da IA:</strong> Estratégias profissionais sobre o estilo de jogo, combos e como counterar os oponentes.</li>
                         </ul>
                     </CollapsibleTutorial>
                 </div>
+                
+                {hasRelations && supplementedRelations && (
+                    <div className="space-y-6">
+                        <SynergySection title="Bons Aliados" colorClass="text-blue-300" heroIds={supplementedRelations.assist} heroApiIdMap={heroApiIdMap} />
+                        <SynergySection title="Forte Contra" colorClass="text-green-300" heroIds={supplementedRelations.strong} heroApiIdMap={heroApiIdMap} />
+                        <SynergySection title="Fraco Contra" colorClass="text-red-300" heroIds={supplementedRelations.weak} heroApiIdMap={heroApiIdMap} />
+                    </div>
+                )}
 
                 {analysis && (
-                    <div className="space-y-4">
+                    <div className="space-y-4 pt-6 border-t border-slate-700">
+                         <h3 className="text-lg font-bold text-center text-amber-300 -mb-2">Análise Tática da IA</h3>
                         <div>
-                            <h3 className="text-sm uppercase font-bold text-gray-400 mb-2">Estilo de Jogo e Função</h3>
-                            <p className="text-sm text-gray-200 leading-relaxed p-3 bg-black bg-opacity-20 rounded-xl">{analysis.playstyleAndRole}</p>
+                            <h4 className="text-sm uppercase font-bold text-gray-400 mb-2">Perfil e Estatísticas</h4>
+                            <p className="text-sm text-gray-200 leading-relaxed p-3 bg-black bg-opacity-20 rounded-xl">{analysis.statisticsAnalysis}</p>
                         </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <h4 className="text-sm uppercase font-bold text-green-300 mb-2">Pontos Fortes</h4>
+                                <ul className="list-disc list-inside text-sm text-gray-200 space-y-1 p-3 bg-black bg-opacity-20 rounded-xl">
+                                    {analysis.strengths.map((s, i) => <li key={i}>{s}</li>)}
+                                </ul>
+                            </div>
+                            <div>
+                                <h4 className="text-sm uppercase font-bold text-red-300 mb-2">Pontos Fracos</h4>
+                                <ul className="list-disc list-inside text-sm text-gray-200 space-y-1 p-3 bg-black bg-opacity-20 rounded-xl">
+                                    {analysis.weaknesses.map((w, i) => <li key={i}>{w}</li>)}
+                                </ul>
+                            </div>
+                        </div>
+
                         <div>
-                            <h3 className="text-sm uppercase font-bold text-amber-400 mb-2">Sinergias Chave</h3>
+                            <h4 className="text-sm uppercase font-bold text-amber-400 mb-2">Sinergias Chave</h4>
                             <div className="space-y-2">
                             {analysis.keySynergies.map(synergy => (
                                 <div key={synergy.heroName} className="p-3 bg-black bg-opacity-20 rounded-xl">
@@ -212,17 +233,9 @@ const SynergyPanel: React.FC<SynergyPanelProps> = ({ selectedHeroId, heroes, her
                             </div>
                         </div>
                         <div>
-                            <h3 className="text-sm uppercase font-bold text-gray-400 mb-2">Estratégia de Counter</h3>
+                            <h4 className="text-sm uppercase font-bold text-gray-400 mb-2">Estratégia de Counter</h4>
                             <p className="text-sm text-gray-200 leading-relaxed p-3 bg-black bg-opacity-20 rounded-xl">{analysis.counterStrategy}</p>
                         </div>
-                    </div>
-                )}
-                
-                {hasRelations && supplementedRelations && (
-                    <div className="space-y-6 pt-4 border-t border-slate-700">
-                        <SynergySection title="Bons Aliados" colorClass="text-blue-300" heroIds={supplementedRelations.assist} heroApiIdMap={heroApiIdMap} />
-                        <SynergySection title="Forte Contra" colorClass="text-green-300" heroIds={supplementedRelations.strong} heroApiIdMap={heroApiIdMap} />
-                        <SynergySection title="Fraco Contra" colorClass="text-red-300" heroIds={supplementedRelations.weak} heroApiIdMap={heroApiIdMap} />
                     </div>
                 )}
                 

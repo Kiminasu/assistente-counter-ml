@@ -9,12 +9,12 @@ function getGenAIClient(): GoogleGenAI {
     if (genAIInstance) {
         return genAIInstance;
     }
-    
-    // FIX: Replaced `import.meta.env.VITE_API_KEY` with `process.env.API_KEY` to resolve the TypeScript error and adhere to coding guidelines.
+
+    // FIX: Switched from import.meta.env.VITE_API_KEY to process.env.API_KEY to align with the coding guidelines and resolve the TypeScript error.
     const apiKey = process.env.API_KEY;
 
     if (!apiKey) {
-        throw new Error("A chave da API do Google não está configurada. Certifique-se de que a variável de ambiente API_KEY está definida.");
+        throw new Error("Google API key is missing.");
     }
     genAIInstance = new GoogleGenAI({ apiKey });
     return genAIInstance;
@@ -389,16 +389,15 @@ INSTRUÇÕES:
                 responseMimeType: "application/json",
                 responseSchema: draftAnalysisSchema,
                 temperature: 0.2,
-                thinkingConfig: { thinkingBudget: 0 }
             },
         });
-
+        
         const jsonText = response.text.trim();
         return JSON.parse(jsonText) as DraftAnalysisResult;
 
     } catch (error) {
         console.error("Erro ao chamar a API Gemini para análise de draft:", error);
-        throw new Error("Não foi possível gerar a análise do draft.");
+        throw new Error("Não foi possível carregar a análise do draft da IA.");
     }
 }
 
@@ -407,62 +406,55 @@ const heroStrategySchema = {
     properties: {
         coreItems: {
             type: Type.ARRAY,
-            description: "Lista de 3 itens essenciais (core build) para este herói.",
+            description: "Lista de 3-4 itens essenciais (core build) para este herói.",
             items: {
                 type: Type.OBJECT,
                 properties: {
                     nome: { type: Type.STRING, description: "Nome do item, deve ser um da lista de itens fornecida." },
-                    motivo: { type: Type.STRING, description: "Motivo tático para este item ser essencial para o kit de habilidades do herói." }
+                    motivo: { type: Type.STRING, description: "Motivo tático curto para a escolha deste item na build do herói." }
                 },
                 required: ["nome", "motivo"]
             }
         },
         situationalItems: {
             type: Type.ARRAY,
-            description: "Lista de 2 itens situacionais para este herói.",
+            description: "Lista de 2-3 itens situacionais importantes.",
             items: {
                 type: Type.OBJECT,
                 properties: {
                     nome: { type: Type.STRING, description: "Nome do item, deve ser um da lista de itens fornecida." },
-                    motivo: { type: Type.STRING, description: "Motivo tático para a escolha deste item em situações específicas (ex: contra muito CC, contra cura, etc.)." }
+                    motivo: { type: Type.STRING, description: "Motivo tático curto explicando quando e por que construir este item." }
                 },
                 required: ["nome", "motivo"]
             }
         },
-        playstyle: {
-            type: Type.STRING,
-            description: "Descrição concisa do estilo de jogo do herói (ex: 'Assassino de emboscada, focado em abater alvos frágeis no início/meio do jogo')."
-        },
-        powerSpikes: {
-            type: Type.STRING,
-            description: "Breve descrição dos picos de poder do herói (ex: 'Nível 4 com a ultimate, e ao completar o primeiro item de dano principal')."
-        }
+        playstyle: { type: Type.STRING, description: "Descrição detalhada (3-4 frases) do estilo de jogo ideal para o herói (early, mid, late game), focando em posicionamento e objetivos." },
+        powerSpikes: { type: Type.STRING, description: "Identificação dos picos de poder do herói (ex: 'Nível 4 com a ultimate', 'Ao completar o item X')." }
     },
     required: ["coreItems", "situationalItems", "playstyle", "powerSpikes"]
 };
 
-export async function getHeroStrategyAnalysis(
-    heroDetails: HeroDetails,
-): Promise<HeroStrategyAnalysis> {
+export async function getHeroStrategyAnalysis(heroDetails: HeroDetails): Promise<HeroStrategyAnalysis> {
     try {
         const ai = getGenAIClient();
         const itemNames = GAME_ITEMS.map(item => item.nome).join(', ');
         const heroDetailsPrompt = formatHeroDetailsForPrompt(heroDetails);
 
-        const systemPrompt = "Você é um treinador de nível Mítico de Mobile Legends. Sua tarefa é fornecer uma análise estratégica completa de um herói, focando em itens e táticas de jogo. Responda APENAS com um objeto JSON válido que siga o schema. Seja direto, tático e use termos em português do Brasil.";
+        const systemPrompt = "Você é um analista de nível Mítico de Mobile Legends especializado em estratégia de heróis. Sua tarefa é fornecer uma análise concisa e tática sobre como jogar com um herói específico. Responda APENAS com um objeto JSON válido que siga o schema.";
 
         const userQuery = `
 HERÓI PARA ANÁLISE:
 ${heroDetailsPrompt}
 
-Lista de Itens Disponíveis para Sugestão:
+Lista de Itens para sugestão:
 [${itemNames}]
 
 INSTRUÇÕES:
-1.  Com base nas habilidades e função do ${heroDetails.name}, sugira 3 'coreItems' (itens essenciais) da lista. Forneça um 'motivo' tático para cada um.
-2.  Sugira 2 'situationalItems' (itens situacionais) da lista, explicando em que tipo de situação eles devem ser construídos.
-3.  Forneça uma descrição concisa do 'playstyle' (estilo de jogo) do herói.
-4.  Descreva brevemente os 'powerSpikes' (picos de poder) do herói, como níveis ou itens chave.`;
+1. Analise o herói e suas habilidades para determinar a melhor estratégia.
+2. Sugira 3-4 'coreItems' (itens essenciais) da lista, explicando o motivo de cada um.
+3. Sugira 2-3 'situationalItems' (itens situacionais), explicando em que situações devem ser construídos.
+4. Descreva o 'playstyle' (estilo de jogo) do herói em 3-4 frases, cobrindo as fases do jogo.
+5. Identifique os principais 'powerSpikes' (picos de poder) do herói.`;
 
         const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",
@@ -472,7 +464,6 @@ INSTRUÇÕES:
                 responseMimeType: "application/json",
                 responseSchema: heroStrategySchema,
                 temperature: 0.2,
-                thinkingConfig: { thinkingBudget: 0 }
             },
         });
 
@@ -480,65 +471,72 @@ INSTRUÇÕES:
         return JSON.parse(jsonText) as HeroStrategyAnalysis;
 
     } catch (error) {
-        console.error(`Erro ao chamar a API Gemini para análise estratégica de ${heroDetails.name}:`, error);
-        throw new Error("Não foi possível gerar a análise estratégica do herói.");
+        console.error("Erro ao chamar a API Gemini para análise de estratégia do herói:", error);
+        throw new Error("Não foi possível carregar a análise estratégica da IA.");
     }
 }
+
 
 const synergyAnalysisSchema = {
     type: Type.OBJECT,
     properties: {
-        playstyleAndRole: { 
-            type: Type.STRING, 
-            description: "Análise tática concisa do estilo de jogo do herói e sua principal função na equipe (ex: iniciador, dano de linha de trás, split pusher, protetor)." 
+        statisticsAnalysis: { type: Type.STRING, description: "Análise geral do herói com base em seu perfil e estatísticas (dano, controle, mobilidade). Identifique seu papel principal na equipe." },
+        strengths: {
+            type: Type.ARRAY,
+            description: "Lista de 2-3 pontos fortes principais do herói.",
+            items: { type: Type.STRING }
+        },
+        weaknesses: {
+            type: Type.ARRAY,
+            description: "Lista de 2-3 pontos fracos ou vulnerabilidades do herói.",
+            items: { type: Type.STRING }
         },
         keySynergies: {
             type: Type.ARRAY,
-            description: "Análise detalhada de 2 sinergias chave com heróis da lista de 'Bons Aliados'. Explique combos de habilidades específicos e como eles se beneficiam mutuamente.",
+            description: "Análise de 2 sinergias chave com os aliados fornecidos.",
             items: {
                 type: Type.OBJECT,
                 properties: {
                     heroName: { type: Type.STRING, description: "Nome do herói aliado." },
-                    reason: { type: Type.STRING, description: "Explicação tática da sinergia." }
+                    reason: { type: Type.STRING, description: "Explicação detalhada de como as habilidades dos dois heróis se complementam." }
                 },
                 required: ["heroName", "reason"]
             }
         },
-        counterStrategy: { 
-            type: Type.STRING, 
-            description: "Estratégia detalhada de como o herói selecionado deve se comportar contra os heróis da lista 'Forte Contra'. Explique quais fraquezas do oponente devem ser exploradas e quais habilidades usar." 
-        }
+        counterStrategy: { type: Type.STRING, description: "Estratégia geral sobre como o herói deve se posicionar e usar suas habilidades para counterar os oponentes listados em 'Forte Contra'." }
     },
-    required: ["playstyleAndRole", "keySynergies", "counterStrategy"]
+    required: ["statisticsAnalysis", "strengths", "weaknesses", "keySynergies", "counterStrategy"]
 };
 
 export async function getSynergyAnalysis(
-    selectedHeroDetails: HeroDetails,
-    alliesDetails: HeroDetails[],
-    strongAgainstDetails: HeroDetails[],
+    selectedHero: HeroDetails,
+    allies: HeroDetails[],
+    strongAgainst: HeroDetails[]
 ): Promise<SynergyAnalysisPayload> {
     try {
         const ai = getGenAIClient();
-        
-        const selectedHeroPrompt = formatHeroDetailsForPrompt(selectedHeroDetails);
-        const alliesPrompt = alliesDetails.map(d => d.name).join(', ');
-        const strongAgainstPrompt = strongAgainstDetails.map(d => d.name).join(', ');
+        const selectedHeroPrompt = formatHeroDetailsForPrompt(selectedHero);
+        const alliesPrompt = allies.map(formatHeroDetailsForPrompt).join('\n\n---\n\n');
+        const strongAgainstPrompt = strongAgainst.map(formatHeroDetailsForPrompt).join('\n\n---\n\n');
 
-        const systemPrompt = "Você é um analista e treinador profissional de Mobile Legends, nível Mítico Glória. Sua análise é profunda, tática e focada em otimizar a performance do jogador. Responda APENAS com um objeto JSON válido que siga o schema.";
+        const systemPrompt = "Você é um analista de nível Mítico de Mobile Legends, especializado em sinergias e estratégias de equipe. Sua análise deve ser tática, objetiva e baseada nas habilidades fornecidas. Responda APENAS com um objeto JSON válido que siga o schema.";
 
         const userQuery = `
-HERÓI EM ANÁLISE:
+HERÓI SELECIONADO:
 ${selectedHeroPrompt}
 
-LISTA DE BONS ALIADOS PARA ANÁLISE DE SINERGIA: [${alliesPrompt}]
-LISTA DE HERÓIS QUE ELE É FORTE CONTRA (COUNTERS): [${strongAgainstPrompt}]
+ALIADOS POTENCIAIS (Bons Aliados):
+${alliesPrompt}
 
-INSTRUÇÕES DETALHADAS:
-1.  **playstyleAndRole**: Descreva o estilo de jogo ideal para ${selectedHeroDetails.name}. Ele é um iniciador agressivo? Um causador de dano na linha de trás? Um protetor? Como ele deve se posicionar e qual sua principal contribuição para a vitória da equipe?
-2.  **keySynergies**: Escolha os 2 melhores heróis da lista de 'Bons Aliados' e explique a sinergia em detalhes. Seja específico sobre os combos de habilidades. Exemplo: "A Ultimate do Atlas agrupa os inimigos, criando o cenário perfeito para a Ultimate da Pharsa causar dano máximo em todos."
-3.  **counterStrategy**: Explique a estratégia para jogar contra os heróis da lista 'Forte Contra'. Como as habilidades de ${selectedHeroDetails.name} exploram as fraquezas desses oponentes? Qual é o plano de jogo para dominar esses confrontos específicos?
-`;
-        
+OPONENTES (Forte Contra):
+${strongAgainstPrompt}
+
+INSTRUÇÕES:
+1. Forneça uma 'statisticsAnalysis' do Herói Selecionado, descrevendo seu papel na equipe (ex: iniciador, dano em área, etc.).
+2. Liste 2-3 'strengths' (pontos fortes) e 'weaknesses' (pontos fracos) claros.
+3. Para 'keySynergies', escolha os 2 melhores aliados da lista e explique detalhadamente a sinergia entre suas habilidades.
+4. Descreva uma 'counterStrategy' geral sobre como o Herói Selecionado pode usar suas vantagens para dominar os oponentes listados.`;
+
         const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",
             contents: userQuery,
@@ -546,7 +544,7 @@ INSTRUÇÕES DETALHADAS:
                 systemInstruction: systemPrompt,
                 responseMimeType: "application/json",
                 responseSchema: synergyAnalysisSchema,
-                temperature: 0.3,
+                temperature: 0.2,
             },
         });
 
@@ -554,7 +552,7 @@ INSTRUÇÕES DETALHADAS:
         return JSON.parse(jsonText) as SynergyAnalysisPayload;
 
     } catch (error) {
-        console.error(`Erro ao chamar a API Gemini para análise de sinergia de ${selectedHeroDetails.name}:`, error);
-        throw new Error("Não foi possível gerar a análise de sinergia do herói.");
+        console.error("Erro ao chamar a API Gemini para análise de sinergia:", error);
+        throw new Error("Não foi possível carregar a análise de sinergia da IA.");
     }
 }

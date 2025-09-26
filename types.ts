@@ -162,7 +162,9 @@ export interface KeySynergy {
 }
 
 export interface SynergyAnalysisPayload {
-    playstyleAndRole: string;
+    statisticsAnalysis: string;
+    strengths: string[];
+    weaknesses: string[];
     keySynergies: KeySynergy[];
     counterStrategy: string;
 }
