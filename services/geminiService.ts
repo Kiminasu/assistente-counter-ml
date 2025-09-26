@@ -10,10 +10,10 @@ function getGenAIClient(): GoogleGenAI {
         return genAIInstance;
     }
     
-    const apiKey = process.env.API_KEY;
+    const apiKey = process.env.VITE_API_KEY;
 
     if (!apiKey) {
-        throw new Error("A chave da API do Google não está configurada. Certifique-se de que a variável de ambiente API_KEY está definida.");
+        throw new Error("A chave da API do Google não está configurada. Certifique-se de que a variável de ambiente VITE_API_KEY está definida.");
     }
     genAIInstance = new GoogleGenAI({ apiKey });
     return genAIInstance;
