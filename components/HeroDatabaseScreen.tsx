@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Hero, Lane, LANES } from '../types';
 import { LANE_ICONS } from '../constants';
@@ -14,31 +13,6 @@ const HeroDatabaseScreen: React.FC<HeroDatabaseScreenProps> = ({ heroes, heroLan
     const [selectedLane, setSelectedLane] = useState<Lane | 'Todas'>('Todas');
     const [selectedHeroId, setSelectedHeroId] = useState<string | null>(null);
     const searchInputRef = useRef<HTMLInputElement>(null);
-    const gridRef = useRef<HTMLDivElement>(null);
-    const [gridColumns, setGridColumns] = useState(7); // Um padrão sensato
-
-    useEffect(() => {
-        const gridEl = gridRef.current;
-        if (!gridEl) return;
-
-        const observer = new ResizeObserver(() => {
-            const computedStyle = window.getComputedStyle(gridEl);
-            const columnCount = computedStyle.getPropertyValue("grid-template-columns").split(" ").length;
-            if (columnCount > 0) {
-                setGridColumns(columnCount);
-            }
-        });
-
-        observer.observe(gridEl);
-        // Verificação inicial
-        const computedStyle = window.getComputedStyle(gridEl);
-        const columnCount = computedStyle.getPropertyValue("grid-template-columns").split(" ").length;
-        if (columnCount > 0) {
-            setGridColumns(columnCount);
-        }
-        
-        return () => observer.disconnect();
-    }, []);
 
     const laneFilters: (Lane | 'Todas')[] = ['Todas', ...LANES];
 
@@ -46,7 +20,9 @@ const HeroDatabaseScreen: React.FC<HeroDatabaseScreenProps> = ({ heroes, heroLan
         const heroesArray: Hero[] = Object.values(heroes);
 
         const searchFiltered = searchTerm
-            ? heroesArray.filter((hero: Hero) => hero.name.toLowerCase().includes(searchTerm.toLowerCase()))
+            ? heroesArray.filter((hero: Hero) =>
+                hero.name.toLowerCase().includes(searchTerm.toLowerCase())
+            )
             : heroesArray;
 
         const laneFiltered = selectedLane === 'Todas'
@@ -60,7 +36,7 @@ const HeroDatabaseScreen: React.FC<HeroDatabaseScreenProps> = ({ heroes, heroLan
     }, [heroes, searchTerm, selectedLane, heroLanes]);
     
     const handleHeroClick = (heroId: string) => {
-        setSelectedHeroId(prevId => (prevId === heroId ? null : heroId));
+        setSelectedHeroId(heroId);
     };
 
     useEffect(() => {
@@ -70,33 +46,17 @@ const HeroDatabaseScreen: React.FC<HeroDatabaseScreenProps> = ({ heroes, heroLan
         }
     }, []);
 
-    const itemsToRender = useMemo(() => {
-        const items: (Hero | { type: 'panel' })[] = [...filteredHeroes];
-        if (selectedHeroId) {
-            const heroIndex = filteredHeroes.findIndex(h => h.id === selectedHeroId);
-            if (heroIndex > -1) {
-                const endOfRowIndex = Math.min(
-                    (Math.floor(heroIndex / gridColumns) + 1) * gridColumns,
-                    filteredHeroes.length
-                );
-                items.splice(endOfRowIndex, 0, { type: 'panel' });
-            }
-        }
-        return items;
-    }, [filteredHeroes, selectedHeroId, gridColumns]);
-
-
     return (
         <div className="w-full max-w-6xl mx-auto animated-entry">
             <div className="sticky top-2 z-20 bg-opacity-50 backdrop-filter backdrop-blur-md -mx-2 p-2 rounded-lg">
-                <div className="glassmorphism p-4 rounded-xl border-2 panel-glow-primary">
+                <div className="glassmorphism p-4 rounded-2xl border-2 panel-glow-primary">
                     <div className="flex flex-col sm:flex-row gap-4">
                         <div className="relative flex-grow">
                              <input
                                 ref={searchInputRef}
                                 type="text"
                                 placeholder="Procurar herói..."
-                                className="w-full p-2 pl-8 rounded-md bg-gray-800 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                                className="w-full p-2 pl-8 rounded-xl bg-gray-800 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-violet-500"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
@@ -107,7 +67,7 @@ const HeroDatabaseScreen: React.FC<HeroDatabaseScreenProps> = ({ heroes, heroLan
                                 <button
                                     key={lane}
                                     onClick={() => setSelectedLane(lane)}
-                                    className={`flex items-center justify-center gap-2 font-semibold py-1 px-3 rounded text-xs sm:text-sm transition-colors duration-200 ${selectedLane === lane ? 'bg-violet-600 text-white' : 'bg-gray-700 hover:bg-gray-600'}`}
+                                    className={`flex items-center justify-center gap-2 font-semibold py-1 px-3 rounded-lg text-xs sm:text-sm transition-colors duration-200 ${selectedLane === lane ? 'bg-violet-600 text-white' : 'bg-gray-700 hover:bg-gray-600'}`}
                                 >
                                     {lane !== 'Todas' && <img src={LANE_ICONS[lane as Lane]} alt={lane} className="w-4 h-4" />}
                                     {lane}
@@ -118,23 +78,10 @@ const HeroDatabaseScreen: React.FC<HeroDatabaseScreenProps> = ({ heroes, heroLan
                 </div>
             </div>
 
-            <div ref={gridRef} className="mt-6 grid grid-cols-4 sm:grid-cols-5 md:grid-cols-7 lg:grid-cols-9 gap-4">
-                 {itemsToRender.length > 0 ? (
-                    itemsToRender.map((item, index) => {
-                        if ('type' in item && item.type === 'panel') {
-                            return (
-                                <div key="detail-panel" className="col-span-full my-2">
-                                    <HeroDetailModal 
-                                        heroId={selectedHeroId}
-                                        heroes={heroes}
-                                    />
-                                </div>
-                            );
-                        }
-
-                        const hero = item as Hero;
+            <div className="mt-6 grid grid-cols-4 sm:grid-cols-5 md:grid-cols-7 lg:grid-cols-9 gap-4">
+                 {filteredHeroes.length > 0 ? (
+                    filteredHeroes.map((hero, index) => {
                         const isSelected = hero.id === selectedHeroId;
-
                         return (
                             <div 
                                 key={hero.id} 
@@ -146,15 +93,9 @@ const HeroDatabaseScreen: React.FC<HeroDatabaseScreenProps> = ({ heroes, heroLan
                                     loading="lazy"
                                     src={hero.imageUrl} 
                                     alt={hero.name} 
-                                    className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-2 border-slate-700 group-hover:border-violet-500 group-hover:scale-110 transition-all" 
+                                    className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-2 group-hover:border-violet-500 group-hover:scale-110 transition-all ${isSelected ? 'border-amber-300 ring-2 ring-amber-300/80' : 'border-slate-700'}`} 
                                 />
-                                <span className="text-xs sm:text-sm mt-2 font-medium">{hero.name}</span>
-                                 <svg 
-                                    xmlns="http://www.w3.org/2000/svg" 
-                                    className={`h-4 w-4 mt-1 text-amber-300 transition-transform duration-300 ${isSelected ? 'rotate-180' : ''}`} 
-                                    fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                                </svg>
+                                <span className={`text-xs sm:text-sm mt-2 font-medium transition-colors ${isSelected ? 'text-amber-300' : 'text-slate-300'}`}>{hero.name}</span>
                             </div>
                         );
                     })
@@ -164,6 +105,12 @@ const HeroDatabaseScreen: React.FC<HeroDatabaseScreenProps> = ({ heroes, heroLan
                     </div>
                 )}
             </div>
+            
+            <HeroDetailModal 
+                heroId={selectedHeroId}
+                heroes={heroes}
+                onClose={() => setSelectedHeroId(null)}
+            />
         </div>
     );
 };

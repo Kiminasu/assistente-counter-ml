@@ -24,12 +24,12 @@ const ItemDatabaseScreen: React.FC = () => {
 
     return (
         <div className="w-full max-w-6xl mx-auto animated-entry">
-            <div className="mb-8 flex flex-wrap justify-center gap-2 bg-black bg-opacity-30 p-2 rounded-lg sticky top-2 z-10">
+            <div className="mb-8 flex flex-wrap justify-center gap-2 bg-black bg-opacity-30 p-2 rounded-xl sticky top-2 z-10">
                 {categories.map(category => (
                     <button
                         key={category}
                         onClick={() => setActiveCategory(category)}
-                        className={`px-3 sm:px-4 py-2 text-sm font-semibold rounded-md transition-colors duration-200 ${
+                        className={`px-3 sm:px-4 py-2 text-sm font-semibold rounded-lg transition-colors duration-200 ${
                             activeCategory === category
                                 ? 'bg-violet-600 text-white shadow-lg shadow-violet-500/30'
                                 : 'text-gray-300 bg-gray-700/50 hover:bg-gray-700'
@@ -44,7 +44,7 @@ const ItemDatabaseScreen: React.FC = () => {
                 {filteredItems.map((item, itemIndex) => (
                     <div 
                         key={item.id} 
-                        className="glassmorphism p-4 rounded-xl border border-transparent hover:border-violet-500 transition-all duration-300 flex flex-col gap-3 animated-entry"
+                        className="glassmorphism p-4 rounded-2xl border border-transparent hover:border-violet-500 transition-all duration-300 flex flex-col gap-3 animated-entry transform hover:scale-105"
                         style={{ animationDelay: `${itemIndex * 25}ms` }}
                     >
                         <div className="flex items-center gap-4">

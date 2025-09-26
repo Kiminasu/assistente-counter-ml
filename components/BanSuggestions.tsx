@@ -53,15 +53,20 @@ const BanSuggestions: React.FC<BanSuggestionsProps> = ({ counterSuggestions, met
             );
         }
 
-        const containerClasses = variant === '1v1'
-            ? "flex flex-wrap items-start justify-center gap-x-6 gap-y-3 sm:gap-x-8 py-2"
-            : "flex flex-wrap items-start justify-center gap-x-2 gap-y-2 sm:gap-x-4 py-2";
+        const isCounterTab = activeTab === 'counter';
+        const suggestionsToShow = isCounterTab ? suggestions.slice(0, 6) : suggestions;
 
-        const imageClasses = variant === '1v1' ? "w-16 h-16 sm:w-20 sm:h-20" : "w-12 h-12 sm:w-14 sm:h-14";
+        const containerClasses = isCounterTab
+            ? "grid grid-cols-3 sm:grid-cols-6 gap-4 py-2"
+            : "grid grid-cols-4 md:grid-cols-8 gap-4 py-2";
+
+        const imageClasses = isCounterTab
+            ? "w-16 h-16 sm:w-20 sm:h-20"
+            : "w-14 h-14 sm:w-16 sm:h-16";
         
         return (
              <div className={containerClasses}>
-                {suggestions.map(({ hero, reason }, index) => {
+                {suggestionsToShow.map(({ hero, reason }, index) => {
                     const isPriority = index < 3;
                     return (
                         <div key={hero.id} className="group relative flex flex-col items-center text-center">
@@ -83,7 +88,7 @@ const BanSuggestions: React.FC<BanSuggestionsProps> = ({ counterSuggestions, met
                             />
                             <span className="text-xs mt-2 font-medium">{hero.name}</span>
                             {/* Tooltip */}
-                            <div className="absolute bottom-full mb-2 w-48 p-2 bg-black text-white text-xs rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-20">
+                            <div className="absolute bottom-full mb-2 w-48 p-2 bg-black text-white text-xs rounded-xl shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-20">
                                 {reason}
                                 <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-black"></div>
                             </div>
@@ -95,20 +100,20 @@ const BanSuggestions: React.FC<BanSuggestionsProps> = ({ counterSuggestions, met
     };
 
     return (
-        <div className="glassmorphism p-4 rounded-xl animated-entry min-h-[9rem] border-2 panel-glow-primary flex flex-col" style={{ animationDelay: '300ms' }}>
+        <div className="glassmorphism p-4 rounded-2xl animated-entry min-h-[9rem] border-2 panel-glow-primary flex flex-col" style={{ animationDelay: '300ms' }}>
             <div className="flex-shrink-0 flex items-center justify-between mb-2">
                  <h2 className="text-lg font-bold text-red-300">SUGESTÕES DE BANIMENTO</h2>
-                 <div className="flex bg-black/30 p-0.5 rounded-md">
+                 <div className="flex bg-black/30 p-0.5 rounded-lg">
                     <button 
                         onClick={() => setUserSelectedTab('counter')}
                         disabled={!hasCounterSuggestions}
-                        className={`px-3 py-1 text-xs font-semibold rounded transition-colors ${activeTab === 'counter' ? 'bg-red-700 text-white' : 'text-gray-400 hover:bg-gray-700/50 disabled:text-gray-600 disabled:cursor-not-allowed'}`}
+                        className={`px-3 py-1 text-xs font-semibold rounded-md transition-colors ${activeTab === 'counter' ? 'bg-red-700 text-white' : 'text-gray-400 hover:bg-gray-700/50 disabled:text-gray-600 disabled:cursor-not-allowed'}`}
                     >
                         Counter
                     </button>
                     <button 
                         onClick={() => setUserSelectedTab('meta')}
-                        className={`px-3 py-1 text-xs font-semibold rounded transition-colors ${activeTab === 'meta' ? 'bg-red-700 text-white' : 'text-gray-400 hover:bg-gray-700/50'}`}
+                        className={`px-3 py-1 text-xs font-semibold rounded-md transition-colors ${activeTab === 'meta' ? 'bg-red-700 text-white' : 'text-gray-400 hover:bg-gray-700/50'}`}
                     >
                         Meta
                     </button>

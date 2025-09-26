@@ -10,7 +10,7 @@ interface LaneSelectorProps {
 
 const LaneSelector: React.FC<LaneSelectorProps> = ({ activeLane, onSelectLane, isDisabled = false }) => {
     return (
-        <div className={`glassmorphism p-4 rounded-xl animated-entry border-2 panel-glow-primary transition-opacity duration-300 ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}>
+        <div className={`glassmorphism p-4 rounded-2xl animated-entry border-2 panel-glow-primary transition-opacity duration-300 ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}>
             <h2 className="text-xl font-bold text-center mb-3">SELECIONE A LANE</h2>
             <div className="flex flex-wrap justify-center gap-2">
                 {LANES_WITH_NONE.map(lane => (

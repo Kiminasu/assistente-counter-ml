@@ -1,6 +1,6 @@
 import React from 'react';
 import { MatchupData, Hero, Role } from '../types';
-import { RATING_STYLES, HERO_ROLES, ROLE_TAGS, SPELL_ICONS } from '../constants';
+import { RATING_STYLES, ROLE_TAGS, SPELL_ICONS } from '../constants';
 import CollapsibleTutorial from './CollapsibleTutorial';
 
 interface DirectMatchupPanelProps {
@@ -10,12 +10,12 @@ interface DirectMatchupPanelProps {
 }
 
 const HeroCharacteristics: React.FC<{ hero: Hero, colorClass: string }> = ({ hero, colorClass }) => {
-    const roles = HERO_ROLES[hero.name] || [];
+    const roles = hero.roles || [];
     const tags = roles.flatMap(role => ROLE_TAGS[role as Role] || []);
     const uniqueTags = [...new Set(tags)];
 
     return (
-        <div className="bg-black bg-opacity-20 p-3 rounded-lg h-full">
+        <div className="bg-black bg-opacity-20 p-3 rounded-xl h-full">
             <p className={`font-bold text-center text-sm sm:text-base ${colorClass}`}>{hero.name}</p>
             <div className="flex flex-wrap justify-center gap-1 mt-2">
                 {uniqueTags.slice(0, 4).map(tag => (
@@ -35,7 +35,7 @@ const DirectMatchupPanel: React.FC<DirectMatchupPanelProps> = ({ isLoading, data
             return (
                 <div className="flex flex-col items-center justify-center h-full">
                     <div className="w-10 h-10 border-2 border-dashed rounded-full animate-spin border-violet-400"></div>
-                    <p className="mt-3 text-sm text-gray-300">CARREGANDO CONFRONTO</p>
+                    <p className="mt-3 text-sm text-gray-300">CARREGANDO CONFRONTO...</p>
                 </div>
             );
         }
@@ -61,20 +61,36 @@ const DirectMatchupPanel: React.FC<DirectMatchupPanelProps> = ({ isLoading, data
 
         if (!data) {
              return (
-                <div className="text-center p-8 text-gray-400 flex flex-col items-center justify-center h-full">
-                    <svg className="w-24 h-16 mb-3 text-gray-600" viewBox="0 0 100 56" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
-                        <g>
-                            <path d="M25 24c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8z" />
-                            <path d="M37 44H13c0-6.627 5.373-12 12-12h0c6.627 0 12 5.373 12 12z" />
-                        </g>
-                        <g>
-                            <path d="M75 24c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8z" />
-                            <path d="M87 44H63c0-6.627 5.373-12 12-12h0c6.627 0 12 5.373 12 12z" />
-                        </g>
-                        <text x="50" y="38" fontFamily="Inter, sans-serif" fontSize="18" fontWeight="900" textAnchor="middle" className="text-gray-500" fill="currentColor">VS</text>
-                    </svg>
-                    <p className="font-semibold">Confronto Direto</p>
-                    <p className="text-xs text-gray-500 mt-1">Selecione o seu herói e o inimigo para ver a análise.</p>
+                <div className="p-4 flex flex-col h-full animated-entry opacity-60">
+                    <div className="mb-4">
+                        <CollapsibleTutorial title="Entendendo o Confronto">
+                             <ul className="list-disc list-inside space-y-2 text-xs text-gray-300">
+                                <li><strong className="text-amber-300">Classificação:</strong> Avaliação da IA sobre quem tem a vantagem tática no confronto direto.</li>
+                                <li><strong className="text-gray-300">Dados Estatísticos:</strong> Variação na taxa de vitória com base em milhares de partidas reais.</li>
+                                <li><strong className="text-violet-300">Análise e Feitiço:</strong> Dicas de como as habilidades interagem e o feitiço ideal para a vitória.</li>
+                            </ul>
+                        </CollapsibleTutorial>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 text-center">
+                        <div>
+                            <div className="w-16 h-16 sm:w-20 sm:h-20 text-3xl font-black text-slate-600 rounded-full mx-auto border-4 border-blue-500/50 bg-slate-800 flex items-center justify-center">?</div>
+                            <p className="font-bold mt-2 text-sm sm:text-base text-gray-500">Seu Herói</p>
+                        </div>
+                         <div>
+                            <div className="w-16 h-16 sm:w-20 sm:h-20 text-3xl font-black text-slate-600 rounded-full mx-auto border-4 border-red-500/50 bg-slate-800 flex items-center justify-center">?</div>
+                            <p className="font-bold mt-2 text-sm sm:text-base text-gray-500">Inimigo</p>
+                        </div>
+                    </div>
+                    <div className="text-center mt-4 p-3 rounded-xl border-2 border-gray-600 bg-black bg-opacity-20">
+                        <p className="font-black text-lg sm:text-xl text-gray-500">CLASSIFICAÇÃO</p>
+                        <p className="font-mono font-semibold text-base sm:text-lg text-gray-600">--%</p>
+                    </div>
+                    
+                    <div className="mt-4 pt-4 border-t border-gray-700">
+                        <h3 className="text-sm uppercase font-bold text-gray-500 mb-2">Análise Tática</h3>
+                        <p className="text-sm text-gray-500 leading-relaxed italic">Selecione seu herói e o inimigo para ver a análise detalhada da IA aqui.</p>
+                    </div>
                 </div>
             );
         }
@@ -107,7 +123,7 @@ const DirectMatchupPanel: React.FC<DirectMatchupPanelProps> = ({ isLoading, data
                         <p className="font-bold mt-2 text-sm sm:text-base">{enemyHero.name}</p>
                     </div>
                 </div>
-                <div className={`text-center mt-4 p-3 rounded-lg border-2 ${styles.border} bg-black bg-opacity-20`}>
+                <div className={`text-center mt-4 p-3 rounded-xl border-2 ${styles.border} bg-black bg-opacity-20`}>
                     <p className={`font-black text-lg sm:text-xl ${styles.text}`}>{classification}</p>
                     {!isTheoretical && <p className="font-mono font-semibold text-base sm:text-lg">{winRateText}</p>}
                     <p className="text-xs text-gray-400">
@@ -123,7 +139,7 @@ const DirectMatchupPanel: React.FC<DirectMatchupPanelProps> = ({ isLoading, data
                 {recommendedSpell && (
                     <div className="mt-4 pt-4 border-t border-gray-700">
                         <h3 className="text-sm uppercase font-bold text-gray-400 mb-2">Feitiço Recomendado</h3>
-                         <div className="p-2 bg-black bg-opacity-20 rounded-lg border-l-4 border-violet-400 flex items-start gap-3">
+                         <div className="p-2 bg-black bg-opacity-20 rounded-xl border-l-4 border-violet-400 flex items-start gap-3">
                             <img loading="lazy" src={SPELL_ICONS[recommendedSpell.nome] || SPELL_ICONS.default} alt={recommendedSpell.nome} className="w-10 h-10 rounded-md flex-shrink-0" />
                             <div>
                                 <p className="font-bold text-violet-300">{recommendedSpell.nome}</p>

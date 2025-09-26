@@ -29,8 +29,8 @@ const SynergySection: React.FC<{ title: string; colorClass: string; heroIds: num
 
     return (
         <div>
-            <h3 className={`text-sm uppercase font-bold mb-3 ${colorClass}`}>{title}</h3>
-            <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+            <h3 className={`text-sm uppercase font-bold mb-3 text-center ${colorClass}`}>{title}</h3>
+            <div className="flex flex-wrap justify-center gap-3">
                 {heroIds.map(id => <HeroListItem key={id} hero={heroApiIdMap[id]} />)}
             </div>
         </div>

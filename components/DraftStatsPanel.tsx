@@ -81,7 +81,9 @@ const DraftStatsPanel: React.FC<DraftStatsPanelProps> = ({ analysis, isLoading, 
                         </div>
                         <div className="absolute left-1/2 top-0 h-full w-0.5 bg-white/30 -ml-px"></div>
                     </div>
-                    <p className="text-center text-gray-300 text-xs mt-2 italic h-8">{advantageReason}</p>
+                    <div className="text-center text-gray-300 text-xs mt-2 italic min-h-[2.5rem] flex items-center justify-center">
+                        <p>{advantageReason}</p>
+                    </div>
                 </div>
 
                 <div className="space-y-3">
@@ -95,7 +97,7 @@ const DraftStatsPanel: React.FC<DraftStatsPanelProps> = ({ analysis, isLoading, 
     }
     
     return (
-         <div className="glassmorphism p-2 rounded-xl flex-grow flex flex-col border-2 panel-glow-primary min-h-[24rem]">
+         <div className="glassmorphism p-2 rounded-2xl flex-grow flex flex-col border-2 panel-glow-primary min-h-[24rem]">
             {renderContent()}
         </div>
     );

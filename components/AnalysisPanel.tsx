@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { AnalysisResult, Lane, ItemSuggestion, HeroSuggestion } from '../types';
+import { AnalysisResult, ItemSuggestion, HeroSuggestion } from '../types';
 import { RATING_STYLES, ITEM_ICONS, SPELL_ICONS } from '../constants';
-import CollapsibleTutorial from './CollapsibleTutorial';
 
 interface AnalysisPanelProps {
     isLoading: boolean;
     result: AnalysisResult | null;
     error: string | null;
-    activeLane: Lane;
 }
 
-const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ isLoading, result, error, activeLane }) => {
+const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ 
+    isLoading, 
+    result, 
+    error
+}) => {
     const [selectedSuggestion, setSelectedSuggestion] = useState<HeroSuggestion | null>(null);
     const [selectedItem, setSelectedItem] = useState<ItemSuggestion | null>(null);
 
@@ -35,7 +37,8 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ isLoading, result, error,
             return (
                 <div className="flex flex-col items-center justify-center h-full p-8 text-center">
                     <div className="w-12 h-12 border-4 border-dashed rounded-full animate-spin border-violet-400"></div>
-                    <p className="mt-4 text-lg">CARREGANDO ANÁLISE</p>
+                    <p className="mt-4 text-lg">CARREGANDO ANÁLISE...</p>
+                    <p className="mt-1 text-sm text-gray-400">A IA está processando as melhores táticas.</p>
                 </div>
             );
         }
@@ -64,9 +67,23 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ isLoading, result, error,
 
         if (!result) {
             return (
-                <div className="text-center p-8 text-gray-400 flex flex-col items-center justify-center h-full">
-                    <svg className="w-16 h-16 mb-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
-                    <p>Selecione o herói inimigo e clique em "Analisar Confronto" para receber sugestões.</p>
+                <div className="opacity-50 text-center space-y-8">
+                    <div>
+                        <h3 className="font-bold text-2xl text-amber-300">Recomendação Perfeita</h3>
+                        <p className="text-sm text-gray-500 mt-1">Aguardando análise para a sugestão ideal...</p>
+                    </div>
+                     <div>
+                        <h3 className="font-bold text-lg text-green-400">Heróis que Anulam (Lane)</h3>
+                         <p className="text-sm text-gray-500 mt-1">Aguardando análise...</p>
+                    </div>
+                     <div>
+                        <h3 className="font-bold text-lg text-indigo-400">Heróis com Vantagem (Lane)</h3>
+                        <p className="text-sm text-gray-500 mt-1">Aguardando análise...</p>
+                    </div>
+                     <div>
+                         <h3 className="text-lg font-bold text-amber-300">Itens de Counter Recomendados</h3>
+                         <p className="text-sm text-gray-500 mt-1">Aguardando análise...</p>
+                    </div>
                 </div>
             );
         }
@@ -91,7 +108,7 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ isLoading, result, error,
         const renderHeroDetailCard = (suggestion: HeroSuggestion) => {
             const styles = RATING_STYLES[suggestion.classificacao] || { text: 'text-gray-300', border: 'border-gray-400' };
             return (
-                <div className={`p-3 mt-4 bg-black bg-opacity-30 rounded-lg animated-entry border-l-4 ${styles.border}`} style={{ animationDelay: '50ms'}}>
+                <div className={`p-3 mt-4 bg-black bg-opacity-30 rounded-xl animated-entry border-l-4 ${styles.border}`} style={{ animationDelay: '50ms'}}>
                     <div className="flex-grow mb-2">
                         <p className="font-bold text-lg mt-2">{suggestion.nome}</p>
                         <div>
@@ -140,7 +157,7 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ isLoading, result, error,
 
                     return (
                         <div key={groupName} className="mb-4">
-                            <h3 className={`font-bold mb-3 ${RATING_STYLES[groupName]?.text || 'text-gray-300'} ${groupName === 'PERFEITO' ? 'text-xl text-amber-300 text-center' : 'pl-2'}`}>
+                            <h3 className={`font-bold mb-3 text-center ${RATING_STYLES[groupName]?.text || 'text-gray-300'} ${groupName === 'PERFEITO' ? 'text-xl text-amber-300' : ''}`}>
                                 {classificationLabels[groupName]}
                             </h3>
                             {groupName === 'PERFEITO' && (
@@ -148,7 +165,7 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ isLoading, result, error,
                                     Esta sugestão representa o counter ideal contra o oponente, independente da lane, com base em dados e táticas.
                                 </p>
                             )}
-                            <div className={`${groupName === 'PERFEITO' ? 'flex justify-center' : 'grid grid-cols-4 sm:grid-cols-6 gap-3'}`}>
+                            <div className="flex justify-center flex-wrap gap-3">
                                 {suggestionsInGroup.slice(0, 6).map((suggestion) => {
                                     const isSelected = selectedSuggestion?.nome === suggestion.nome;
                                     const styles = RATING_STYLES[suggestion.classificacao];
@@ -187,7 +204,7 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ isLoading, result, error,
                 })}
 
                 <h2 className="text-xl font-bold text-center mt-6 mb-3 text-amber-300">Itens de Counter Recomendados</h2>
-                <div className="grid grid-cols-4 sm:grid-cols-6 gap-3">
+                <div className="flex justify-center flex-wrap gap-3">
                     {result.sugestoesItens.map((item, index) => {
                          const isSelected = selectedItem?.nome === item.nome;
                          return (
@@ -217,7 +234,7 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ isLoading, result, error,
                 </div>
                 
                 {selectedItem && (
-                    <div className="p-3 mt-4 bg-black bg-opacity-30 rounded-lg animated-entry border-l-4 border-violet-500" style={{ animationDelay: '50ms'}}>
+                    <div className="p-3 mt-4 bg-black bg-opacity-30 rounded-xl animated-entry border-l-4 border-violet-500" style={{ animationDelay: '50ms'}}>
                         <div className="flex items-center gap-4">
                              <img 
                                 loading="lazy"
@@ -252,19 +269,11 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ isLoading, result, error,
     };
 
     return (
-        <aside className="col-span-1 glassmorphism p-4 rounded-xl animated-entry flex flex-col lg:h-[85vh] border-2 panel-glow-primary">
-            <h2 className="text-xl sm:text-2xl font-black text-center mb-2 tracking-wider flex-shrink-0">Análise Tática da IA</h2>
-            <div className="mb-4">
-                <CollapsibleTutorial title="Entendendo a Análise">
-                    <ul className="list-disc list-inside space-y-2 text-xs text-gray-300">
-                        <li><strong className="text-amber-300">Recomendação Perfeita:</strong> O counter ideal com base em dados, independentemente da lane.</li>
-                        <li><strong className="text-green-300">Heróis que Anulam:</strong> Counters que neutralizam as habilidades chave do inimigo na lane.</li>
-                        <li><strong className="text-indigo-400">Heróis com Vantagem:</strong> Opções fortes que possuem vantagem tática geral no confronto.</li>
-                        <li><strong className="text-violet-300">Itens de Counter:</strong> Itens essenciais para reduzir a eficácia do herói inimigo.</li>
-                    </ul>
-                </CollapsibleTutorial>
+        <aside className="col-span-1 glassmorphism p-4 rounded-2xl animated-entry flex flex-col lg:h-[85vh] border-2 panel-glow-primary">
+            <div className="flex-shrink-0">
+                <h2 className="text-xl sm:text-2xl font-black text-center mb-2 tracking-wider">Análise Tática da IA</h2>
             </div>
-            <div className="flex-1 overflow-y-auto pr-2 space-y-2">
+            <div className="flex-1 overflow-y-auto pr-2 min-h-[200px] flex flex-col justify-center">
                 {renderContent()}
             </div>
         </aside>

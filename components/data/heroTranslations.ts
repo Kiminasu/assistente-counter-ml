@@ -42,6 +42,20 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { title: "Combo de Abate", desc: "Use a Habilidade 2 para se aproximar, seguido da Ultimate para prender e causar dano massivo. A Habilidade 1 pode ser usada antes ou durante a Ultimate para dano adicional." }
     ]
   },
+    "Badang": {
+    name: "Badang",
+    summary: "Um guerreiro de uma vila do sul, Badang possui uma força imensa. Ele luta para proteger seu lar de monstros que emergem de uma fonte amaldiçoada.",
+    skills: [
+      { skillname: "Punho de Cavalaria", skilldesc: "Após cada 4 Ataques Básicos, o próximo Ataque Básico de Badang arremessará os inimigos para trás e causará dano extra. Inimigos arremessados contra obstáculos serão atordoados." },
+      { skillname: "Punho de Qigong", skilldesc: "Badang libera um vento de punho em uma direção, causando Dano Físico e lentidão. O vento de punho explode ao atingir um obstáculo, causando dano adicional." },
+      { skillname: "Quebra-Punho", skilldesc: "Badang avança em uma direção. Se ele atingir um herói inimigo, ele o arremessa para trás e causa dano. Ele deixa um obstáculo para trás que pode ser usado com sua passiva." },
+      { skillname: "Rachadura de Punho", skilldesc: "Badang lança uma rajada de socos em uma direção, causando dano várias vezes. Durante isso, ele ganha um escudo. Os socos podem acionar efeitos de Ataque Básico." }
+    ],
+    combos: [
+      { title: "Combo de Atordoamento na Parede", desc: "Use a Habilidade 2 para avançar por um inimigo, criando uma parede atrás dele. Use a Habilidade 1 para empurrá-lo contra a parede para um atordoamento da passiva." },
+      { title: "Combo de Explosão Total", desc: "Prenda um inimigo contra uma parede com a Habilidade 2. Use a Ultimate imediatamente, seguido da Habilidade 1 para maximizar o dano enquanto eles estão atordoados." }
+    ]
+  },
   "Nana": {
     name: "Nana",
     summary: "Nana é uma Leonina travessa que vive na Floresta Mágica. Ela tem o poder de transformar qualquer um que a irrite em um pequeno animal com seu bumerangue mágico, Molina.",
@@ -1400,105 +1414,83 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
     name: "Joy",
     summary: "Joy é uma Leonina enérgica que se move ao ritmo da batida. Ela pode avançar em sincronia com a música, tornando-se imune a controle de grupo e desferindo um ataque final devastador.",
     skills: [
-      { skillname: "Hum, Nós Não Brincamos!", skilldesc: "As habilidades de Joy são sincronizadas com a batida. Acertar uma habilidade no ritmo perfeito concede um escudo e velocidade de movimento." },
-      { skillname: "Olha, Leonin de Cristal!", skilldesc: "Joy invoca um cristal que causa dano." },
-      { skillname: "Miau, Ritmo de Alegria!", skilldesc: "Joy avança em uma direção. Usar esta habilidade no ritmo permite que ela a use novamente até 5 vezes. No último avanço, ela ganha imunidade a CC." },
-      { skillname: "Ha, Eletrizante Batida!", skilldesc: "Joy remove todos os debuffs e libera sua energia, causando dano contínuo ao seu redor. O dano aumenta a cada vez que ela acerta a batida com sua Habilidade 2." }
+      { skillname: "Humph, Joy está com Raiva!", skilldesc: "Joy ganha um escudo e velocidade de movimento extra sempre que suas habilidades atingem um inimigo ou ela acerta o ritmo da batida." },
+      { skillname: "Olha, um Cristal Leonino!", skilldesc: "Joy invoca um cristal em um local que causa Dano Mágico aos inimigos próximos." },
+      { skillname: "Miau, Ritmo da Alegria!", skilldesc: "Joy avança na direção alvo, causando Dano Mágico. Acertar um inimigo ou um cristal da Habilidade 1 no ritmo da batida permite que ela use esta habilidade novamente e a torna imune a controle de grupo durante o avanço." },
+      { skillname: "Ha, Batidas Eletrizantes!", skilldesc: "Após avançar 4 vezes no ritmo, Joy libera seu poder total, tornando-se imune a controle e causando Dano Mágico contínuo aos inimigos próximos por 4s." }
     ],
     combos: [
-      { title: "Combo Rítmico", desc: "Use a Habilidade 2 no ritmo da batida para avançar continuamente e ganhar imunidade. Após acertar a batida 5 vezes, ative a Ultimate para causar dano máximo." }
+      { title: "Dança Rítmica", desc: "Use a Habilidade 2 no ritmo da batida para avançar continuamente, ganhando imunidade a CC. Use a Habilidade 1 para criar alvos para seus avanços e, após 4 avanços rítmicos, ative a Ultimate para dano em área massivo." }
     ]
   },
   "Novaria": {
     name: "Novaria",
-    summary: "Novaria é uma maga astral que se tornou uma com as estrelas. Ela pode se mover através do terreno e disparar um projétil de longo alcance que causa dano com base na distância.",
+    summary: "Novaria, a Astróloga Rebelde, já foi uma das cientistas mais promissoras de Eruditio. Obcecada com os segredos das estrelas, ela se aventurou nas profundezas do universo, retornando com o poder de manipular esferas astrais e disparar projéteis de energia cósmica de alcances inimagináveis.",
     skills: [
-      { skillname: "Pacto Estelar", skilldesc: "As habilidades de Novaria revelam a posição dos inimigos atingidos." },
-      { skillname: "Gota Astral", skilldesc: "Novaria invoca uma esfera que causa dano e lentidão contínuos." },
-      { skillname: "Meteoro Astral", skilldesc: "Novaria entra em um estado astral, permitindo que ela passe através de paredes. Ela pode disparar uma esfera que explode, causando dano com base na distância percorrida." },
-      { skillname: "Eco Astral", skilldesc: "Novaria dispara um projétil que se anexa a um herói, revelando-o e aumentando o tamanho de sua caixa de colisão." }
+      { skillname: "Bênção Astral", skilldesc: "Inimigos atingidos pelas habilidades de Novaria são revelados e recebem uma Marca Astral. Quando uma esfera astral explode perto de um inimigo marcado, ela se divide em mais esferas." },
+      { skillname: "Meteoro Astral", skilldesc: "Novaria invoca um Meteoro Astral em um local, causando Dano Mágico contínuo e lentidão. Após um tempo, o meteoro explode, causando dano adicional." },
+      { skillname: "Eco Astral", skilldesc: "Novaria invoca uma Esfera Astral em um local. Ela pode dispará-la em uma direção, e a esfera explode ao atingir um herói inimigo, causando Dano Mágico com base na distância percorrida." },
+      { skillname: "Voleio Astral", skilldesc: "Novaria entra em um estado astral, ganhando a habilidade de atravessar terrenos e aumentando sua visão. Ela pode disparar um poderoso Voleio Astral que viaja pelo mapa, explodindo ao atingir um herói para causar Dano Mágico massivo." }
     ],
     combos: [
-      { title: "Combo de Sniper Astral", desc: "Use a Ultimate para revelar e marcar um alvo. Use a Habilidade 2 para atravessar paredes e ganhar distância, e então dispare o meteoro para dano massivo de longa distância. Use a Habilidade 1 para lentidão e zoneamento." }
-    ]
-  },
-  "Arlott": {
-    name: "Arlott",
-    summary: "Arlott é um guerreiro demoníaco que empunha uma lança dupla. Ele pode marcar seus inimigos e avançar neles com golpes implacáveis, recuperando-se a cada ataque.",
-    skills: [
-      { skillname: "Olho Demoníaco", skilldesc: "Arlott revela a posição de heróis inimigos próximos a cada 10s." },
-      { skillname: "Golpe Destemido", skilldesc: "Arlott balança sua lança, causando dano e repelindo os inimigos. Inimigos na borda externa são atordoados." },
-      { skillname: "Vingança", skilldesc: "Arlott avança em um inimigo marcado pela sua passiva, causando dano e se curando. A recarga é zerada se ele acertar." },
-      { skillname: "Golpe Final", skilldesc: "Arlott varre o campo de batalha com sua lança, empurrando todos os inimigos em uma linha para o final do alcance da habilidade." }
-    ],
-    combos: [
-      { title: "Combo de Controle e Dano", desc: "Use a Habilidade 1 para marcar os inimigos com a passiva. Use a Habilidade 2 para avançar neles repetidamente. Use a Ultimate para varrer e agrupar a equipe inimiga." }
-    ]
-  },
-  "Ixia": {
-    name: "Ixia",
-    summary: "Ixia é uma jovem inventora de Eruditio que usa uma arma de arco de energia. Ela pode armazenar energia para desferir ataques em leque, controlando o campo de batalha com suas rajadas.",
-    skills: [
-      { skillname: "Gatilho Sifão", skilldesc: "Os Ataques Básicos de Ixia aplicam uma marca. Atacar um alvo marcado com outro Ataque Básico causa dano extra e a cura." },
-      { skillname: "Arco Duplo", skilldesc: "Ixia dispara dois feixes de energia que causam dano e retardam." },
-      { skillname: "Hélice de Sifão", skilldesc: "Ixia puxa os inimigos em uma área para o centro após um curto atraso." },
-      { skillname: "Barragem de Arclight", skilldesc: "Ixia entra em modo de barragem, e seus Ataques Básicos atingem uma área em forma de leque por 5s." }
-    ],
-    combos: [
-      { title: "Combo de Dano em Área", desc: "Use a Habilidade 2 para agrupar os inimigos. Ative a Ultimate e use seus ataques em leque para atingir múltiplos alvos. Use a Habilidade 1 para dano e lentidão adicionais." }
-    ]
-  },
-  "Nolan": {
-    name: "Nolan",
-    summary: "Nolan é um detetive cósmico que pode cortar o tecido do espaço. Ele deixa fendas dimensionais para trás, que ele pode usar para se mover rapidamente e causar dano em cadeia.",
-    skills: [
-      { skillname: "Visão Dimensional", skilldesc: "As habilidades de Nolan cortam o espaço, deixando uma fenda que retarda os inimigos. Se duas fendas se conectarem, elas explodem, puxando os inimigos e causando dano." },
-      { skillname: "Expansão", skilldesc: "Nolan avança e causa dano, deixando uma fenda." },
-      { skillname: "Calibre", skilldesc: "Nolan ataca em uma área, causando dano e deixando uma fenda." },
-      { skillname: "Fratura", skilldesc: "Nolan corta a área à sua frente 3 vezes, causando dano e deixando fendas. Ele também remove todos os debuffs de si mesmo." }
-    ],
-    combos: [
-      { title: "Combo de Fenda Dimensional", desc: "Use a Habilidade 2 para se aproximar, seguido da Habilidade 1 para criar uma segunda fenda e causar a explosão. Use a Ultimate para dano massivo e para criar múltiplas fendas para explosões em cadeia." }
-    ]
-  },
-  "Cici": {
-    name: "Cici",
-    summary: "Cici é uma artista de rua animada que luta com um ioiô. Ela ganha 'Deleite' ao causar dano, aumentando sua velocidade de movimento e permitindo que ela salte e ataque com agilidade.",
-    skills: [
-      { skillname: "Alegria do Artista", skilldesc: "Cici ganha acúmulos de 'Deleite' ao causar dano, aumentando sua velocidade de movimento. Com acúmulos máximos, ela ganha roubo de vida." },
-      { skillname: "Explosão de Ioiô", skilldesc: "Cici lança seu ioiô em um alvo, prendendo-se a ele e podendo atacá-lo duas vezes enquanto se move." },
-      { skillname: "Link Animoso", skilldesc: "Cici salta para um local. Se ela pousar em um inimigo, ela salta novamente." },
-      { skillname: "Cortina Final", skilldesc: "Cici joga seu ioiô em um herói inimigo, ligando-o a outro herói próximo. Ela pode reativar para puxá-los juntos, causando dano e atordoando." }
-    ],
-    combos: [
-      { title: "Combo de Mobilidade e Dano", desc: "Use a Habilidade 1 para se prender a um alvo e causar dano contínuo. Use a Habilidade 2 para saltar e se reposicionar. Use a Ultimate para prender dois inimigos e puxá-los para um controle em grupo." }
-    ]
-  },
-  "Chip": {
-    name: "Chip",
-    summary: "Chip é um gênio da tecnologia que pode criar portais para teletransporte rápido pelo mapa, oferecendo mobilidade global para sua equipe.",
-    skills: [
-      { skillname: "Hora do Lanche!", skilldesc: "Quando Chip está fora de combate, ele come batatas fritas para se curar. Ao ajudar um aliado, ele oferece uma batata para curá-lo também." },
-      { skillname: "Curso de Colisão", skilldesc: "Chip avança com sua hovercraft, ganhando um escudo. Seu próximo Ataque Básico o faz avançar e arremessar o inimigo." },
-      { skillname: "Excesso de Velocidade", skilldesc: "Chip acelera sua hovercraft, ganhando velocidade de movimento e causando dano contínuo aos inimigos próximos." },
-      { skillname: "Atalho", skilldesc: "Chip joga um portal principal em um local e pode conectar portais próximos a ele. Aliados (e inimigos) podem usar os portais para se teletransportar." }
-    ],
-    combos: [
-      { title: "Combo de Mobilidade Global", desc: "Use a Ultimate para criar um portal principal perto de um objetivo ou luta. Conecte portais para que seus aliados possam se juntar rapidamente. Use a Habilidade 1 e 2 para controle e dano no combate." }
+      { title: "Combo de Atiradora de Longo Alcance", desc: "Use a Habilidade 2 para invocar uma esfera. Posicione-se a uma grande distância e dispare a esfera para causar dano máximo. Use a Habilidade 1 para retardar inimigos e facilitar o acerto." },
+      { title: "Execução Global", desc: "Ative a Ultimate para ganhar visão de um alvo com pouca vida em qualquer lugar do mapa. Dispare o Voleio Astral para garantir o abate à distância." }
     ]
   },
   "Zhuxin": {
     name: "Zhuxin",
-    summary: "Zhuxin, a Feiticeira das Borboletas, comanda enxames de borboletas espirituais para punir o mal. Com sua lanterna, ela guia almas perdidas, mas não hesita em usar seu poder para prender e consumir a força vital de seus inimigos em um campo carmesim.",
+    summary: "Zhuxin é a guardiã das Lanternas da Alma, uma maga graciosa que comanda borboletas etéreas. Ela tece feitiços que prendem a alma de seus inimigos, florescendo em poder destrutivo e controle de grupo.",
     skills: [
-      { skillname: "Borboletas Carmesins", skilldesc: "As habilidades de Zhuxin aplicam Pilhas de Borboleta Carmesim nos inimigos. Ao atingir 3 pilhas, as borboletas irrompem, causando dano com base no HP perdido do alvo. Zhuxin também recupera HP ao recuperar Mana." },
-      { skillname: "Graça Flutuante", skilldesc: "Zhuxin lança sua lanterna de seda como um bumerangue, causando dano mágico na ida e na volta e aplicando uma Pilha de Borboleta." },
-      { skillname: "Armadilha da Alma", skilldesc: "Zhuxin lança uma armadilha de seda que se prende ao primeiro herói inimigo atingido, causando dano e puxando-o levemente. Se não atingir um herói, a armadilha permanece no chão e se ativará em inimigos que se aproximarem." },
-      { skillname: "Campo Carmesim", skilldesc: "Zhuxin cria um grande campo de borboletas. Inimigos dentro do campo são revelados, retardados e continuamente recebem Pilhas de Borboleta Carmesim. O campo também aumenta a velocidade de recarga das Pilhas de Borboleta." }
+      { skillname: "Graça Vibrante", skilldesc: "As habilidades de Zhuxin aplicam 'Laço da Alma' nos inimigos. Com acúmulos máximos, a próxima habilidade consome os acúmulos para puxar os alvos e causar dano adicional." },
+      { skillname: "Ponto da Tecelã de Almas", skilldesc: "Zhuxin lança um orbe de seda que ricocheteia entre os inimigos, causando Dano Mágico e aplicando Laço da Alma." },
+      { skillname: "Borboletas Carmesim", skilldesc: "Zhuxin invoca borboletas que atacam os inimigos, causando dano e aplicando Laço da Alma. Ela também ganha um escudo." },
+      { skillname: "Farol Carmesim", skilldesc: "Zhuxin cria um campo de borboletas que causa dano contínuo e aplica Laço da Alma aos inimigos dentro dele. O campo se move lentamente." }
     ],
     combos: [
-      { title: "Combo de Controle e Explosão", desc: "Use a Habilidade 2 para prender um inimigo. Imediatamente use a Habilidade 1 para aplicar mais pilhas e acionar a explosão da passiva para um dano massivo." },
-      { title: "Combo de Luta em Equipe", desc: "Posicione a Ultimate em uma área estratégica para retardar e aplicar pilhas em vários inimigos. Use a Habilidade 1 e a Habilidade 2 para focar em alvos prioritários e detonar a passiva repetidamente." }
+      { title: "Combo de Controle em Massa", desc: "Use a Habilidade 2 e Habilidade 1 para aplicar acúmulos da passiva nos inimigos. Use a Ultimate para aplicar mais acúmulos e, em seguida, use outra habilidade para ativar o puxão em massa da passiva." },
+      { title: "Troca Rápida", desc: "Use a Habilidade 1 para pokear e aplicar marcas. Se um inimigo se aproximar, use a Habilidade 2 para ganhar um escudo e contra-atacar, ativando a passiva para controle." }
+    ]
+  },
+  "Sun": {
+    name: "Sun",
+    summary: "O Rei Macaco, uma figura lendária renascida. Sun empunha seu Bastão Dourado e pode invocar clones de si mesmo para confundir e dominar seus oponentes em batalha.",
+    skills: [
+      { skillname: "Deus Símio", skilldesc: "Os clones de Sun reduzem a Defesa Física dos inimigos que atacam. Os ataques de Sun e seus clones curam Sun ao atingir inimigos." },
+      { skillname: "Variedade Infinita", skilldesc: "Sun arremessa seu bastão dourado, causando dano e lentidão. Ao atingir um herói ou chegar ao alcance máximo, o bastão se transforma em um clone." },
+      { skillname: "Movimento Instantâneo", skilldesc: "Sun e seus clones avançam em direção a um alvo, causando Dano Físico." },
+      { skillname: "Técnicas de Clone", skilldesc: "Sun invoca um clone poderoso por 12s. O clone herda uma porcentagem dos atributos de Sun e pode usar suas habilidades." }
+    ],
+    combos: [
+      { title: "Engajamento com Clones", desc: "Use a Ultimate para invocar o clone principal. Use a Habilidade 1 para criar um segundo clone e, em seguida, use a Habilidade 2 para fazer com que todos os macacos ataquem o mesmo alvo, destruindo sua defesa." },
+      { title: "Split Push", desc: "Use seus clones para empurrar rotas e destruir torres rapidamente, enquanto o Sun real fica seguro ou participa de lutas." }
+    ]
+  },
+  "Obsidia": {
+    name: "Obsidia",
+    summary: "Uma caçadora de elite das Montanhas de Cristal, Obsidia usa fragmentos de obsidiana energizados para perfurar seus inimigos com precisão mortal. Cada tiro é uma obra de arte letal.",
+    skills: [
+      { skillname: "Lâminas de Obsidiana", skilldesc: "Os ataques básicos de Obsidia aplicam marcas de fragmento. Com 3 marcas, o próximo ataque de Obsidia causa dano verdadeiro extra com base no HP perdido do alvo." },
+      { skillname: "Tiro Estilhaçado", skilldesc: "Obsidia dispara um projétil de obsidiana que se estilhaça ao atingir o primeiro alvo, causando dano em um cone atrás dele e aplicando uma marca de fragmento." },
+      { skillname: "Salto Cristalino", skilldesc: "Obsidia salta para trás, ganhando velocidade de ataque por um curto período e deixando para trás um campo de cristais afiados que causam lentidão aos inimigos." },
+      { skillname: "Voleio do Crepúsculo", skilldesc: "Obsidia canaliza e dispara uma rajada de 5 projéteis de obsidiana de longo alcance em uma área alvo, com cada projétil causando Dano Físico massivo a todos os inimigos atingidos." }
+    ],
+    combos: [
+      { title: "Combo de Dano e Kite", desc: "Use a Habilidade 1 para pokear e aplicar marcas. Use a Habilidade 2 para criar distância de ameaças e se reposicionar. Em lutas de equipe, use a Ultimate para dano em área e foque em aplicar marcas para ativar o dano verdadeiro da passiva." },
+      { title: "Execução à Distância", desc: "Posicione-se com a Habilidade 2, enfraqueça os alvos com a Habilidade 1 e ataques básicos, e finalize-os com a Ultimate de longo alcance." }
+    ]
+  },
+  "Ixia": {
+    name: "Ixia",
+    summary: "Uma inventora genial e sonhadora de Eruditio, Ixia empunha sua poderosa Arma de Arco. Ela sonha em compartilhar suas invenções com o mundo, usando o poder do Starlium para proteger seus amigos e ideais.",
+    skills: [
+      { skillname: "Sifão de Starlium", skilldesc: "Ataques Básicos e habilidades aplicam uma marca de 'Sifão' nos inimigos. O próximo Ataque Básico em um alvo com 2 marcas consome as marcas para causar dano extra e curar Ixia." },
+      { skillname: "Raio Duplo", skilldesc: "Ixia dispara dois raios de energia que causam Dano Físico e lentidão aos inimigos em uma área retangular." },
+      { skillname: "Hélice Estelar", skilldesc: "Ixia lança um recipiente de energia Starlium que puxa os inimigos para o centro após um curto atraso, causando Dano Físico." },
+      { skillname: "Barragem de Arcoluz", skilldesc: "Ixia desmonta sua arma em seis armas menores e entra em um estado estacionário. Ela pode então disparar uma barragem contínua de tiros em uma grande área em forma de leque, causando dano a todos os inimigos na área." }
+    ],
+    combos: [
+      { title: "Combo de Dano em Área", desc: "Use a Habilidade 2 para agrupar os inimigos. Imediatamente, ative a Ultimate para atingir todos eles com a barragem. Use a Habilidade 1 para aplicar lentidão e marcas." },
+      { title: "Troca na Lane", desc: "Use a Habilidade 1 para pokear e, em seguida, use Ataques Básicos para ativar a cura da passiva, permitindo trocas favoráveis." }
     ]
   }
-}
+};

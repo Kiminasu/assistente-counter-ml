@@ -10,12 +10,10 @@ function getGenAIClient(): GoogleGenAI {
         return genAIInstance;
     }
     
-    // A linha abaixo é para deploy em serviços como Vercel/Netlify que usam VITE
-    const apiKey = (import.meta as any).env.VITE_API_KEY;
+    const apiKey = process.env.API_KEY;
 
     if (!apiKey) {
-        // Mensagem de erro atualizada para ambientes de frontend (Vite).
-        throw new Error("A chave da API do Google não está configurada. Certifique-se de que a variável de ambiente VITE_API_KEY está definida.");
+        throw new Error("A chave da API do Google não está configurada. Certifique-se de que a variável de ambiente API_KEY está definida.");
     }
     genAIInstance = new GoogleGenAI({ apiKey });
     return genAIInstance;
@@ -159,8 +157,12 @@ export async function getStrategicAnalysis(
         const analysisTypeContext = isTheoretical
             ? "Os dados estatísticos são limitados. Portanto, analise CADA UM dos heróis da lista a seguir, que foram pré-selecionados por seu alto potencial tático, e determine os melhores counters."
             : "Analise CADA UM dos seguintes heróis, que são counters estatísticos, e siga as instruções.";
+        
+        const criticalRule = lane !== 'NENHUMA' 
+            ? "REGRA CRÍTICA: É OBRIGATÓRIO que a sua primeira sugestão de herói seja um que ANULE o oponente. A anulação deve ser baseada na neutralização direta de habilidades chave, não apenas em vantagem estatística. Depois, inclua outros heróis com VANTAGEM geral."
+            : "";
 
-        const userQuery = `Oponente ${laneContext}:\n${enemyDetailsPrompt}\n\n${roleQueryContext}\n${analysisTypeContext}\n\nHeróis para Análise:\n${countersDetailsPrompt}\n\n${commonInstructions}\n\nSe a análise for para uma lane específica (não 'NENHUMA'), priorize a sugestão de pelo menos 1 herói que ANULE o oponente (focando em anulação de habilidades). Além disso, inclua pelo menos 1 herói com 'VANTAGEM' geral, se houver candidatos viáveis.\n\nLISTA DETALHADA DE ITENS DISPONÍVEIS:\n${formattedItemList}`;
+        const userQuery = `Oponente ${laneContext}:\n${enemyDetailsPrompt}\n\n${roleQueryContext}\n${analysisTypeContext}\n\nHeróis para Análise:\n${countersDetailsPrompt}\n\n${commonInstructions}\n\n${criticalRule}\n\nLISTA DETALHADA DE ITENS DISPONÍVEIS:\n${formattedItemList}`;
 
         const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",
@@ -293,7 +295,7 @@ const draftAnalysisSchema = {
         },
         advantageReason: { 
             type: Type.STRING, 
-            description: "Análise tática curta (1-2 frases) explicando o motivo principal da pontuação de vantagem." 
+            description: "Análise tática curta e específica (máximo 2 frases) explicando o motivo principal da pontuação, mencionando matchups de heróis chave."
         },
         allyComposition: compositionSchema,
         enemyComposition: compositionSchema,
@@ -323,11 +325,9 @@ const draftAnalysisSchema = {
             items: {
                 type: Type.OBJECT,
                 properties: {
-                    // FIX: Changed 'itemName' to 'name' to match the StrategicItemSuggestion type.
                     name: { type: Type.STRING, description: "Nome do item, deve ser um da lista de itens fornecida." },
                     reason: { type: Type.STRING, description: "Motivo pelo qual este item é importante para a composição do time contra os inimigos." }
                 },
-                // FIX: Changed 'itemName' to 'name' to match the StrategicItemSuggestion type.
                 required: ["name", "reason"]
             }
         }
@@ -342,7 +342,6 @@ export async function getDraftAnalysis(
 ): Promise<DraftAnalysisResult> {
     try {
         const ai = getGenAIClient();
-        // Correção: Envia apenas os nomes dos itens para reduzir o tamanho do prompt e evitar erros de truncamento de JSON.
         const itemNames = GAME_ITEMS.map(item => item.nome).join(', ');
         const availableHeroNames = availableHeroes.map(h => h.name).join(', ');
 
@@ -372,14 +371,14 @@ Lista de Itens para sugestão:
 [${itemNames}]
 
 INSTRUÇÕES:
-1. Analise a composição do Time Aliado contra o Time Inimigo. Considere as interações de habilidades, mencionando a numeração da habilidade (ex: Habilidade 1, Ultimate), incluindo dano base, escalonamento, tipo de dano e tempos de recarga. Se um time não tiver heróis, considere isso na análise.
-2. Forneça um 'advantageScore' numérico de -10 (vantagem clara para o inimigo) a 10 (vantagem clara para o aliado).
-3. Forneça um 'advantageReason' tático e conciso que explique a pontuação.
-4. Preencha 'allyComposition' e 'enemyComposition', atribuindo uma pontuação de 1 a 10 para cada categoria (dano físico, dano mágico, tanque/sobrevivência, controle de grupo) com base no potencial combinado dos heróis selecionados.
-5. Forneça 2-3 'teamStrengths' (pontos fortes) da composição aliada.
-6. Forneça 2-3 'teamWeaknesses' (pontos fracos) e como o time inimigo pode explorá-los.
-7. Se houver menos de 5 heróis no time aliado, sugira o melhor 'nextPickSuggestion' da lista de heróis disponíveis. A sugestão deve incluir 'heroName', 'role' (da lista [${ROLES.join(', ')}]) e um 'reason' tático. Se o time aliado estiver completo, este campo deve ser nulo.
-8. Sugira 2 'strategicItems' gerais da lista de itens que seriam cruciais para o time aliado neste confronto, explicando o motivo.`;
+1.  Sua análise deve ser extremamente precisa. O 'Time Aliado' é composto APENAS pelos heróis listados em "Time Aliado". O 'Time Inimigo' é composto APENAS pelos heróis em "Time Inimigo". Não os confunda. Baseie toda a sua análise nesta separação.
+2.  Forneça um 'advantageScore' numérico de -10 (vantagem clara para o inimigo) a 10 (vantagem clara para o aliado).
+3.  Forneça um 'advantageReason' tático e concreto que explique a pontuação. Seja específico, mencionando confrontos de heróis chave (ex: "Vantagem aliada devido ao controle em área do Atlas que anula a mobilidade inimiga de Fanny e Ling."). Evite frases genéricas como "melhor composição" ou "draft superior".
+4.  Preencha 'allyComposition' e 'enemyComposition', atribuindo uma pontuação de 1 a 10 para cada categoria (dano físico, dano mágico, tanque/sobrevivência, controle de grupo) com base no potencial combinado dos heróis selecionados.
+5.  Forneça 2-3 'teamStrengths' (pontos fortes) da composição aliada.
+6.  Forneça 2-3 'teamWeaknesses' (pontos fracos) e como o time inimigo pode explorá-los.
+7.  Se houver menos de 5 heróis no time aliado, sugira o melhor 'nextPickSuggestion' da lista de heróis disponíveis. A sugestão deve incluir 'heroName', 'role' (da lista [${ROLES.join(', ')}]) e um 'reason' tático. Se o time aliado estiver completo, este campo deve ser nulo.
+8.  Sugira 2 'strategicItems' gerais da lista de itens que seriam cruciais para o time aliado neste confronto, explicando o motivo.`;
 
         const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",

@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-// FIX: Moved HeroDetails import from heroService.ts to types.ts to fix import error.
 import { Hero, Lane, AnalysisResult, LANES, ROLES, Role, HeroSuggestion, BanSuggestion, MatchupData, ItemSuggestion, RankCategory, RankDays, SortField, HeroRankInfo, Team, DraftAnalysisResult, NextPickSuggestion, StrategicItemSuggestion, LaneOrNone, HeroDetails } from './types';
 import { fetchHeroes, fetchCounters, fetchHeroDetails, fetchHeroRankings, ApiHeroRankData } from './services/heroService';
 import { getStrategicAnalysis, getDetailedMatchupAnalysis, getDraftAnalysis } from './services/geminiService';
 import { findClosestString } from './utils';
-import { SPELL_ICONS, HERO_ROLES } from './constants';
+import { SPELL_ICONS } from './constants';
 import { HERO_EXPERT_RANK } from './components/data/heroData';
 import { GAME_ITEMS } from './components/data/items';
-import { HERO_LANES_DATA } from './components/data/heroLanes';
+import { HERO_CATEGORIZATION } from './components/data/heroCategorization';
+import { MANUAL_HERO_DATA } from './components/data/manualHeroData';
 import LoadingOverlay from './components/LoadingOverlay';
 import AnalysisPanel from './components/AnalysisPanel';
 import LaneSelector from './components/LaneSelector';
@@ -35,7 +35,7 @@ const App: React.FC = () => {
     const [isLoadingHeroes, setIsLoadingHeroes] = useState(true);
     const [heroLoadingError, setHeroLoadingError] = useState<string | null>(null);
 
-    const [gameMode, setGameMode] = useState<GameMode>('1v1');
+    const [gameMode, setGameMode] = useState<GameMode>('synergy');
 
     // State for 1v1 mode
     const [matchupAllyPick, setMatchupAllyPick] = useState<string | null>(null);
@@ -109,21 +109,33 @@ const App: React.FC = () => {
     useEffect(() => {
         const loadInitialData = async () => {
             try {
-                const fetchedHeroes = await fetchHeroes();
+                const fetchedHeroesFromApi = await fetchHeroes();
                 
-                Object.values(fetchedHeroes).forEach((hero: Hero) => {
-                    hero.roles = HERO_ROLES[hero.name] || [];
-                });
+                // Merge manual data with API data. API data takes precedence.
+                const allHeroesData = { ...MANUAL_HERO_DATA, ...fetchedHeroesFromApi };
 
+                const enrichedHeroes: Record<string, Hero> = {};
                 const heroLanesMap: Record<number, Lane[]> = {};
-                for (const hero of Object.values(fetchedHeroes) as Hero[]) {
-                    if (hero.apiId && HERO_LANES_DATA[hero.name]) {
-                        heroLanesMap[hero.apiId] = HERO_LANES_DATA[hero.name];
+
+                for (const heroId in allHeroesData) {
+                    const baseHero = allHeroesData[heroId as keyof typeof allHeroesData];
+                    const categorization = HERO_CATEGORIZATION[baseHero.name];
+                    
+                    const enrichedHero: Hero = {
+                        ...baseHero,
+                        roles: categorization?.roles || [],
+                    };
+                    
+                    enrichedHeroes[heroId] = enrichedHero;
+
+                    if (baseHero.apiId && categorization?.lanes) {
+                        heroLanesMap[baseHero.apiId] = categorization.lanes;
                     }
                 }
-
-                setHeroes(fetchedHeroes);
+                
+                setHeroes(enrichedHeroes);
                 setHeroLanes(heroLanesMap);
+
             } catch (error) {
                 const errorMessage = error instanceof Error ? error.message : 'Ocorreu um erro desconhecido.';
                 setHeroLoadingError(`Falha ao carregar dados iniciais: ${errorMessage} Tente atualizar a página.`);
@@ -225,8 +237,10 @@ const App: React.FC = () => {
         const calculateCounterBans = async () => {
             let personalCounters: BanSuggestion[] = [];
             try {
-                if (gameMode === '1v1') {
-                    const yourHero = matchupAllyPick ? heroes[matchupAllyPick] : null;
+                 const heroIdForCounters = gameMode === '1v1' ? matchupAllyPick : synergyHeroPick;
+
+                if ((gameMode === '1v1' || gameMode === 'synergy') && heroIdForCounters) {
+                    const yourHero = heroes[heroIdForCounters];
                     if (yourHero?.apiId) {
                         const counterData = await fetchCounters(yourHero.apiId);
                         personalCounters = counterData
@@ -285,7 +299,7 @@ const App: React.FC = () => {
         };
 
         calculateCounterBans();
-    }, [matchupAllyPick, draftAllyPicks, gameMode, heroes, heroApiIdMap]);
+    }, [matchupAllyPick, draftAllyPicks, synergyHeroPick, gameMode, heroes, heroApiIdMap]);
     
     const handleAnalysis = useCallback(async () => {
         if (!matchupEnemyPick) return;
@@ -310,7 +324,6 @@ const App: React.FC = () => {
                 const roleForAnalysis: Role | 'Qualquer' = isAnyLane ? 'Qualquer' : laneToRoleMap[lane as Lane];
                 const counterData = await fetchCounters(enemyHero.apiId);
                 
-                // FIX: Cast Object.values(heroes) to Hero[] to ensure correct type inference.
                 const heroesForRole = isAnyLane 
                     ? (Object.values(heroes) as Hero[])
                     : (Object.values(heroes) as Hero[]).filter((h: Hero) => h.roles.includes(roleForAnalysis as Role));
@@ -366,11 +379,9 @@ const App: React.FC = () => {
                 const validSpellNames = Object.keys(SPELL_ICONS);
     
                 const heroSuggestions: HeroSuggestion[] = analysisFromAI.sugestoesHerois.map((aiSuggestion): HeroSuggestion => {
-                    // FIX: Cast Object.values(heroes) to Hero[] to ensure correct type inference for heroData.
                     const heroData = (Object.values(heroes) as Hero[]).find((h: Hero) => h.name === aiSuggestion.nome);
                     const stat = relevantCounterHeroes.find(c => c.name === aiSuggestion.nome);
                     const winRateIncrease = stat?.increase_win_rate || 0;
-                    // FIX: Corrected typo 'VANTAGAGE' to 'VANTAGEM'.
                     const classificacao: 'ANULA' | 'VANTAGEM' = (isTheoretical || !stat) ? 'VANTAGEM' : (winRateIncrease > 0.04 ? 'ANULA' : 'VANTAGEM');
                     const correctedSpells = aiSuggestion.spells.map(spell => ({ ...spell, nome: findClosestString(spell.nome, validSpellNames) }));
                     return {
@@ -539,14 +550,12 @@ const App: React.FC = () => {
                 const enemyDetails = pickedEnemyHeroes.map(h => currentCache[h.apiId]).filter((d): d is HeroDetails => !!d);
 
                 const pickedHeroIds = new Set(allPickedHeroes.map((h: Hero) => h.id));
-                // FIX: Cast Object.values(heroes) to Hero[] to ensure correct type inference for availableHeroes.
                 const availableHeroes = (Object.values(heroes) as Hero[]).filter((h: Hero) => !pickedHeroIds.has(h.id));
                 
                 const analysisFromAI = await getDraftAnalysis(allyDetails, enemyDetails, availableHeroes);
 
                 let nextPick: NextPickSuggestion | null = null;
                 if (analysisFromAI.nextPickSuggestion) {
-                    // FIX: Cast Object.values(heroes) to Hero[] to ensure correct type inference for heroData.
                     const heroData = (Object.values(heroes) as Hero[]).find((h: Hero) => h.name === analysisFromAI.nextPickSuggestion?.heroName);
                     const role = findClosestString(analysisFromAI.nextPickSuggestion.role, ROLES as any) as Role;
                     if (heroData) {
@@ -628,12 +637,36 @@ const App: React.FC = () => {
         setActiveSlot(null);
     }, [activeSlot, gameMode, draftAllyPicks, draftEnemyPicks]);
     
+    const handleClear1v1Slot = useCallback((team: Team) => {
+        if (team === 'ally') {
+            setMatchupAllyPick(null);
+        } else {
+            setMatchupEnemyPick(null);
+        }
+        setAnalysisResult(null);
+        setAnalysisError(null);
+        setMatchupData(null);
+        setMatchupError(null);
+    }, []);
+
     const handleClearDraft = useCallback(() => {
         setDraftAllyPicks(Array(5).fill(null));
         setDraftEnemyPicks(Array(5).fill(null));
         setDraftAnalysis(null);
         setDraftAnalysisError(null);
     }, []);
+
+    const handleClearDraftSlot = useCallback((team: Team, index: number) => {
+        if (team === 'ally') {
+            const newPicks = [...draftAllyPicks];
+            newPicks[index] = null;
+            setDraftAllyPicks(newPicks);
+        } else {
+            const newPicks = [...draftEnemyPicks];
+            newPicks[index] = null;
+            setDraftEnemyPicks(newPicks);
+        }
+    }, [draftAllyPicks, draftEnemyPicks]);
 
     const tabs = useMemo(() => [
         {
@@ -666,71 +699,67 @@ const App: React.FC = () => {
         if (gameMode === '1v1') {
             return (
                  <div className="flex flex-col gap-6">
-                    {/* Top Section: Hero Matchup & Controls */}
-                    <div className="grid grid-cols-2 lg:grid-cols-11 gap-4 lg:gap-6 items-start">
+                    <CollapsibleTutorial title="Como Analisar um Confronto">
+                        <ol className="list-decimal list-inside space-y-1 text-xs sm:text-sm text-gray-300">
+                           <li>Selecione o <strong className="text-red-300">herói inimigo</strong>. (Obrigatório)</li>
+                           <li>Selecione <strong className="text-blue-300">seu herói</strong>. (Opcional, para análise direta e sinergias).</li>
+                           <li>Escolha a <strong className="text-amber-300">lane</strong> do confronto abaixo. (Selecione "NENHUMA" para sugestões gerais).</li>
+                           <li>Clique em <strong className="text-violet-500">"Analisar Confronto"</strong> para a IA gerar as sugestões.</li>
+                       </ol>
+                    </CollapsibleTutorial>
+
+                    {/* Top Section: Hero Matchup */}
+                    <div className="grid grid-cols-2 gap-4 items-start">
                         {/* Ally Hero Column */}
-                        <div className="col-span-1 lg:col-span-3 flex flex-col gap-2 glassmorphism p-3 rounded-xl border-2 panel-glow-blue">
+                        <div className="col-span-1 flex flex-col gap-2 glassmorphism p-3 rounded-2xl border-2 panel-glow-blue">
                             <h2 className="text-xl font-black text-center text-blue-300 tracking-wider">SEU HERÓI</h2>
                             <HeroSlot 
                                 type="ally" 
                                 heroId={matchupAllyPick} 
                                 heroes={heroes} 
                                 onClick={() => handleSlotClick('ally', 0)}
-                                label="Selecione"
+                                onClear={() => handleClear1v1Slot('ally')}
+                                label="Opcional"
                             />
                         </div>
 
                         {/* Enemy Hero Column */}
-                        <div className="col-span-1 lg:col-span-3 lg:order-3 flex flex-col gap-2 glassmorphism p-3 rounded-xl border-2 panel-glow-red">
+                        <div className="col-span-1 flex flex-col gap-2 glassmorphism p-3 rounded-2xl border-2 panel-glow-red">
                             <h2 className="text-xl font-black text-center text-red-300 tracking-wider">INIMIGO</h2>
                             <HeroSlot 
                                 type="enemy" 
                                 heroId={matchupEnemyPick} 
                                 heroes={heroes} 
                                 onClick={() => handleSlotClick('enemy', 0)}
+                                onClear={() => handleClear1v1Slot('enemy')}
                                 label="Selecione"
                             />
                         </div>
+                    </div>
 
-                        {/* Center Controls Column */}
-                        <div className="col-span-2 lg:col-span-5 lg:order-2 flex flex-col items-center gap-4">
-                            <div className="w-full max-w-lg">
-                                <CollapsibleTutorial title="Como Analisar um Confronto">
-                                    <ol className="list-decimal list-inside space-y-1 text-xs sm:text-sm text-gray-300">
-                                        <li>Selecione <strong className="text-blue-300">seu herói</strong> no painel azul.</li>
-                                        <li>Selecione o <strong className="text-red-300">herói inimigo</strong> no painel vermelho.</li>
-                                        <li>Escolha a <strong className="text-amber-300">lane</strong> do confronto abaixo. (Selecione "NENHUMA" para sugestões gerais).</li>
-                                        <li>Clique em <strong className="text-amber-300">"Analisar"</strong> para a IA gerar as sugestões com base em dados reais.</li>
-                                    </ol>
-                                </CollapsibleTutorial>
-                            </div>
-                            <div className="w-full max-w-lg">
-                                <LaneSelector 
-                                    activeLane={activeLane} 
-                                    onSelectLane={setActiveLane} 
-                                    isDisabled={is1v1AnalysisLoading}
-                                />
-                            </div>
-                            <div className="w-full max-w-lg animated-entry" style={{ animationDelay: '150ms' }}>
-                                <button
-                                    onClick={handleAnalysis}
-                                    disabled={!matchupEnemyPick || is1v1AnalysisLoading}
-                                    className="w-full bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white font-bold py-3 px-4 rounded-lg text-lg hover:from-violet-400 hover:to-fuchsia-400 transition-all duration-300 disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed flex items-center justify-center shadow-lg shadow-violet-500/40 disabled:shadow-none transform hover:scale-105"
-                                >
-                                    {is1v1AnalysisLoading ? (
-                                        <>
-                                            <svg className="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
-                                                <circle className="opacity-25" cx="10" cy="10" r="8" stroke="currentColor" strokeWidth="4"></circle>
-                                                <path className="opacity-75" fill="currentColor" d="M4 10a6 6 0 016-6v2a4 4 0 00-4 4H4z"></path>
-                                            </svg>
-                                            Analisando...
-                                        </>
-                                    ) : (
-                                        'Analisar Confronto'
-                                    )}
-                                </button>
-                            </div>
-                        </div>
+                    <div className="glassmorphism p-4 rounded-2xl animated-entry border-2 panel-glow-primary flex flex-col gap-4">
+                        <LaneSelector 
+                            activeLane={activeLane} 
+                            onSelectLane={setActiveLane} 
+                            isDisabled={is1v1AnalysisLoading}
+                        />
+                         <button
+                            onClick={handleAnalysis}
+                            disabled={!matchupEnemyPick || is1v1AnalysisLoading}
+                            className="w-full bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white font-bold py-3 px-4 rounded-xl text-lg hover:from-violet-400 hover:to-fuchsia-400 transition-all duration-300 disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed flex items-center justify-center shadow-lg shadow-violet-500/40 disabled:shadow-none transform hover:scale-105"
+                        >
+                            {is1v1AnalysisLoading ? (
+                                <>
+                                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                                        <circle className="opacity-25" cx="10" cy="10" r="8" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 10a6 6 0 016-6v2a4 4 0 00-4 4H4z"></path>
+                                    </svg>
+                                    Analisando...
+                                </>
+                            ) : (
+                                'Analisar Confronto'
+                            )}
+                        </button>
                     </div>
 
                     {/* Ban Suggestions Section */}
@@ -753,7 +782,6 @@ const App: React.FC = () => {
                                 isLoading={is1v1AnalysisLoading}
                                 result={analysisResult}
                                 error={analysisError}
-                                activeLane={activeLane as Lane}
                             />
                         </div>
                     </div>
@@ -767,6 +795,7 @@ const App: React.FC = () => {
                     enemyPicks={draftEnemyPicks}
                     heroes={heroes}
                     onSlotClick={handleSlotClick}
+                    onClearSlot={handleClearDraftSlot}
                     counterBanSuggestions={counterBanSuggestions}
                     metaBanSuggestions={metaBanSuggestions}
                     isBanLoading={isMetaBansLoading}
@@ -780,7 +809,7 @@ const App: React.FC = () => {
         if (gameMode === 'ranking') {
             return (
                 <div className="w-full max-w-4xl mx-auto animated-entry">
-                    <div className="glassmorphism p-4 sm:p-6 rounded-xl border-2 panel-glow-primary">
+                    <div className="glassmorphism p-4 sm:p-6 rounded-2xl border-2 panel-glow-primary">
                         <HeroRankings 
                             isLoading={isRankingsLoading}
                             rankings={heroRankings}
@@ -805,6 +834,10 @@ const App: React.FC = () => {
                 heroes={heroes}
                 heroApiIdMap={heroApiIdMap}
                 onHeroSelectClick={() => handleSlotClick('synergy', 0)}
+                onClearHero={() => setSynergyHeroPick(null)}
+                counterBanSuggestions={counterBanSuggestions}
+                metaBanSuggestions={metaBanSuggestions}
+                isBanLoading={isMetaBansLoading}
             />;
         }
         if (gameMode === 'heroes') {

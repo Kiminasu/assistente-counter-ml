@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Hero, Lane, LANES } from '../types';
 import { LANE_ICONS } from '../constants';
@@ -22,7 +21,9 @@ const HeroSelectionModal: React.FC<HeroSelectionModalProps> = ({ isOpen, onClose
         const heroesArray: Hero[] = Object.values(heroes);
 
         const searchFiltered = searchTerm
-            ? heroesArray.filter((hero: Hero) => hero.name.toLowerCase().includes(searchTerm.toLowerCase()))
+            ? heroesArray.filter((hero: Hero) =>
+                hero.name.toLowerCase().includes(searchTerm.toLowerCase())
+            )
             : heroesArray;
 
         const laneFiltered = selectedLane === 'Todas'
@@ -37,6 +38,7 @@ const HeroSelectionModal: React.FC<HeroSelectionModalProps> = ({ isOpen, onClose
 
     useEffect(() => {
         if (isOpen) {
+            document.body.style.overflow = 'hidden';
             setSearchTerm('');
             setSelectedLane('Todas');
             const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
@@ -44,6 +46,9 @@ const HeroSelectionModal: React.FC<HeroSelectionModalProps> = ({ isOpen, onClose
                 setTimeout(() => searchInputRef.current?.focus(), 100);
             }
         }
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
     }, [isOpen]);
 
     if (!isOpen) {

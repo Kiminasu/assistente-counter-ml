@@ -9,7 +9,7 @@ const CollapsibleTutorial: React.FC<CollapsibleTutorialProps> = ({ title, childr
     const [isOpen, setIsOpen] = useState(false);
 
     return (
-        <div className="text-sm text-gray-400 bg-black bg-opacity-20 rounded-lg border border-slate-700 w-full animated-entry">
+        <div className="text-sm text-gray-400 bg-black bg-opacity-20 rounded-2xl border border-slate-700 w-full animated-entry">
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 className="w-full p-3 flex justify-between items-center cursor-pointer text-left"
