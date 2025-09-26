@@ -155,3 +155,14 @@ export interface HeroDetails {
     skills: HeroSkill[];
     combos: SkillCombo[];
 }
+
+export interface KeySynergy {
+    heroName: string;
+    reason: string;
+}
+
+export interface SynergyAnalysisPayload {
+    playstyleAndRole: string;
+    keySynergies: KeySynergy[];
+    counterStrategy: string;
+}

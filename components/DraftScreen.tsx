@@ -1,5 +1,5 @@
 import React from 'react';
-import { Hero, Team, BanSuggestion, DraftAnalysisResult } from '../types';
+import { Hero, Team, BanSuggestion, DraftAnalysisResult, RankCategory } from '../types';
 import HeroSlot from './HeroSlot';
 import BanSuggestions from './BanSuggestions';
 import DraftStatsPanel from './DraftStatsPanel';
@@ -19,6 +19,8 @@ interface DraftScreenProps {
     isDraftAnalysisLoading: boolean;
     draftAnalysisError: string | null;
     onClearDraft: () => void;
+    activeMetaRank: RankCategory;
+    onMetaRankChange: (rank: RankCategory) => void;
 }
 
 const DraftScreen: React.FC<DraftScreenProps> = ({ 
@@ -33,7 +35,9 @@ const DraftScreen: React.FC<DraftScreenProps> = ({
     draftAnalysis,
     isDraftAnalysisLoading,
     draftAnalysisError,
-    onClearDraft
+    onClearDraft,
+    activeMetaRank,
+    onMetaRankChange
 }) => {
     return (
         <div className="flex flex-col gap-6 animated-entry">
@@ -95,6 +99,8 @@ const DraftScreen: React.FC<DraftScreenProps> = ({
                     metaSuggestions={metaBanSuggestions}
                     isLoading={isBanLoading}
                     variant="5v5"
+                    activeMetaRank={activeMetaRank}
+                    onMetaRankChange={onMetaRankChange}
                 />
             </div>
             

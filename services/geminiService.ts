@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { Lane, Role, SpellSuggestion, MatchupClassification, GameItem, ROLES, Hero, DraftAnalysisResult, LaneOrNone, HeroStrategyAnalysis, HeroDetails } from "../types";
+import { Lane, Role, SpellSuggestion, MatchupClassification, GameItem, ROLES, Hero, DraftAnalysisResult, LaneOrNone, HeroStrategyAnalysis, HeroDetails, KeySynergy, SynergyAnalysisPayload } from "../types";
 import { SPELL_ICONS } from "../constants";
 import { GAME_ITEMS } from '../components/data/items';
 
@@ -10,10 +10,11 @@ function getGenAIClient(): GoogleGenAI {
         return genAIInstance;
     }
     
-    const apiKey = process.env.VITE_API_KEY;
+    // FIX: Replaced `import.meta.env.VITE_API_KEY` with `process.env.API_KEY` to resolve the TypeScript error and adhere to coding guidelines.
+    const apiKey = process.env.API_KEY;
 
     if (!apiKey) {
-        throw new Error("A chave da API do Google não está configurada. Certifique-se de que a variável de ambiente VITE_API_KEY está definida.");
+        throw new Error("A chave da API do Google não está configurada. Certifique-se de que a variável de ambiente API_KEY está definida.");
     }
     genAIInstance = new GoogleGenAI({ apiKey });
     return genAIInstance;
@@ -481,5 +482,79 @@ INSTRUÇÕES:
     } catch (error) {
         console.error(`Erro ao chamar a API Gemini para análise estratégica de ${heroDetails.name}:`, error);
         throw new Error("Não foi possível gerar a análise estratégica do herói.");
+    }
+}
+
+const synergyAnalysisSchema = {
+    type: Type.OBJECT,
+    properties: {
+        playstyleAndRole: { 
+            type: Type.STRING, 
+            description: "Análise tática concisa do estilo de jogo do herói e sua principal função na equipe (ex: iniciador, dano de linha de trás, split pusher, protetor)." 
+        },
+        keySynergies: {
+            type: Type.ARRAY,
+            description: "Análise detalhada de 2 sinergias chave com heróis da lista de 'Bons Aliados'. Explique combos de habilidades específicos e como eles se beneficiam mutuamente.",
+            items: {
+                type: Type.OBJECT,
+                properties: {
+                    heroName: { type: Type.STRING, description: "Nome do herói aliado." },
+                    reason: { type: Type.STRING, description: "Explicação tática da sinergia." }
+                },
+                required: ["heroName", "reason"]
+            }
+        },
+        counterStrategy: { 
+            type: Type.STRING, 
+            description: "Estratégia detalhada de como o herói selecionado deve se comportar contra os heróis da lista 'Forte Contra'. Explique quais fraquezas do oponente devem ser exploradas e quais habilidades usar." 
+        }
+    },
+    required: ["playstyleAndRole", "keySynergies", "counterStrategy"]
+};
+
+export async function getSynergyAnalysis(
+    selectedHeroDetails: HeroDetails,
+    alliesDetails: HeroDetails[],
+    strongAgainstDetails: HeroDetails[],
+): Promise<SynergyAnalysisPayload> {
+    try {
+        const ai = getGenAIClient();
+        
+        const selectedHeroPrompt = formatHeroDetailsForPrompt(selectedHeroDetails);
+        const alliesPrompt = alliesDetails.map(d => d.name).join(', ');
+        const strongAgainstPrompt = strongAgainstDetails.map(d => d.name).join(', ');
+
+        const systemPrompt = "Você é um analista e treinador profissional de Mobile Legends, nível Mítico Glória. Sua análise é profunda, tática e focada em otimizar a performance do jogador. Responda APENAS com um objeto JSON válido que siga o schema.";
+
+        const userQuery = `
+HERÓI EM ANÁLISE:
+${selectedHeroPrompt}
+
+LISTA DE BONS ALIADOS PARA ANÁLISE DE SINERGIA: [${alliesPrompt}]
+LISTA DE HERÓIS QUE ELE É FORTE CONTRA (COUNTERS): [${strongAgainstPrompt}]
+
+INSTRUÇÕES DETALHADAS:
+1.  **playstyleAndRole**: Descreva o estilo de jogo ideal para ${selectedHeroDetails.name}. Ele é um iniciador agressivo? Um causador de dano na linha de trás? Um protetor? Como ele deve se posicionar e qual sua principal contribuição para a vitória da equipe?
+2.  **keySynergies**: Escolha os 2 melhores heróis da lista de 'Bons Aliados' e explique a sinergia em detalhes. Seja específico sobre os combos de habilidades. Exemplo: "A Ultimate do Atlas agrupa os inimigos, criando o cenário perfeito para a Ultimate da Pharsa causar dano máximo em todos."
+3.  **counterStrategy**: Explique a estratégia para jogar contra os heróis da lista 'Forte Contra'. Como as habilidades de ${selectedHeroDetails.name} exploram as fraquezas desses oponentes? Qual é o plano de jogo para dominar esses confrontos específicos?
+`;
+        
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: userQuery,
+            config: {
+                systemInstruction: systemPrompt,
+                responseMimeType: "application/json",
+                responseSchema: synergyAnalysisSchema,
+                temperature: 0.3,
+            },
+        });
+
+        const jsonText = response.text.trim();
+        return JSON.parse(jsonText) as SynergyAnalysisPayload;
+
+    } catch (error) {
+        console.error(`Erro ao chamar a API Gemini para análise de sinergia de ${selectedHeroDetails.name}:`, error);
+        throw new Error("Não foi possível gerar a análise de sinergia do herói.");
     }
 }

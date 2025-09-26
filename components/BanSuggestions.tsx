@@ -1,14 +1,28 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { BanSuggestion } from '../types';
+import { BanSuggestion, RankCategory } from '../types';
 
 interface BanSuggestionsProps {
     counterSuggestions: BanSuggestion[];
     metaSuggestions: BanSuggestion[];
     isLoading: boolean;
     variant: '1v1' | '5v5';
+    activeMetaRank: RankCategory;
+    onMetaRankChange: (rank: RankCategory) => void;
 }
 
-const BanSuggestions: React.FC<BanSuggestionsProps> = ({ counterSuggestions, metaSuggestions, isLoading, variant }) => {
+const RANK_LABELS: Record<RankCategory, string> = {
+    all: "Todos", epic: "Épico", legend: "Lenda", mythic: "Mítico", honor: "Honra", glory: "Glória"
+};
+const META_RANKS_TO_DISPLAY: RankCategory[] = ['epic', 'legend', 'mythic', 'honor', 'glory'];
+
+const BanSuggestions: React.FC<BanSuggestionsProps> = ({ 
+    counterSuggestions, 
+    metaSuggestions, 
+    isLoading, 
+    variant,
+    activeMetaRank,
+    onMetaRankChange
+}) => {
     // userSelectedTab rastreia a escolha explícita do utilizador. Nulo significa que nenhuma escolha foi feita.
     const [userSelectedTab, setUserSelectedTab] = useState<'counter' | 'meta' | null>(null);
 
@@ -54,7 +68,7 @@ const BanSuggestions: React.FC<BanSuggestionsProps> = ({ counterSuggestions, met
         }
 
         const isCounterTab = activeTab === 'counter';
-        const suggestionsToShow = isCounterTab ? suggestions.slice(0, 6) : suggestions;
+        const suggestionsToShow = suggestions;
 
         const containerClasses = isCounterTab
             ? "grid grid-cols-3 sm:grid-cols-6 gap-4 py-2"
@@ -119,6 +133,23 @@ const BanSuggestions: React.FC<BanSuggestionsProps> = ({ counterSuggestions, met
                     </button>
                  </div>
             </div>
+            {activeTab === 'meta' && (
+                <div className="flex-shrink-0 flex flex-wrap justify-center gap-1 mb-3 bg-black/20 p-1 rounded-lg">
+                    {META_RANKS_TO_DISPLAY.map(rank => (
+                        <button
+                            key={rank}
+                            onClick={() => onMetaRankChange(rank)}
+                            className={`flex-1 text-xs font-semibold py-1 px-2 rounded-md transition-colors ${
+                                activeMetaRank === rank
+                                    ? 'bg-red-800 text-white'
+                                    : 'text-gray-400 hover:bg-gray-700/50'
+                            }`}
+                        >
+                            {RANK_LABELS[rank]}
+                        </button>
+                    ))}
+                </div>
+            )}
             <div className="flex-grow">
                 {renderContent()}
             </div>

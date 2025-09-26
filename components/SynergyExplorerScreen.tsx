@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { BanSuggestion, Hero, HeroStrategyAnalysis, HeroRankInfo } from '../types';
+import { BanSuggestion, Hero, HeroStrategyAnalysis, HeroRankInfo, RankCategory } from '../types';
 import CollapsibleTutorial from './CollapsibleTutorial';
 import HeroSlot from './HeroSlot';
 import SynergyPanel from './SynergyPanel';
@@ -20,6 +20,8 @@ interface SynergyExplorerScreenProps {
     counterBanSuggestions: BanSuggestion[];
     metaBanSuggestions: BanSuggestion[];
     isBanLoading: boolean;
+    activeMetaRank: RankCategory;
+    onMetaRankChange: (rank: RankCategory) => void;
 }
 
 const SectionHeader: React.FC<{ children: React.ReactNode }> = ({ children }) => (
@@ -35,6 +37,8 @@ const SynergyExplorerScreen: React.FC<SynergyExplorerScreenProps> = ({
     counterBanSuggestions,
     metaBanSuggestions,
     isBanLoading,
+    activeMetaRank,
+    onMetaRankChange
 }) => {
     const selectedHero = selectedHeroId ? heroes[selectedHeroId] : null;
 
@@ -272,6 +276,8 @@ const SynergyExplorerScreen: React.FC<SynergyExplorerScreenProps> = ({
                 metaSuggestions={metaBanSuggestions}
                 isLoading={isBanLoading}
                 variant="1v1"
+                activeMetaRank={activeMetaRank}
+                onMetaRankChange={onMetaRankChange}
             />
             
             {(selectedHeroId) && (
