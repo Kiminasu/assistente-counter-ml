@@ -10,11 +10,13 @@ function getGenAIClient(): GoogleGenAI {
         return genAIInstance;
     }
 
-    // FIX: Switched from import.meta.env.VITE_API_KEY to process.env.API_KEY to align with the coding guidelines and resolve the TypeScript error.
-    const apiKey = process.env.API_KEY;
+    // The API key is retrieved from the VITE_API_KEY environment variable,
+    // which is common for projects built with Vite and deployed on platforms like Vercel or Netlify.
+    const apiKey = process.env.VITE_API_KEY;
 
     if (!apiKey) {
-        throw new Error("Google API key is missing.");
+        // Clear error message to guide the user in configuration.
+        throw new Error("A chave da API do Google (VITE_API_KEY) não foi encontrada. Certifique-se de que a variável de ambiente está configurada corretamente nas configurações do seu projeto na Vercel ou Netlify.");
     }
     genAIInstance = new GoogleGenAI({ apiKey });
     return genAIInstance;
@@ -165,6 +167,7 @@ export async function getStrategicAnalysis(
 
         const userQuery = `Oponente ${laneContext}:\n${enemyDetailsPrompt}\n\n${roleQueryContext}\n${analysisTypeContext}\n\nHeróis para Análise:\n${countersDetailsPrompt}\n\n${commonInstructions}\n\n${criticalRule}\n\nLISTA DETALHADA DE ITENS DISPONÍVEIS:\n${formattedItemList}`;
 
+        // FIX: Removed thinkingConfig to enable thinking for higher quality analysis, as per guidelines for non-low-latency tasks.
         const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",
             contents: userQuery,
@@ -173,7 +176,6 @@ export async function getStrategicAnalysis(
                 responseMimeType: "application/json",
                 responseSchema: analysisResponseSchema,
                 temperature: 0.1,
-                thinkingConfig: { thinkingBudget: 0 },
             },
         });
         
@@ -255,6 +257,7 @@ INSTRUÇÕES:
 3. Forneça uma 'detailedAnalysis'. Comece a análise com a mesma palavra da 'classification' para consistência. Explique o motivo e dê 2 dicas táticas diretas.
 4. Recomende o melhor 'recommendedSpell' da lista [${spellList}].`;
 
+        // FIX: Removed thinkingConfig to enable thinking for higher quality analysis, as per guidelines for non-low-latency tasks.
         const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",
             contents: userQuery,
@@ -263,7 +266,6 @@ INSTRUÇÕES:
                 responseMimeType: "application/json",
                 responseSchema: matchupResponseSchema,
                 temperature: 0.1,
-                thinkingConfig: { thinkingBudget: 0 }
             },
         });
 
