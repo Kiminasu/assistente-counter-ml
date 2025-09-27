@@ -12,7 +12,7 @@ function getGenAIClient(): GoogleGenAI {
 
     // FIX: A chave da API deve ser obtida de process.env.API_KEY de acordo com as diretrizes de codificação.
     // A implementação anterior usava import.meta.env, que não está em conformidade e causava um erro de tipo.
-    const apiKey = process.env.API_KEY;
+    const apiKey = import.meta.env.VITE_API_KEY;
 
     if (!apiKey) {
         // A disponibilidade da chave da API é um pré-requisito e é tratada externamente.
