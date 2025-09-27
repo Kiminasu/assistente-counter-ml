@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Hero, Lane, AnalysisResult, LANES, ROLES, Role, HeroSuggestion, BanSuggestion, MatchupData, ItemSuggestion, RankCategory, RankDays, SortField, HeroRankInfo, Team, DraftAnalysisResult, NextPickSuggestion, StrategicItemSuggestion, LaneOrNone, HeroDetails } from './types';
-import { fetchHeroes, fetchCounters, fetchHeroDetails, fetchHeroRankings, ApiHeroRankData } from './services/heroService';
-import { getStrategicAnalysis, getDetailedMatchupAnalysis, getDraftAnalysis } from './services/geminiService';
+import { Hero, Lane, AnalysisResult, LANES, ROLES, Role, HeroSuggestion, BanSuggestion, MatchupData, ItemSuggestion, RankCategory, RankDays, SortField, HeroRankInfo, Team, DraftAnalysisResult, NextPickSuggestion, StrategicItemSuggestion, LaneOrNone, HeroDetails, HeroRelation, SynergyAnalysisPayload } from './types';
+import { fetchHeroes, fetchCounters, fetchHeroDetails, fetchHeroRankings, ApiHeroRankData, fetchHeroRelations } from './services/heroService';
+import { getStrategicAnalysis, getDetailedMatchupAnalysis, getDraftAnalysis, getSynergyAnalysis } from './services/geminiService';
 import { findClosestString } from './utils';
 import { SPELL_ICONS } from './constants';
 import { HERO_EXPERT_RANK } from './components/data/heroData';
@@ -30,6 +30,7 @@ type GameMode = '1v1' | '5v5' | 'ranking' | 'item' | 'synergy' | 'heroes';
 
 const NUMBER_OF_META_BAN_SUGGESTIONS = 8;
 const NUMBER_OF_COUNTER_BAN_SUGGESTIONS = 6;
+const INITIAL_COUNTERS_TO_FETCH = 12; // Fetch more to account for filtering
 
 const App: React.FC = () => {
     const [heroes, setHeroes] = useState<Record<string, Hero>>({});
@@ -64,6 +65,12 @@ const App: React.FC = () => {
     const [matchupData, setMatchupData] = useState<MatchupData | null>(null);
     const [matchupError, setMatchupError] = useState<string | null>(null);
     
+    // FIX: Add states for synergy data in 1v1 mode tab.
+    const [synergyRelations1v1, setSynergyRelations1v1] = useState<HeroRelation | null>(null);
+    const [synergyAnalysis1v1, setSynergyAnalysis1v1] = useState<SynergyAnalysisPayload | null>(null);
+    const [synergyError1v1, setSynergyError1v1] = useState<string | null>(null);
+    const [isSynergyLoading1v1, setIsSynergyLoading1v1] = useState(false);
+
     const [heroDetailsCache, setHeroDetailsCache] = useState<Record<number, HeroDetails>>(() => {
         try {
             const item = window.localStorage.getItem('heroDetailsCache');
@@ -238,7 +245,7 @@ const App: React.FC = () => {
         const calculateCounterBans = async () => {
             let personalCounters: BanSuggestion[] = [];
             try {
-                 const heroIdForCounters = gameMode === '1v1' ? matchupAllyPick : synergyHeroPick;
+                const heroIdForCounters = gameMode === '1v1' ? matchupAllyPick : synergyHeroPick;
 
                 if ((gameMode === '1v1' || gameMode === 'synergy') && heroIdForCounters) {
                     const yourHero = heroes[heroIdForCounters];
@@ -246,7 +253,7 @@ const App: React.FC = () => {
                         const counterData = await fetchCounters(yourHero.apiId);
                         personalCounters = counterData
                             .sort((a, b) => b.increase_win_rate - a.increase_win_rate)
-                            .slice(0, NUMBER_OF_COUNTER_BAN_SUGGESTIONS)
+                            .slice(0, INITIAL_COUNTERS_TO_FETCH)
                             .map(data => {
                                 const hero = heroApiIdMap[data.heroid];
                                 if (!hero) return null;
@@ -255,7 +262,8 @@ const App: React.FC = () => {
                                     reason: `Forte counter para ${yourHero.name} (+${(data.increase_win_rate * 100).toFixed(1)}% de vitória).`
                                 };
                             })
-                            .filter((s): s is BanSuggestion => s !== null);
+                            .filter((s): s is BanSuggestion => s !== null)
+                            .slice(0, NUMBER_OF_COUNTER_BAN_SUGGESTIONS);
                     }
                 } else if (gameMode === '5v5') {
                     const pickedAllyHeroes = draftAllyPicks
@@ -267,10 +275,11 @@ const App: React.FC = () => {
                         const allCountersData = await Promise.all(counterPromises);
                         
                         const aggregatedCounters: Record<number, { hero: Hero; count: number; totalWinRate: number }> = {};
+                        const pickedHeroIds = new Set([...draftAllyPicks, ...draftEnemyPicks].filter(Boolean));
 
                         allCountersData.flat().forEach(counter => {
                             const hero = heroApiIdMap[counter.heroid];
-                            if (!hero) return;
+                            if (!hero || pickedHeroIds.has(hero.id)) return;
 
                             if (aggregatedCounters[counter.heroid]) {
                                 aggregatedCounters[counter.heroid].count++;
@@ -285,11 +294,12 @@ const App: React.FC = () => {
                                 if (b.count !== a.count) return b.count - a.count;
                                 return (b.totalWinRate / b.count) - (a.totalWinRate / a.count);
                             })
-                            .slice(0, NUMBER_OF_COUNTER_BAN_SUGGESTIONS)
+                            .slice(0, INITIAL_COUNTERS_TO_FETCH)
                             .map(agg => ({
                                 hero: agg.hero,
                                 reason: `Countera ${agg.count} herói(s) aliado(s). Ameaça: +${((agg.totalWinRate / agg.count) * 100).toFixed(1)}% de vitória.`
-                            }));
+                            }))
+                            .slice(0, NUMBER_OF_COUNTER_BAN_SUGGESTIONS);
                     }
                 }
             } catch (error) {
@@ -300,8 +310,57 @@ const App: React.FC = () => {
         };
 
         calculateCounterBans();
-    }, [matchupAllyPick, draftAllyPicks, synergyHeroPick, gameMode, heroes, heroApiIdMap]);
+    }, [matchupAllyPick, draftAllyPicks, draftEnemyPicks, synergyHeroPick, gameMode, heroes, heroApiIdMap]);
     
+    // FIX: Add useEffect to fetch synergy data for the 1v1 mode tab.
+    useEffect(() => {
+        if (gameMode !== '1v1' || !matchupAllyPick) {
+            setSynergyRelations1v1(null);
+            setSynergyAnalysis1v1(null);
+            setSynergyError1v1(null);
+            setIsSynergyLoading1v1(false);
+            return;
+        }
+
+        const fetchSynergyData = async () => {
+            setIsSynergyLoading1v1(true);
+            setSynergyError1v1(null);
+            setSynergyRelations1v1(null);
+            setSynergyAnalysis1v1(null);
+            try {
+                const selectedHero = heroes[matchupAllyPick!];
+                if (!selectedHero || !selectedHero.apiId) {
+                    throw new Error("Herói aliado inválido para análise de sinergia.");
+                }
+
+                const relationsData = await fetchHeroRelations(selectedHero.apiId);
+                setSynergyRelations1v1(relationsData);
+
+                const selectedHeroDetails = await fetchHeroDetails(selectedHero.apiId);
+
+                const strongAgainstHeroes = (relationsData?.strong?.target_hero_id || [])
+                    .map(id => heroApiIdMap[id])
+                    .filter((h): h is Hero => !!h);
+
+                const strongAgainstDetails = (await Promise.all(
+                    strongAgainstHeroes.map(h => fetchHeroDetails(h.apiId))
+                )).filter((d): d is HeroDetails => !!d);
+                
+                if (strongAgainstDetails.length > 0) {
+                    const analysisResult = await getSynergyAnalysis(selectedHeroDetails, [], strongAgainstDetails);
+                    setSynergyAnalysis1v1(analysisResult);
+                }
+
+            } catch (err) {
+                setSynergyError1v1(err instanceof Error ? err.message : "Falha ao carregar dados de sinergia.");
+            } finally {
+                setIsSynergyLoading1v1(false);
+            }
+        };
+
+        fetchSynergyData();
+    }, [matchupAllyPick, gameMode, heroes, heroApiIdMap]);
+
     const handleAnalysis = useCallback(async () => {
         if (!matchupEnemyPick) return;
         
@@ -676,13 +735,16 @@ const App: React.FC = () => {
         },
         {
             label: "Sinergias",
+// FIX: Pass correct props to SynergyPanel and use the new state variables for synergy data.
             content: <SynergyPanel 
-                selectedHeroId={matchupAllyPick}
-                heroes={heroes}
+                isLoading={isSynergyLoading1v1}
+                error={synergyError1v1}
+                relations={synergyRelations1v1}
+                analysis={synergyAnalysis1v1}
                 heroApiIdMap={heroApiIdMap}
             />
         }
-    ], [is1v1AnalysisLoading, matchupData, matchupError, matchupAllyPick, heroes, heroApiIdMap]);
+    ], [is1v1AnalysisLoading, matchupData, matchupError, isSynergyLoading1v1, synergyError1v1, synergyRelations1v1, synergyAnalysis1v1, heroApiIdMap]);
 
     if (isLoadingHeroes) {
         return <LoadingOverlay message={'CARREGANDO'} />;

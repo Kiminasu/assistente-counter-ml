@@ -1,5 +1,5 @@
 
-import { Hero, Lane, HeroDetails, HeroSkill, SkillCombo } from '../types';
+import { Hero, Lane, HeroDetails, HeroSkill, SkillCombo, HeroRelation } from '../types';
 import { HERO_TRANSLATIONS } from '../components/data/heroTranslations';
 
 interface ApiHeroRecord {
@@ -30,12 +30,6 @@ export interface ApiHeroRankData {
             head: string;
         }
     }
-}
-
-export interface HeroRelation {
-    assist: { target_hero_id: number[] };
-    strong: { target_hero_id: number[] };
-    weak: { target_hero_id: number[] };
 }
 
 function cleanSkillDescription(desc: string): string {

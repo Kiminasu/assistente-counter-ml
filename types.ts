@@ -168,3 +168,10 @@ export interface SynergyAnalysisPayload {
     keySynergies: KeySynergy[];
     counterStrategy: string;
 }
+
+// FIX: Export the HeroRelation interface so it can be used by other components.
+export interface HeroRelation {
+    assist: { target_hero_id: number[] };
+    strong: { target_hero_id: number[] };
+    weak: { target_hero_id: number[] };
+}

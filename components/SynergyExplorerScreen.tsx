@@ -1,15 +1,15 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { BanSuggestion, Hero, HeroStrategyAnalysis, HeroRankInfo, RankCategory } from '../types';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { BanSuggestion, Hero, HeroStrategyAnalysis, HeroRankInfo, RankCategory, HeroDetails, HeroRelation, SynergyAnalysisPayload } from '../types';
 import CollapsibleTutorial from './CollapsibleTutorial';
 import HeroSlot from './HeroSlot';
 import SynergyPanel from './SynergyPanel';
 import HeroStrategyPanel from './HeroStrategyPanel';
 import BanSuggestions from './BanSuggestions';
-import { getHeroStrategyAnalysis } from '../services/geminiService';
-import { fetchHeroDetails, fetchHeroRankings, ApiHeroRankData } from '../services/heroService';
+import { getHeroStrategyAnalysis, getSynergyAnalysis } from '../services/geminiService';
+import { fetchHeroDetails, fetchHeroRankings, fetchHeroRelations } from '../services/heroService';
 import { findClosestString } from '../utils';
 import { GAME_ITEMS } from './data/items';
-import { META_SYNERGIES } from './data/synergyData';
+import { META_SYNERGIES, MANUAL_SYNERGY_DATA } from './data/synergyData';
 
 interface SynergyExplorerScreenProps {
     selectedHeroId: string | null;
@@ -41,10 +41,19 @@ const SynergyExplorerScreen: React.FC<SynergyExplorerScreenProps> = ({
     onMetaRankChange
 }) => {
     const selectedHero = selectedHeroId ? heroes[selectedHeroId] : null;
+    const analysisSectionRef = useRef<HTMLDivElement>(null);
 
-    const [analysis, setAnalysis] = useState<HeroStrategyAnalysis | null>(null);
+    // States for strategy analysis
+    const [strategyAnalysis, setStrategyAnalysis] = useState<HeroStrategyAnalysis | null>(null);
+    const [strategyAnalysisError, setStrategyAnalysisError] = useState<string | null>(null);
+    
+    // States for synergy analysis
+    const [synergyRelations, setSynergyRelations] = useState<HeroRelation | null>(null);
+    const [synergyAnalysis, setSynergyAnalysis] = useState<SynergyAnalysisPayload | null>(null);
+    const [synergyError, setSynergyError] = useState<string | null>(null);
+
+    // Combined loading state
     const [isAnalysisLoading, setIsAnalysisLoading] = useState(false);
-    const [analysisError, setAnalysisError] = useState<string | null>(null);
 
     const [risingHeroes, setRisingHeroes] = useState<HeroRankInfo[]>([]);
     const [isRisingHeroesLoading, setIsRisingHeroesLoading] = useState(true);
@@ -122,8 +131,11 @@ const SynergyExplorerScreen: React.FC<SynergyExplorerScreenProps> = ({
 
     useEffect(() => {
         if (!selectedHeroId) {
-            setAnalysis(null);
-            setAnalysisError(null);
+            setStrategyAnalysis(null);
+            setStrategyAnalysisError(null);
+            setSynergyAnalysis(null);
+            setSynergyError(null);
+            setSynergyRelations(null);
         }
     }, [selectedHeroId]);
     
@@ -131,34 +143,71 @@ const SynergyExplorerScreen: React.FC<SynergyExplorerScreenProps> = ({
         if (!selectedHero || !selectedHero.apiId) return;
 
         setIsAnalysisLoading(true);
-        setAnalysisError(null);
-        setAnalysis(null);
+        setStrategyAnalysis(null);
+        setStrategyAnalysisError(null);
+        setSynergyAnalysis(null);
+        setSynergyError(null);
+        setSynergyRelations(null);
+
+        setTimeout(() => {
+            analysisSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
 
         try {
-            const heroDetails = await fetchHeroDetails(selectedHero.apiId);
-            const analysisResult = await getHeroStrategyAnalysis(heroDetails);
+            const heroNameMap = Object.values(heroes).reduce((acc, hero: Hero) => {
+                acc[hero.name] = hero.apiId;
+                return acc;
+            }, {} as Record<string, number>);
 
-            const validItemNames = GAME_ITEMS.map(item => item.nome);
+            const strategyTask = async () => {
+                const heroDetails = await fetchHeroDetails(selectedHero.apiId);
+                const analysisResult = await getHeroStrategyAnalysis(heroDetails);
+
+                const validItemNames = GAME_ITEMS.map(item => item.nome);
+                const correctedCoreItems = analysisResult.coreItems.map(item => ({ ...item, nome: findClosestString(item.nome, validItemNames) }));
+                const correctedSituationalItems = analysisResult.situationalItems.map(item => ({ ...item, nome: findClosestString(item.nome, validItemNames) }));
+                
+                return { ...analysisResult, coreItems: correctedCoreItems, situationalItems: correctedSituationalItems };
+            };
+
+            const synergyTask = async () => {
+                const relationsData = await fetchHeroRelations(selectedHero.apiId);
+                setSynergyRelations(relationsData);
+
+                let strongIds = [...(relationsData?.strong?.target_hero_id || [])];
+                if (MANUAL_SYNERGY_DATA[selectedHero.name]) {
+                    const manualData = MANUAL_SYNERGY_DATA[selectedHero.name];
+                    if (strongIds.length < 4) {
+                        const needed = 4 - strongIds.length;
+                        const candidates = manualData.strongAgainst.map(name => heroNameMap[name]).filter(id => id && !strongIds.includes(id));
+                        strongIds.push(...candidates.slice(0, needed));
+                    }
+                }
+                const uniqueStrongIds = [...new Set(strongIds)];
+                
+                // Update relations with supplemented data for UI consistency
+                setSynergyRelations(prev => ({ ...prev, strong: { target_hero_id: uniqueStrongIds }, weak: prev?.weak || {target_hero_id: []}, assist: prev?.assist || {target_hero_id: []} }));
+
+                const selectedHeroDetails = await fetchHeroDetails(selectedHero.apiId);
+                const strongAgainstDetails = (await Promise.all(
+                    uniqueStrongIds.map(id => heroApiIdMap[id]).filter(Boolean).map(h => fetchHeroDetails(h.apiId))
+                )).filter((d): d is HeroDetails => !!d);
+
+                return await getSynergyAnalysis(selectedHeroDetails, [], strongAgainstDetails);
+            };
+
+            const [strategyResult, synergyResult] = await Promise.all([
+                strategyTask(),
+                synergyTask()
+            ]);
             
-            const correctedCoreItems = analysisResult.coreItems.map(item => ({
-                ...item,
-                nome: findClosestString(item.nome, validItemNames),
-            }));
-
-            const correctedSituationalItems = analysisResult.situationalItems.map(item => ({
-                ...item,
-                nome: findClosestString(item.nome, validItemNames),
-            }));
-
-            setAnalysis({
-                ...analysisResult,
-                coreItems: correctedCoreItems,
-                situationalItems: correctedSituationalItems,
-            });
+            setStrategyAnalysis(strategyResult);
+            setSynergyAnalysis(synergyResult);
 
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : "Ocorreu um erro desconhecido.";
-            setAnalysisError(errorMessage);
+            setStrategyAnalysisError(errorMessage);
+            setSynergyError(errorMessage);
         } finally {
             setIsAnalysisLoading(false);
         }
@@ -281,12 +330,14 @@ const SynergyExplorerScreen: React.FC<SynergyExplorerScreenProps> = ({
             />
             
             {(selectedHeroId) && (
-                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                 <div ref={analysisSectionRef} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div className="glassmorphism p-4 rounded-2xl border-2 panel-glow-primary flex flex-col">
-                        <SectionHeader>Sinergias e Counters</SectionHeader>
+                        <SectionHeader>Sinergias</SectionHeader>
                         <SynergyPanel
-                            selectedHeroId={selectedHeroId}
-                            heroes={heroes}
+                            isLoading={isAnalysisLoading}
+                            error={synergyError}
+                            relations={synergyRelations}
+                            analysis={synergyAnalysis}
                             heroApiIdMap={heroApiIdMap}
                         />
                     </div>
@@ -294,9 +345,9 @@ const SynergyExplorerScreen: React.FC<SynergyExplorerScreenProps> = ({
                         <SectionHeader>Análise Estratégica da IA</SectionHeader>
                         <HeroStrategyPanel
                             selectedHero={selectedHero}
-                            analysis={analysis}
+                            analysis={strategyAnalysis}
                             isLoading={isAnalysisLoading}
-                            error={analysisError}
+                            error={strategyAnalysisError}
                         />
                     </div>
                 </div>
