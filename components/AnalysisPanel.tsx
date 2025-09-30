@@ -1,17 +1,20 @@
+
 import React, { useState, useEffect } from 'react';
-import { AnalysisResult, ItemSuggestion, HeroSuggestion } from '../types';
+import { AnalysisResult, ItemSuggestion, HeroSuggestion, LaneOrNone } from '../types';
 import { RATING_STYLES, ITEM_ICONS, SPELL_ICONS } from '../constants';
 
 interface AnalysisPanelProps {
     isLoading: boolean;
     result: AnalysisResult | null;
     error: string | null;
+    activeLane: LaneOrNone;
 }
 
 const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ 
     isLoading, 
     result, 
-    error
+    error,
+    activeLane
 }) => {
     const [selectedSuggestion, setSelectedSuggestion] = useState<HeroSuggestion | null>(null);
     const [selectedItem, setSelectedItem] = useState<ItemSuggestion | null>(null);
@@ -68,16 +71,12 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
         if (!result) {
             return (
                 <div className="opacity-50 text-center space-y-8">
-                    <div>
-                        <h3 className="font-bold text-2xl text-amber-300">Recomendação Perfeita</h3>
-                        <p className="text-sm text-gray-500 mt-1">Aguardando análise para a sugestão ideal...</p>
-                    </div>
                      <div>
                         <h3 className="font-bold text-lg text-green-400">Heróis que Anulam (Lane)</h3>
                          <p className="text-sm text-gray-500 mt-1">Aguardando análise...</p>
                     </div>
                      <div>
-                        <h3 className="font-bold text-lg text-indigo-400">Heróis com Vantagem (Lane)</h3>
+                        <h3 className="font-bold text-lg text-indigo-400">Heróis com Vantagem</h3>
                         <p className="text-sm text-gray-500 mt-1">Aguardando análise...</p>
                     </div>
                      <div>
@@ -97,18 +96,17 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
             return acc;
         }, {} as Record<string, HeroSuggestion[]>);
 
-        const groupOrder: ('PERFEITO' | 'ANULA' | 'VANTAGEM')[] = ['PERFEITO', 'ANULA', 'VANTAGEM'];
+        const groupOrder: ('ANULA' | 'VANTAGEM')[] = ['ANULA', 'VANTAGEM'];
         
         const classificationLabels: Record<string, string> = {
-            'PERFEITO': 'Recomendação Perfeita',
             'ANULA': 'Heróis que Anulam (Lane)',
-            'VANTAGEM': 'Heróis com Vantagem (Lane)'
+            'VANTAGEM': `Heróis com Vantagem ${activeLane === 'NENHUMA' ? '(Geral)' : '(Lane)'}`
         };
 
         const renderHeroDetailCard = (suggestion: HeroSuggestion) => {
             const styles = RATING_STYLES[suggestion.classificacao] || { text: 'text-gray-300', border: 'border-gray-400' };
             return (
-                <div className={`p-3 mt-4 bg-black bg-opacity-30 rounded-xl animated-entry border-l-4 ${styles.border}`} style={{ animationDelay: '50ms'}}>
+                <div className={`p-3 my-4 bg-black bg-opacity-30 rounded-xl animated-entry border-l-4 ${styles.border}`} style={{ animationDelay: '50ms'}}>
                     <div className="flex-grow mb-2">
                         <p className="font-bold text-lg mt-2">{suggestion.nome}</p>
                         <div>
@@ -131,18 +129,20 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
                         </div>
                     )}
 
-                    <div className="mt-3">
-                        <p className="text-xs uppercase font-bold text-gray-400 mb-2">Feitiços Recomendados</p>
-                        {suggestion.spells.map(spell => (
-                            <div key={spell.nome} className="mt-2 pl-3 border-l-2 border-violet-400 flex items-start gap-3">
-                                <img loading="lazy" src={SPELL_ICONS[spell.nome] || SPELL_ICONS.default} alt={spell.nome} className="w-8 h-8 rounded-md mt-1 flex-shrink-0" />
-                                <div>
-                                    <p className="text-sm font-semibold text-violet-300">{spell.nome}</p>
-                                    <p className="text-xs text-gray-400">{spell.motivo}</p>
+                    {suggestion.spells && suggestion.spells.length > 0 && (
+                        <div className="mt-3">
+                            <p className="text-xs uppercase font-bold text-gray-400 mb-2">Feitiços Recomendados</p>
+                            {suggestion.spells.map(spell => (
+                                <div key={spell.nome} className="mt-2 pl-3 border-l-2 border-violet-400 flex items-start gap-3">
+                                    <img loading="lazy" src={SPELL_ICONS[spell.nome] || SPELL_ICONS.default} alt={spell.nome} className="w-8 h-8 rounded-md mt-1 flex-shrink-0" />
+                                    <div>
+                                        <p className="text-sm font-semibold text-violet-300">{spell.nome}</p>
+                                        <p className="text-xs text-gray-400">{spell.motivo}</p>
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
-                    </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             );
         }
@@ -151,25 +151,21 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
             <>
                 {groupOrder.map(groupName => {
                     const suggestionsInGroup = groupedSuggestions[groupName];
-                    if (!suggestionsInGroup) return null;
+                    if (!suggestionsInGroup || suggestionsInGroup.length === 0) return null;
 
                     const isDetailVisible = selectedSuggestion && suggestionsInGroup.some(s => s.nome === selectedSuggestion.nome);
 
                     return (
                         <div key={groupName} className="mb-4">
-                            <h3 className={`font-bold mb-3 text-center ${RATING_STYLES[groupName]?.text || 'text-gray-300'} ${groupName === 'PERFEITO' ? 'text-xl text-amber-300' : ''}`}>
+                            <h3 className={`font-bold text-lg mb-3 text-center ${RATING_STYLES[groupName]?.text || 'text-gray-300'}`}>
                                 {classificationLabels[groupName]}
                             </h3>
-                            {groupName === 'PERFEITO' && (
-                                <p className="text-xs text-center text-gray-400 -mt-2 mb-3 max-w-sm mx-auto">
-                                    Esta sugestão representa o counter ideal contra o oponente, independente da lane, com base em dados e táticas.
-                                </p>
-                            )}
+                           
                             <div className="flex justify-center flex-wrap gap-3">
-                                {suggestionsInGroup.slice(0, 6).map((suggestion) => {
+                                {suggestionsInGroup.map((suggestion) => {
                                     const isSelected = selectedSuggestion?.nome === suggestion.nome;
                                     const styles = RATING_STYLES[suggestion.classificacao];
-                                    const heroImageSize = groupName === 'PERFEITO' ? 'w-24 h-24 sm:w-28 sm:h-28' : 'w-14 h-14';
+                                    const heroImageSize = 'w-14 h-14';
                                     return (
                                         <div 
                                             key={suggestion.nome} 
@@ -204,6 +200,7 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
                 })}
 
                 <h2 className="text-xl font-bold text-center mt-6 mb-3 text-amber-300">Itens de Counter Recomendados</h2>
+                
                 <div className="flex justify-center flex-wrap gap-3">
                     {result.sugestoesItens.map((item, index) => {
                          const isSelected = selectedItem?.nome === item.nome;
@@ -232,9 +229,9 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
                          )
                     })}
                 </div>
-                
+
                 {selectedItem && (
-                    <div className="p-3 mt-4 bg-black bg-opacity-30 rounded-xl animated-entry border-l-4 border-violet-500" style={{ animationDelay: '50ms'}}>
+                    <div className="p-3 my-4 bg-black bg-opacity-30 rounded-xl animated-entry border-l-4 border-violet-500" style={{ animationDelay: '50ms'}}>
                         <div className="flex items-center gap-4">
                              <img 
                                 loading="lazy"

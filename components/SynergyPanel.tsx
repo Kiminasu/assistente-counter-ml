@@ -1,12 +1,12 @@
+
 import React from 'react';
-import { Hero, HeroDetails, SynergyAnalysisPayload, HeroRelation } from '../types';
+import { Hero, HeroRelation } from '../types';
 import CollapsibleTutorial from './CollapsibleTutorial';
 
 interface SynergyPanelProps {
     isLoading: boolean;
     error: string | null;
     relations: HeroRelation | null;
-    analysis: SynergyAnalysisPayload | null;
     heroApiIdMap: Record<number, Hero>;
 }
 
@@ -32,13 +32,13 @@ const SynergySection: React.FC<{ title: string; colorClass: string; heroIds: num
         <div>
             <h3 className={`text-sm uppercase font-bold mb-3 text-center ${colorClass}`}>{title}</h3>
             <div className="flex flex-wrap justify-center gap-3">
-                {heroIds.map(id => <HeroListItem key={id} hero={heroApiIdMap[id]} />)}
+                {heroIds.slice(0, 10).map(id => <HeroListItem key={id} hero={heroApiIdMap[id]} />)}
             </div>
         </div>
     );
 };
 
-const SynergyPanel: React.FC<SynergyPanelProps> = ({ isLoading, error, relations, analysis, heroApiIdMap }) => {
+const SynergyPanel: React.FC<SynergyPanelProps> = ({ isLoading, error, relations, heroApiIdMap }) => {
 
     const renderContent = () => {        
         if (isLoading) {
@@ -58,8 +58,10 @@ const SynergyPanel: React.FC<SynergyPanelProps> = ({ isLoading, error, relations
                 </div>
             );
         }
+        
+        const hasRelations = relations && ((relations.assist?.target_hero_id?.length || 0) > 0 || (relations.strong?.target_hero_id?.length || 0) > 0 || (relations.weak?.target_hero_id?.length || 0) > 0);
 
-        if (!relations && !analysis) {
+        if (!hasRelations) {
              return (
                  <div className="text-center p-8 text-gray-400 flex flex-col items-center justify-center h-full">
                     <svg className="w-12 h-12 mb-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -71,53 +73,23 @@ const SynergyPanel: React.FC<SynergyPanelProps> = ({ isLoading, error, relations
             );
         }
 
-        const hasRelations = relations && (relations.strong?.target_hero_id?.length > 0);
-
         return (
             <div className="p-1 space-y-6 animated-entry overflow-y-auto max-h-[70vh] pr-2">
                  <div className="mb-4">
                     <CollapsibleTutorial title="Entendendo as Sinergias">
                         <ul className="list-disc list-inside space-y-2 text-xs text-gray-300">
-                            <li><strong className="text-green-300">Forte Contra:</strong> Heróis que o seu personagem countera com eficácia.</li>
-                            <li><strong className="text-amber-300">Análise da IA:</strong> Estratégias profissionais sobre o estilo de jogo, combos e como counterar os oponentes.</li>
+                            <li><strong className="text-blue-300">Bons Aliados:</strong> Heróis que têm boa sinergia com seu personagem.</li>
+                            <li><strong className="text-green-300">Forte Contra:</strong> Heróis que seu personagem countera com eficácia.</li>
+                            <li><strong className="text-red-300">Fraco Contra:</strong> Heróis que são eficazes contra seu personagem (counters).</li>
                         </ul>
                     </CollapsibleTutorial>
                 </div>
                 
-                {hasRelations && relations && (
-                    <div className="space-y-6">
-                        <SynergySection title="Forte Contra" colorClass="text-green-300" heroIds={relations.strong.target_hero_id} heroApiIdMap={heroApiIdMap} />
-                    </div>
-                )}
-
-                {analysis && (
-                    <div className="space-y-4 pt-6 border-t border-slate-700">
-                         <h3 className="text-lg font-bold text-center text-amber-300 -mb-2">Análise Tática da IA</h3>
-                        <div>
-                            <h4 className="text-sm uppercase font-bold text-gray-400 mb-2">Perfil e Estatísticas</h4>
-                            <p className="text-sm text-gray-200 leading-relaxed p-3 bg-black bg-opacity-20 rounded-xl">{analysis.statisticsAnalysis}</p>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <h4 className="text-sm uppercase font-bold text-green-300 mb-2">Pontos Fortes</h4>
-                                <ul className="list-disc list-inside text-sm text-gray-200 space-y-1 p-3 bg-black bg-opacity-20 rounded-xl">
-                                    {analysis.strengths.map((s, i) => <li key={i}>{s}</li>)}
-                                </ul>
-                            </div>
-                            <div>
-                                <h4 className="text-sm uppercase font-bold text-red-300 mb-2">Pontos Fracos</h4>
-                                <ul className="list-disc list-inside text-sm text-gray-200 space-y-1 p-3 bg-black bg-opacity-20 rounded-xl">
-                                    {analysis.weaknesses.map((w, i) => <li key={i}>{w}</li>)}
-                                </ul>
-                            </div>
-                        </div>
-
-                        <div>
-                            <h4 className="text-sm uppercase font-bold text-gray-400 mb-2">Estratégia de Counter</h4>
-                            <p className="text-sm text-gray-200 leading-relaxed p-3 bg-black bg-opacity-20 rounded-xl">{analysis.counterStrategy}</p>
-                        </div>
-                    </div>
-                )}
+                <div className="space-y-6">
+                    <SynergySection title="Bons Aliados" colorClass="text-blue-300" heroIds={relations.assist.target_hero_id} heroApiIdMap={heroApiIdMap} />
+                    <SynergySection title="Forte Contra" colorClass="text-green-300" heroIds={relations.strong.target_hero_id} heroApiIdMap={heroApiIdMap} />
+                    <SynergySection title="Fraco Contra" colorClass="text-red-300" heroIds={relations.weak.target_hero_id} heroApiIdMap={heroApiIdMap} />
+                </div>
                 
                 {!hasRelations && !isLoading && (
                      <div className="text-center p-8 text-gray-400 flex flex-col items-center justify-center h-full">

@@ -1,6 +1,7 @@
 
 import { Hero, Lane, HeroDetails, HeroSkill, SkillCombo, HeroRelation } from '../types';
 import { HERO_TRANSLATIONS } from '../components/data/heroTranslations';
+import { MANUAL_SYNERGY_DATA } from '../components/data/synergyData';
 
 interface ApiHeroRecord {
   data: {
@@ -270,8 +271,12 @@ export async function fetchHeroRankings(
     }, ttl);
 }
 
-export async function fetchHeroRelations(heroApiId: number): Promise<HeroRelation | null> {
-    const cacheKey = `hero_relations_${heroApiId}`;
+export async function fetchHeroRelations(
+    heroApiId: number,
+    heroes: Record<string, Hero>,
+    heroApiIdMap: Record<number, Hero>
+): Promise<HeroRelation | null> {
+    const cacheKey = `hero_relations_manual_${heroApiId}`;
     const ttl = 24 * 60 * 60 * 1000; // 24 horas
 
     return fetchWithCache(cacheKey, async () => {
@@ -300,17 +305,44 @@ export async function fetchHeroRelations(heroApiId: number): Promise<HeroRelatio
                  console.warn(`A resposta da API de relações não foi 'ok': ${relationResponse.statusText}`);
             }
 
+            // Augment with manual data
+            const hero = heroApiIdMap[heroApiId];
+            const manualData = hero ? MANUAL_SYNERGY_DATA[hero.name] : undefined;
+            const nameToHeroMap = Object.values(heroes).reduce((acc, h) => {
+                acc[h.name] = h;
+                return acc;
+            }, {} as Record<string, Hero>);
+
+            const mergedAssistIds = new Set(assistIds);
+            const mergedStrongIds = new Set(strongIds);
+
+            if (manualData) {
+                manualData.allies.forEach(name => {
+                    const allyHero = nameToHeroMap[name];
+                    if (allyHero && allyHero.apiId) mergedAssistIds.add(allyHero.apiId);
+                });
+                manualData.strongAgainst.forEach(name => {
+                    const strongHero = nameToHeroMap[name];
+                    if (strongHero && strongHero.apiId) mergedStrongIds.add(strongHero.apiId);
+                });
+            }
+
             const weakIds = countersData
                 .sort((a, b) => b.increase_win_rate - a.increase_win_rate)
                 .map(counter => counter.heroid);
 
-            if (assistIds.length === 0 && strongIds.length === 0 && weakIds.length === 0) {
+            const weakIdSet = new Set(weakIds);
+            // Filter strong and assist lists to remove any hero that is also a counter
+            const filteredStrongIds = Array.from(mergedStrongIds).filter(id => !weakIdSet.has(id));
+            const filteredAssistIds = Array.from(mergedAssistIds).filter(id => !weakIdSet.has(id));
+
+            if (filteredAssistIds.length === 0 && filteredStrongIds.length === 0 && weakIds.length === 0) {
                 return null;
             }
-
+            
             return {
-                assist: { target_hero_id: assistIds },
-                strong: { target_hero_id: strongIds },
+                assist: { target_hero_id: filteredAssistIds },
+                strong: { target_hero_id: filteredStrongIds },
                 weak: { target_hero_id: weakIds },
             };
 

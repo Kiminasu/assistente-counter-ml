@@ -156,19 +156,6 @@ export interface HeroDetails {
     combos: SkillCombo[];
 }
 
-export interface KeySynergy {
-    heroName: string;
-    reason: string;
-}
-
-export interface SynergyAnalysisPayload {
-    statisticsAnalysis: string;
-    strengths: string[];
-    weaknesses: string[];
-    keySynergies: KeySynergy[];
-    counterStrategy: string;
-}
-
 // FIX: Export the HeroRelation interface so it can be used by other components.
 export interface HeroRelation {
     assist: { target_hero_id: number[] };

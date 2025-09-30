@@ -41,6 +41,14 @@ const DraftScreen: React.FC<DraftScreenProps> = ({
 }) => {
     return (
         <div className="flex flex-col gap-6 animated-entry">
+            <CollapsibleTutorial title="Como Usar o Analisador de Draft">
+                <p className="text-xs sm:text-sm text-gray-300">
+                    Selecione os heróis para o seu time e o time inimigo.
+                    <br />
+                    A IA analisará as composições em tempo real, mostrando a barra de vantagem, pontos fortes/fracos e sugestões estratégicas para garantir a vitória no draft.
+                </p>
+            </CollapsibleTutorial>
+
             {/* Hero Selection Grid */}
             <div className="grid grid-cols-2 gap-4">
                 {/* Ally Team */}
@@ -87,13 +95,6 @@ const DraftScreen: React.FC<DraftScreenProps> = ({
                         Limpar Draft
                     </button>
                 </div>
-                <CollapsibleTutorial title="Como Usar o Analisador de Draft">
-                    <p className="text-xs sm:text-sm text-gray-300">
-                        Selecione os heróis para o seu time e o time inimigo.
-                        <br />
-                        A IA analisará as composições em tempo real, mostrando a barra de vantagem, pontos fortes/fracos e sugestões estratégicas para garantir a vitória no draft.
-                    </p>
-                </CollapsibleTutorial>
                 <BanSuggestions
                     counterSuggestions={counterBanSuggestions}
                     metaSuggestions={metaBanSuggestions}
