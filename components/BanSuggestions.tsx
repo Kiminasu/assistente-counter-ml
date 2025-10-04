@@ -6,7 +6,7 @@ interface BanSuggestionsProps {
     metaSuggestions: BanSuggestion[];
     isLoading: boolean;
     variant: '1v1' | '5v5';
-    activeMetaRank: RankCategory;
+    activeMetaRank: RankCategory | null;
     onMetaRankChange: (rank: RankCategory) => void;
 }
 
@@ -51,7 +51,7 @@ const BanSuggestions: React.FC<BanSuggestionsProps> = ({
     const suggestions = activeTab === 'counter' ? counterSuggestions : metaSuggestions;
 
     const renderContent = () => {
-        if (isLoading) {
+        if (isLoading || !activeMetaRank) {
             return (
                 <div className="flex justify-center items-center h-24">
                     <div className="w-8 h-8 border-2 border-dashed rounded-full animate-spin border-red-400"></div>
@@ -133,7 +133,7 @@ const BanSuggestions: React.FC<BanSuggestionsProps> = ({
                     </button>
                  </div>
             </div>
-            {activeTab === 'meta' && (
+            {activeTab === 'meta' && activeMetaRank && (
                 <div className="flex-shrink-0 flex flex-wrap justify-center gap-1 mb-3 bg-black/20 p-1 rounded-lg">
                     {META_RANKS_TO_DISPLAY.map(rank => (
                         <button

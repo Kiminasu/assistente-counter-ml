@@ -19,7 +19,7 @@ interface DraftScreenProps {
     isDraftAnalysisLoading: boolean;
     draftAnalysisError: string | null;
     onClearDraft: () => void;
-    activeMetaRank: RankCategory;
+    activeMetaRank: RankCategory | null;
     onMetaRankChange: (rank: RankCategory) => void;
 }
 
