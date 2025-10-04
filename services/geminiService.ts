@@ -1,6 +1,8 @@
 
 
 
+
+
 import { GoogleGenAI, Type } from "@google/genai";
 import { Lane, Role, SpellSuggestion, MatchupClassification, GameItem, ROLES, Hero, DraftAnalysisResult, LaneOrNone, HeroStrategyAnalysis, HeroDetails, AnalysisResult } from "../types";
 import { SPELL_ICONS } from "../constants";
@@ -13,9 +15,7 @@ function getGenAIClient(): GoogleGenAI {
         return genAIInstance;
     }
 
-    // FIX: A chave da API deve ser obtida de process.env.API_KEY de acordo com as diretrizes de codificação.
-    // A implementação anterior usava import.meta.env, que não está em conformidade e causava um erro de tipo.
-    const apiKey = import.meta.env.VITE_API_KEY;
+    const apiKey = process.env.API_KEY;
 
     if (!apiKey) {
         // A disponibilidade da chave da API é um pré-requisito e é tratada externamente.
@@ -103,7 +103,7 @@ const analysisResponseSchema = {
             items: {
                 type: Type.OBJECT,
                 properties: {
-                    nome: { type: Type.STRING, description: "Nome do item, deve ser um da lista de itens detalhada fornecida." },
+                    nome: { type: Type.STRING, description: "Nome do item, deve ser um da lista de nomes de itens fornecida." },
                     motivo: { type: Type.STRING, description: "Motivo pelo qual este item é eficaz contra o oponente, com base em suas habilidades." }
                 },
                 required: ["nome", "motivo"]
@@ -168,7 +168,7 @@ export async function getCombined1v1Analysis(
 ): Promise<Combined1v1AnalysisPayload> {
     try {
         const ai = getGenAIClient();
-        const formattedItemList = formatItemsForPrompt(GAME_ITEMS);
+        const itemNames = GAME_ITEMS.map(item => item.nome).join(', ');
         const spellList = Object.keys(SPELL_ICONS).filter(spell => spell !== 'default').join(', ');
         
         const enemyDetailsPrompt = formatHeroDetailsForPrompt(enemyHeroDetails);
@@ -190,12 +190,12 @@ Instruções para a Parte 1:
 1. Para cada herói counter sugerido, forneça um 'motivo' tático detalhado, comparando habilidades.
 2. Forneça 1-2 'avisos' críticos.
 3. Sugira 1 ou 2 'spells' (feitiços) da lista [${spellList}].
-4. Sugira 3 'sugestoesItens' de counter da lista de itens detalhada. O motivo deve explicar a interação direta do item com as habilidades do oponente.
+4. Sugira 3 'sugestoesItens' de counter da seguinte lista de nomes de itens: [${itemNames}]. O motivo deve explicar a interação direta do item com as habilidades do oponente.
 `;
 
         // --- Matchup Analysis Prompt Part ---
         let matchupInstructions = '';
-        if (yourHeroDetails && lane !== 'NENHUMA') {
+        if (yourHeroDetails) {
              let winRateDescription = `estatisticamente NEUTRO`;
             if (winRate != null && winRate > 0.01) {
                 winRateDescription = `uma VANTAGEM estatística de +${(winRate * 100).toFixed(1)}%`;
@@ -204,9 +204,13 @@ Instruções para a Parte 1:
             }
             const yourHeroDetailsPrompt = formatHeroDetailsForPrompt(yourHeroDetails);
             
+            const matchupContextText = lane === 'NENHUMA' 
+                ? `Confronto direto geral (sem lane específica): Meu Herói (${yourHeroDetails.name}) vs Inimigo (${enemyHeroDetails.name}).`
+                : `Confronto na lane ${lane}: Meu Herói (${yourHeroDetails.name}) vs Inimigo (${enemyHeroDetails.name}).`;
+
             matchupInstructions = `
 **Parte 2: Análise de Confronto Direto (matchupAnalysis)**
-Confronto na lane ${lane}: Meu Herói (${yourHeroDetails.name}) vs Inimigo (${enemyHeroDetails.name}).
+${matchupContextText}
 Dados Estatísticos: Meu herói tem ${winRateDescription}.
 
 Meu Herói:
@@ -231,9 +235,6 @@ ${countersDetailsPrompt}
 ${matchupInstructions}
 
 ${matchupInstructions ? '' : 'Instrução Adicional: Como não há um "Meu Herói" selecionado, o campo "matchupAnalysis" no JSON de resposta deve ser nulo.'}
-
-LISTA DETALHADA DE ITENS DISPONÍVEIS:
-${formattedItemList}
 `;
         
         const response = await ai.models.generateContent({

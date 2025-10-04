@@ -2,6 +2,8 @@
 
 
 
+
+
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Hero, Lane, AnalysisResult, LANES, ROLES, Role, HeroSuggestion, BanSuggestion, MatchupData, ItemSuggestion, RankCategory, RankDays, SortField, HeroRankInfo, Team, DraftAnalysisResult, NextPickSuggestion, StrategicItemSuggestion, LaneOrNone, HeroDetails, HeroRelation, HeroStrategyAnalysis } from './types';
 import { fetchHeroes, fetchCounters, fetchHeroDetails, fetchHeroRankings, ApiHeroRankData, fetchHeroRelations } from './services/heroService';
@@ -48,6 +50,7 @@ const App: React.FC = () => {
     const [matchupAllyPick, setMatchupAllyPick] = useState<string | null>(null);
     const [matchupEnemyPick, setMatchupEnemyPick] = useState<string | null>(null);
     const [is1v1AnalysisLoading, setIs1v1AnalysisLoading] = useState(false);
+    const [loadingMessage, setLoadingMessage] = useState("CARREGANDO ANÁLISE...");
     
     // State for 5v5 mode
     const [draftAllyPicks, setDraftAllyPicks] = useState<(string | null)[]>(Array(5).fill(null));
@@ -174,6 +177,29 @@ const App: React.FC = () => {
             return acc;
         }, {} as Record<number, Hero>);
     }, [heroes]);
+    
+    useEffect(() => {
+        let interval: number;
+        if (is1v1AnalysisLoading) {
+            const messages = [
+                "Analisando as fraquezas do oponente...",
+                "Calculando os melhores counters táticos...",
+                "Gerando builds de itens estratégicos...",
+                "Compilando a estratégia final...",
+            ];
+            let messageIndex = 0;
+            setLoadingMessage(messages[messageIndex]);
+            interval = window.setInterval(() => {
+                messageIndex = (messageIndex + 1) % messages.length;
+                setLoadingMessage(messages[messageIndex]);
+            }, 2500); // Change message every 2.5 seconds
+        }
+        return () => {
+            if (interval) {
+                clearInterval(interval);
+            }
+        };
+    }, [is1v1AnalysisLoading]);
 
     // Efeito para buscar rankings para a tela de "Ranking"
     useEffect(() => {
@@ -893,6 +919,7 @@ const App: React.FC = () => {
                         <div className="order-2 lg:order-1">
                              <AnalysisPanel 
                                 isLoading={is1v1AnalysisLoading}
+                                loadingMessage={loadingMessage}
                                 result={analysisResult}
                                 error={analysisError}
                                 activeLane={activeLane}

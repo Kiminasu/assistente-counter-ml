@@ -5,13 +5,15 @@ import { RATING_STYLES, ITEM_ICONS, SPELL_ICONS } from '../constants';
 
 interface AnalysisPanelProps {
     isLoading: boolean;
+    loadingMessage: string;
     result: AnalysisResult | null;
     error: string | null;
     activeLane: LaneOrNone;
 }
 
 const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ 
-    isLoading, 
+    isLoading,
+    loadingMessage,
     result, 
     error,
     activeLane
@@ -38,10 +40,39 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
     const renderContent = () => {
         if (isLoading) {
             return (
-                <div className="flex flex-col items-center justify-center h-full p-8 text-center">
-                    <div className="w-12 h-12 border-4 border-dashed rounded-full animate-spin border-violet-400"></div>
-                    <p className="mt-4 text-lg">CARREGANDO ANÁLISE...</p>
-                    <p className="mt-1 text-sm text-gray-400">A IA está processando as melhores táticas.</p>
+                <div className="flex flex-col items-center justify-center h-full p-4 text-center">
+                    <div className="w-full animate-pulse space-y-8">
+                        {/* Hero Group Skeleton */}
+                        <div>
+                            <div className="h-5 bg-slate-700 rounded w-3/4 mx-auto mb-4"></div>
+                            <div className="flex justify-center gap-4">
+                                <div className="w-14 h-14 bg-slate-700 rounded-full"></div>
+                                <div className="w-14 h-14 bg-slate-700 rounded-full"></div>
+                                <div className="w-14 h-14 bg-slate-700 rounded-full"></div>
+                            </div>
+                        </div>
+                        {/* Another Hero Group Skeleton */}
+                        <div>
+                            <div className="h-5 bg-slate-700 rounded w-3/4 mx-auto mb-4"></div>
+                            <div className="flex justify-center gap-4">
+                                <div className="w-14 h-14 bg-slate-700 rounded-full"></div>
+                                <div className="w-14 h-14 bg-slate-700 rounded-full"></div>
+                            </div>
+                        </div>
+                        {/* Items Group Skeleton */}
+                        <div>
+                            <div className="h-5 bg-slate-700 rounded w-1/2 mx-auto mb-4"></div>
+                            <div className="flex justify-center gap-4">
+                                <div className="w-14 h-14 bg-slate-700 rounded-lg"></div>
+                                <div className="w-14 h-14 bg-slate-700 rounded-lg"></div>
+                                <div className="w-14 h-14 bg-slate-700 rounded-lg"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="mt-8 text-center">
+                        <div className="w-10 h-10 border-2 border-dashed rounded-full animate-spin border-violet-400 mx-auto"></div>
+                        <p className="mt-3 text-sm text-violet-300 transition-all duration-300">{loadingMessage}</p>
+                    </div>
                 </div>
             );
         }
@@ -87,7 +118,7 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
             );
         }
         
-        const groupedSuggestions = result.sugestoesHerois.reduce((acc, suggestion) => {
+        const groupedSuggestions = (result.sugestoesHerois || []).reduce((acc, suggestion) => {
             const classification = suggestion.classificacao;
             if (!acc[classification]) {
                 acc[classification] = [];
@@ -202,7 +233,7 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
                 <h2 className="text-xl font-bold text-center mt-6 mb-3 text-amber-300">Itens de Counter Recomendados</h2>
                 
                 <div className="flex justify-center flex-wrap gap-3">
-                    {result.sugestoesItens.map((item, index) => {
+                    {(result.sugestoesItens || []).map((item, index) => {
                          const isSelected = selectedItem?.nome === item.nome;
                          return (
                             <div 
