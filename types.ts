@@ -78,6 +78,9 @@ export type Team = 'ally' | 'enemy';
 export const RANKS = ['all', 'epic', 'legend', 'mythic', 'honor', 'glory'] as const;
 export type RankCategory = typeof RANKS[number];
 
+export const USER_SIGNUP_RANKS = ['Guerreiro', 'Elite', 'Mestre', 'Grão-Mestre', 'Épico', 'Lenda', 'Mítico', 'Honra', 'Glória'] as const;
+export type UserSignupRank = typeof USER_SIGNUP_RANKS[number];
+
 export const RANK_DAYS = [1, 3, 7, 15, 30] as const;
 export type RankDays = typeof RANK_DAYS[number];
 

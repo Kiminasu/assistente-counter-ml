@@ -1,8 +1,3 @@
-
-
-
-
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { Lane, Role, SpellSuggestion, MatchupClassification, GameItem, ROLES, Hero, DraftAnalysisResult, LaneOrNone, HeroStrategyAnalysis, HeroDetails, AnalysisResult } from "../types";
 import { SPELL_ICONS } from "../constants";
@@ -23,6 +18,41 @@ function getGenAIClient(): GoogleGenAI {
     }
     genAIInstance = new GoogleGenAI({ apiKey });
     return genAIInstance;
+}
+
+async function fetchGeminiWithCache<T>(cacheKey: string, fetchFunction: () => Promise<T>): Promise<T> {
+    const ttl = 6 * 60 * 60 * 1000; // 6 horas
+    try {
+        const cachedItem = localStorage.getItem(cacheKey);
+        if (cachedItem) {
+            const { timestamp, data } = JSON.parse(cachedItem);
+            const isCacheValid = (new Date().getTime() - timestamp) < ttl;
+            if (isCacheValid) {
+                console.log(`[Cache IA] HIT para: ${cacheKey}`);
+                return data as T;
+            }
+            console.log(`[Cache IA] Expirado para: ${cacheKey}`);
+        } else {
+             console.log(`[Cache IA] MISS para: ${cacheKey}`);
+        }
+    } catch (e) {
+        console.error(`[Cache IA] Falha ao ler do cache para a chave ${cacheKey}`, e);
+    }
+
+    const fetchedData = await fetchFunction();
+
+    try {
+        const itemToCache = {
+            timestamp: new Date().getTime(),
+            data: fetchedData,
+        };
+        localStorage.setItem(cacheKey, JSON.stringify(itemToCache));
+        console.log(`[Cache IA] Escrito no cache para a chave: ${cacheKey}`);
+    } catch (e) {
+        console.error(`[Cache IA] Falha ao escrever no cache para a chave ${cacheKey}`, e);
+    }
+
+    return fetchedData;
 }
 
 const formatHeroDetailsForPrompt = (details: HeroDetails): string => {
@@ -166,21 +196,24 @@ export async function getCombined1v1Analysis(
   yourHeroDetails: HeroDetails | null, // Can be null
   winRate: number | null // Can be null
 ): Promise<Combined1v1AnalysisPayload> {
-    try {
-        const ai = getGenAIClient();
-        const itemNames = GAME_ITEMS.map(item => item.nome).join(', ');
-        const spellList = Object.keys(SPELL_ICONS).filter(spell => spell !== 'default').join(', ');
-        
-        const enemyDetailsPrompt = formatHeroDetailsForPrompt(enemyHeroDetails);
-        const countersDetailsPrompt = potentialCountersDetails.map(d => formatHeroDetailsForPrompt(d)).join('\n\n---\n\n');
+    const cacheKey = `gemini_1v1_${enemyHeroDetails.name}_${yourHeroDetails?.name || 'none'}_${lane}_${selectedRole}`;
+    
+    return fetchGeminiWithCache(cacheKey, async () => {
+        try {
+            const ai = getGenAIClient();
+            const itemNames = GAME_ITEMS.map(item => item.nome).join(', ');
+            const spellList = Object.keys(SPELL_ICONS).filter(spell => spell !== 'default').join(', ');
+            
+            const enemyDetailsPrompt = formatHeroDetailsForPrompt(enemyHeroDetails);
+            const countersDetailsPrompt = potentialCountersDetails.map(d => formatHeroDetailsForPrompt(d)).join('\n\n---\n\n');
 
-        const systemPrompt = `Você é um analista de nível Mítico e engenheiro de jogo de Mobile Legends. Sua tarefa é fornecer uma análise tática infalível. Baseie-se ESTRITAMENTE nos dados fornecidos. Não invente informações. Responda APENAS com um objeto JSON válido que siga o schema. Seja direto, preciso e use termos em português do Brasil.`;
-        
-        const laneContext = lane === 'NENHUMA' ? 'em um confronto geral' : `na lane '${lane}'`;
-        
-        // --- Strategic Analysis Prompt Part ---
-        const itemRoleContext = selectedRole === 'Qualquer' ? 'o counter ideal' : `um herói da função '${selectedRole}'`;
-        const strategicInstructions = `
+            const systemPrompt = `Você é um analista de nível Mítico e engenheiro de jogo de Mobile Legends. Sua tarefa é fornecer uma análise tática infalível. Baseie-se ESTRITAMENTE nos dados fornecidos. Não invente informações. Responda APENAS com um objeto JSON válido que siga o schema. Seja direto, preciso e use termos em português do Brasil.`;
+            
+            const laneContext = lane === 'NENHUMA' ? 'em um confronto geral' : `na lane '${lane}'`;
+            
+            // --- Strategic Analysis Prompt Part ---
+            const itemRoleContext = selectedRole === 'Qualquer' ? 'o counter ideal' : `um herói da função '${selectedRole}'`;
+            const strategicInstructions = `
 **Parte 1: Análise Estratégica de Counters (strategicAnalysis)**
 O oponente ${laneContext} é ${enemyHeroDetails.name}.
 ${selectedRole === 'Qualquer' ? "Analise os melhores counters possíveis, independente da função." : `Eu quero jogar com um herói da função '${selectedRole}'.`}
@@ -193,22 +226,22 @@ Instruções para a Parte 1:
 4. Sugira 3 'sugestoesItens' de counter da seguinte lista de nomes de itens: [${itemNames}]. O motivo deve explicar a interação direta do item com as habilidades do oponente.
 `;
 
-        // --- Matchup Analysis Prompt Part ---
-        let matchupInstructions = '';
-        if (yourHeroDetails) {
-             let winRateDescription = `estatisticamente NEUTRO`;
-            if (winRate != null && winRate > 0.01) {
-                winRateDescription = `uma VANTAGEM estatística de +${(winRate * 100).toFixed(1)}%`;
-            } else if (winRate != null && winRate < -0.01) {
-                winRateDescription = `uma DESVANTAGEM estatística de ${(winRate * 100).toFixed(1)}%`;
-            }
-            const yourHeroDetailsPrompt = formatHeroDetailsForPrompt(yourHeroDetails);
-            
-            const matchupContextText = lane === 'NENHUMA' 
-                ? `Confronto direto geral (sem lane específica): Meu Herói (${yourHeroDetails.name}) vs Inimigo (${enemyHeroDetails.name}).`
-                : `Confronto na lane ${lane}: Meu Herói (${yourHeroDetails.name}) vs Inimigo (${enemyHeroDetails.name}).`;
+            // --- Matchup Analysis Prompt Part ---
+            let matchupInstructions = '';
+            if (yourHeroDetails) {
+                 let winRateDescription = `estatisticamente NEUTRO`;
+                if (winRate != null && winRate > 0.01) {
+                    winRateDescription = `uma VANTAGEM estatística de +${(winRate * 100).toFixed(1)}%`;
+                } else if (winRate != null && winRate < -0.01) {
+                    winRateDescription = `uma DESVANTAGEM estatística de ${(winRate * 100).toFixed(1)}%`;
+                }
+                const yourHeroDetailsPrompt = formatHeroDetailsForPrompt(yourHeroDetails);
+                
+                const matchupContextText = lane === 'NENHUMA' 
+                    ? `Confronto direto geral (sem lane específica): Meu Herói (${yourHeroDetails.name}) vs Inimigo (${enemyHeroDetails.name}).`
+                    : `Confronto na lane ${lane}: Meu Herói (${yourHeroDetails.name}) vs Inimigo (${enemyHeroDetails.name}).`;
 
-            matchupInstructions = `
+                matchupInstructions = `
 **Parte 2: Análise de Confronto Direto (matchupAnalysis)**
 ${matchupContextText}
 Dados Estatísticos: Meu herói tem ${winRateDescription}.
@@ -224,9 +257,9 @@ Instruções para a Parte 2:
 2. Forneça uma 'detailedAnalysis' concisa (3-4 frases), começando com a mesma palavra da 'classification'.
 3. Recomende o melhor 'recommendedSpell' da lista [${spellList}].
 `;
-        }
+            }
 
-        const userQuery = `
+            const userQuery = `
 ${strategicInstructions}
 
 Heróis para Análise (para a Parte 1):
@@ -236,25 +269,26 @@ ${matchupInstructions}
 
 ${matchupInstructions ? '' : 'Instrução Adicional: Como não há um "Meu Herói" selecionado, o campo "matchupAnalysis" no JSON de resposta deve ser nulo.'}
 `;
-        
-        const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
-            contents: userQuery,
-            config: {
-                systemInstruction: systemPrompt,
-                responseMimeType: "application/json",
-                responseSchema: combined1v1Schema,
-                temperature: 0.1,
-            },
-        });
-        
-        const jsonText = response.text.trim();
-        return JSON.parse(jsonText) as Combined1v1AnalysisPayload;
-    } catch (error) {
-        console.error("Erro ao chamar a API Gemini para análise 1v1 combinada:", error);
-        const errorMessage = error instanceof Error ? error.message : "Não foi possível gerar a análise da IA.";
-        throw new Error(errorMessage);
-    }
+            
+            const response = await ai.models.generateContent({
+                model: "gemini-2.5-flash",
+                contents: userQuery,
+                config: {
+                    systemInstruction: systemPrompt,
+                    responseMimeType: "application/json",
+                    responseSchema: combined1v1Schema,
+                    temperature: 0.1,
+                },
+            });
+            
+            const jsonText = response.text.trim();
+            return JSON.parse(jsonText) as Combined1v1AnalysisPayload;
+        } catch (error) {
+            console.error("Erro ao chamar a API Gemini para análise 1v1 combinada:", error);
+            const errorMessage = error instanceof Error ? error.message : "Não foi possível gerar a análise da IA.";
+            throw new Error(errorMessage);
+        }
+    });
 }
 
 
@@ -324,64 +358,70 @@ export async function getDraftAnalysis(
   enemyHeroesDetails: HeroDetails[],
   availableHeroes: Hero[],
 ): Promise<DraftAnalysisResult> {
-    try {
-        const ai = getGenAIClient();
-        const itemNames = GAME_ITEMS.map(item => item.nome).join(', ');
-        const availableHeroNames = availableHeroes.map(h => h.name).join(', ');
+    const allyNames = allyHeroesDetails.map(h => h.name).sort().join(',');
+    const enemyNames = enemyHeroesDetails.map(h => h.name).sort().join(',');
+    const cacheKey = `gemini_draft_${allyNames}_vs_${enemyNames}`;
 
-        const allyDetailsPrompt = allyHeroesDetails.length > 0
-            ? allyHeroesDetails.map(formatHeroDetailsForPrompt).join('\n\n---\n\n')
-            : "Nenhum herói selecionado ainda.";
-        
-        const enemyDetailsPrompt = enemyHeroesDetails.length > 0
-            ? enemyHeroesDetails.map(formatHeroDetailsForPrompt).join('\n\n---\n\n')
-            : "Nenhum herói selecionado ainda.";
+    return fetchGeminiWithCache(cacheKey, async () => {
+        try {
+            const ai = getGenAIClient();
+            const itemNames = GAME_ITEMS.map(item => item.nome).join(', ');
+            const availableHeroNames = availableHeroes.map(h => h.name).join(', ');
 
-        const systemPrompt = "Você é um analista de draft de nível Mítico de Mobile Legends. Sua tarefa é analisar uma situação de draft 5v5 e fornecer conselhos estratégicos. Sua análise deve ser concisa, tática e focada em sinergia de equipe, counters e composição geral. Responda APENAS com um objeto JSON válido que siga o schema.";
-        
-        const userQuery = `
-SITUAÇÃO ATUAL DO DRAFT 5v5:
+            const allyDetailsPrompt = allyHeroesDetails.length > 0
+                ? allyHeroesDetails.map(formatHeroDetailsForPrompt).join('\n\n---\n\n')
+                : "Nenhum herói selecionado ainda.";
+            
+            const enemyDetailsPrompt = enemyHeroesDetails.length > 0
+                ? enemyHeroesDetails.map(formatHeroDetailsForPrompt).join('\n\n---\n\n')
+                : "Nenhum herói selecionado ainda.";
 
-Time Aliado (Heróis já escolhidos):
-${allyDetailsPrompt}
+            const systemPrompt = "Você é um analista de draft de nível Mítico de Mobile Legends. Sua tarefa é analisar uma situação de draft 5v5 e fornecer conselhos estratégicos. Sua análise deve ser concisa, tática e focada em sinergia de equipe, counters e composição geral. Responda APENAS com um objeto JSON válido que siga o schema.";
+            
+            const userQuery = `
+    SITUAÇÃO ATUAL DO DRAFT 5v5:
 
-Time Inimigo (Heróis já escolhidos):
-${enemyDetailsPrompt}
+    Time Aliado (Heróis já escolhidos):
+    ${allyDetailsPrompt}
 
-Heróis ainda disponíveis para escolha:
-[${availableHeroNames}]
+    Time Inimigo (Heróis já escolhidos):
+    ${enemyDetailsPrompt}
 
-Lista de Itens para sugestão:
-[${itemNames}]
+    Heróis ainda disponíveis para escolha:
+    [${availableHeroNames}]
 
-INSTRUÇÕES:
-1.  Sua análise deve ser extremamente precisa. O 'Time Aliado' é composto APENAS pelos heróis listados em "Time Aliado". O 'Time Inimigo' é composto APENAS pelos heróis em "Time Inimigo". Não os confunda. Baseie toda a sua análise nesta separação.
-2.  Forneça um 'advantageScore' numérico de -10 (vantagem clara para o inimigo) a 10 (vantagem clara para o aliado).
-3.  Forneça um 'advantageReason' tático e concreto que explique a pontuação. Seja específico, mencionando confrontos de heróis chave (ex: "Vantagem aliada devido ao controle em área do Atlas que anula a mobilidade inimiga de Fanny e Ling."). Evite frases genéricas como "melhor composição" ou "draft superior".
-4.  Preencha 'allyComposition' e 'enemyComposition', atribuindo uma pontuação de 1 a 10 para cada categoria (dano físico, dano mágico, tanque/sobrevivência, controle de grupo) com base no potencial combinado dos heróis selecionados.
-5.  Forneça 2-3 'teamStrengths' (pontos fortes) da composição aliada.
-6.  Forneça 2-3 'teamWeaknesses' (pontos fracos) e como o time inimigo pode explorá-los.
-7.  Se houver menos de 5 heróis no time aliado, sugira o melhor 'nextPickSuggestion' da lista de heróis disponíveis. A sugestão deve incluir 'heroName', 'role' (da lista [${ROLES.join(', ')}]) e um 'reason' tático. Se o time aliado estiver completo, este campo deve ser nulo.
-8.  Sugira 2 'strategicItems' gerais da lista de itens que seriam cruciais para o time aliado neste confronto, explicando o motivo.`;
+    Lista de Itens para sugestão:
+    [${itemNames}]
 
-        const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
-            contents: userQuery,
-            config: {
-                systemInstruction: systemPrompt,
-                responseMimeType: "application/json",
-                responseSchema: draftAnalysisSchema,
-                temperature: 0.1,
-            },
-        });
-        
-        const jsonText = response.text.trim();
-        return JSON.parse(jsonText) as DraftAnalysisResult;
+    INSTRUÇÕES:
+    1.  Sua análise deve ser extremamente precisa. O 'Time Aliado' é composto APENAS pelos heróis listados em "Time Aliado". O 'Time Inimigo' é composto APENAS pelos heróis em "Time Inimigo". Não os confunda. Baseie toda a sua análise nesta separação.
+    2.  Forneça um 'advantageScore' numérico de -10 (vantagem clara para o inimigo) a 10 (vantagem clara para o aliado).
+    3.  Forneça um 'advantageReason' tático e concreto que explique a pontuação. Seja específico, mencionando confrontos de heróis chave (ex: "Vantagem aliada devido ao controle em área do Atlas que anula a mobilidade inimiga de Fanny e Ling."). Evite frases genéricas como "melhor composição" ou "draft superior".
+    4.  Preencha 'allyComposition' e 'enemyComposition', atribuindo uma pontuação de 1 a 10 para cada categoria (dano físico, dano mágico, tanque/sobrevivência, controle de grupo) com base no potencial combinado dos heróis selecionados.
+    5.  Forneça 2-3 'teamStrengths' (pontos fortes) da composição aliada.
+    6.  Forneça 2-3 'teamWeaknesses' (pontos fracos) e como o time inimigo pode explorá-los.
+    7.  Se houver menos de 5 heróis no time aliado, sugira o melhor 'nextPickSuggestion' da lista de heróis disponíveis. A sugestão deve incluir 'heroName', 'role' (da lista [${ROLES.join(', ')}]) e um 'reason' tático. Se o time aliado estiver completo, este campo deve ser nulo.
+    8.  Sugira 2 'strategicItems' gerais da lista de itens que seriam cruciais para o time aliado neste confronto, explicando o motivo.`;
 
-    } catch (error) {
-        console.error("Erro ao chamar a API Gemini para análise de draft:", error);
-        throw new Error("Não foi possível carregar a análise do draft da IA.");
-    }
+            const response = await ai.models.generateContent({
+                model: "gemini-2.5-flash",
+                contents: userQuery,
+                config: {
+                    systemInstruction: systemPrompt,
+                    responseMimeType: "application/json",
+                    responseSchema: draftAnalysisSchema,
+                    temperature: 0.1,
+                },
+            });
+            
+            const jsonText = response.text.trim();
+            return JSON.parse(jsonText) as DraftAnalysisResult;
+
+        } catch (error) {
+            console.error("Erro ao chamar a API Gemini para análise de draft:", error);
+            throw new Error("Não foi possível carregar a análise do draft da IA.");
+        }
+    });
 }
 
 const heroStrategySchema = {
@@ -468,59 +508,63 @@ export async function getSynergyAndStrategyAnalysis(
   heroToAnalyzeDetails: HeroDetails,
   potentialCountersDetails: HeroDetails[]
 ): Promise<CombinedSynergyAnalysisPayload> {
-    try {
-        const ai = getGenAIClient();
-        const itemNames = GAME_ITEMS.map(item => item.nome).join(', ');
-        const spellList = Object.keys(SPELL_ICONS).filter(spell => spell !== 'default').join(', ');
-        const heroToAnalyzePrompt = formatHeroDetailsForPrompt(heroToAnalyzeDetails);
-        const countersDetailsPrompt = potentialCountersDetails.map(d => formatHeroDetailsForPrompt(d)).join('\n\n---\n\n');
+    const cacheKey = `gemini_synergy_${heroToAnalyzeDetails.name}`;
 
-        const systemPrompt = "Você é um analista de nível Mítico de Mobile Legends. Sua tarefa é fornecer uma análise estratégica completa e robusta sobre um herói específico, incluindo sua build, estilo de jogo e quem é seu counter perfeito. Baseie-se ESTRITAMENTE nos dados fornecidos. Responda APENAS com um objeto JSON válido que siga o schema.";
+    return fetchGeminiWithCache(cacheKey, async () => {
+        try {
+            const ai = getGenAIClient();
+            const itemNames = GAME_ITEMS.map(item => item.nome).join(', ');
+            const spellList = Object.keys(SPELL_ICONS).filter(spell => spell !== 'default').join(', ');
+            const heroToAnalyzePrompt = formatHeroDetailsForPrompt(heroToAnalyzeDetails);
+            const countersDetailsPrompt = potentialCountersDetails.map(d => formatHeroDetailsForPrompt(d)).join('\n\n---\n\n');
 
-        const userQuery = `
-ANÁLISE ESTRATÉGICA COMPLETA
+            const systemPrompt = "Você é um analista de nível Mítico de Mobile Legends. Sua tarefa é fornecer uma análise estratégica completa e robusta sobre um herói específico, incluindo sua build, estilo de jogo e quem é seu counter perfeito. Baseie-se ESTRITAMENTE nos dados fornecidos. Responda APENAS com um objeto JSON válido que siga o schema.";
 
-HERÓI PARA ANÁLISE:
-${heroToAnalyzePrompt}
+            const userQuery = `
+    ANÁLISE ESTRATÉGICA COMPLETA
 
-Heróis Potenciais para serem o Counter Perfeito (analise e escolha o melhor):
-${countersDetailsPrompt}
+    HERÓI PARA ANÁLISE:
+    ${heroToAnalyzePrompt}
 
-Lista de Itens para sugestão:
-[${itemNames}]
+    Heróis Potenciais para serem o Counter Perfeito (analise e escolha o melhor):
+    ${countersDetailsPrompt}
 
-Lista de Feitiços para sugestão:
-[${spellList}]
+    Lista de Itens para sugestão:
+    [${itemNames}]
 
-INSTRUÇÕES:
-1.  **Análise de Estratégia do Herói (strategy)**:
-    a.  Sugira 3-4 'coreItems' (itens essenciais) da lista de itens, explicando o motivo de cada um.
-    b.  Sugira 2-3 'situationalItems' (itens situacionais), explicando em que situações devem ser construídos.
-    c.  Descreva o 'playstyle' (estilo de jogo) do herói em 3-4 frases.
-    d.  Identifique os principais 'powerSpikes' (picos de poder).
-2.  **Análise do Counter Perfeito (perfectCounter)**:
-    a.  A partir da lista 'Heróis Potenciais', escolha o herói que melhor countera o 'HERÓI PARA ANÁLISE'.
-    b.  Forneça um 'motivo' tático detalhado para essa escolha, comparando diretamente as habilidades.
-    c.  Forneça 1-2 'avisos' críticos sobre o confronto.
-    d.  Sugira 1 ou 2 'spells' (feitiços) ideais para o counter neste confronto.
-`;
+    Lista de Feitiços para sugestão:
+    [${spellList}]
 
-        const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
-            contents: userQuery,
-            config: {
-                systemInstruction: systemPrompt,
-                responseMimeType: "application/json",
-                responseSchema: combinedSynergyAnalysisSchema,
-                temperature: 0.1,
-            },
-        });
+    INSTRUÇÕES:
+    1.  **Análise de Estratégia do Herói (strategy)**:
+        a.  Sugira 3-4 'coreItems' (itens essenciais) da lista de itens, explicando o motivo de cada um.
+        b.  Sugira 2-3 'situationalItems' (itens situacionais), explicando em que situações devem ser construídos.
+        c.  Descreva o 'playstyle' (estilo de jogo) do herói em 3-4 frases.
+        d.  Identifique os principais 'powerSpikes' (picos de poder).
+    2.  **Análise do Counter Perfeito (perfectCounter)**:
+        a.  A partir da lista 'Heróis Potenciais', escolha o herói que melhor countera o 'HERÓI PARA ANÁLISE'.
+        b.  Forneça um 'motivo' tático detalhado para essa escolha, comparando diretamente as habilidades.
+        c.  Forneça 1-2 'avisos' críticos sobre o confronto.
+        d.  Sugira 1 ou 2 'spells' (feitiços) ideais para o counter neste confronto.
+    `;
 
-        const jsonText = response.text.trim();
-        return JSON.parse(jsonText) as CombinedSynergyAnalysisPayload;
+            const response = await ai.models.generateContent({
+                model: "gemini-2.5-flash",
+                contents: userQuery,
+                config: {
+                    systemInstruction: systemPrompt,
+                    responseMimeType: "application/json",
+                    responseSchema: combinedSynergyAnalysisSchema,
+                    temperature: 0.1,
+                },
+            });
 
-    } catch (error) {
-        console.error("Erro ao chamar a API Gemini para análise combinada de sinergia:", error);
-        throw new Error("Não foi possível carregar a análise estratégica combinada da IA.");
-    }
+            const jsonText = response.text.trim();
+            return JSON.parse(jsonText) as CombinedSynergyAnalysisPayload;
+
+        } catch (error) {
+            console.error("Erro ao chamar a API Gemini para análise combinada de sinergia:", error);
+            throw new Error("Não foi possível carregar a análise estratégica combinada da IA.");
+        }
+    });
 }

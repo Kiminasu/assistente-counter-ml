@@ -1,10 +1,6 @@
 
-
-
-
-
-
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { Session } from '@supabase/supabase-js';
 import { Hero, Lane, AnalysisResult, LANES, ROLES, Role, HeroSuggestion, BanSuggestion, MatchupData, ItemSuggestion, RankCategory, RankDays, SortField, HeroRankInfo, Team, DraftAnalysisResult, NextPickSuggestion, StrategicItemSuggestion, LaneOrNone, HeroDetails, HeroRelation, HeroStrategyAnalysis } from './types';
 import { fetchHeroes, fetchCounters, fetchHeroDetails, fetchHeroRankings, ApiHeroRankData, fetchHeroRelations } from './services/heroService';
 import { getCombined1v1Analysis, getDraftAnalysis, getSynergyAndStrategyAnalysis } from './services/geminiService';
@@ -32,6 +28,8 @@ import ItemDatabaseScreen from './components/ItemDatabaseScreen';
 import CollapsibleTutorial from './components/CollapsibleTutorial';
 import SynergyExplorerScreen from './components/SynergyExplorerScreen';
 import HeroDatabaseScreen from './components/HeroDatabaseScreen';
+import AuthScreen from './AuthScreen';
+import { supabase } from './supabaseClient';
 
 type GameMode = '1v1' | '5v5' | 'ranking' | 'item' | 'synergy' | 'heroes';
 
@@ -40,8 +38,34 @@ const NUMBER_OF_COUNTER_BAN_SUGGESTIONS = 6;
 const INITIAL_COUNTERS_TO_FETCH = 12; // Fetch more to account for filtering
 
 const App: React.FC = () => {
+    // Verificação de configuração do Supabase.
+    if (!supabase) {
+        return (
+            <div className="min-h-screen flex flex-col items-center justify-center p-4 text-center">
+                <div className="w-full max-w-lg glassmorphism p-8 rounded-2xl border-2 panel-glow-red">
+                    <h1 className="text-3xl font-bold text-red-400 mb-4">CONFIGURAÇÃO INCOMPLETA</h1>
+                    <p className="text-slate-300 mb-2">
+                        A aplicação não conseguiu se conectar ao backend.
+                    </p>
+                    <p className="text-slate-300 mb-6">
+                        Parece que as credenciais do Supabase ainda não foram adicionadas. Por favor, siga estes passos:
+                    </p>
+                    <ol className="text-left text-slate-400 space-y-3 bg-black/30 p-4 rounded-lg">
+                        <li>1. Abra o arquivo <code className="bg-slate-800 text-amber-300 px-2 py-1 rounded">supabaseClient.ts</code> no seu editor.</li>
+                        <li>2. Copie a <b className="text-white">URL do Projeto</b> e a chave <b className="text-white">anon public</b> das configurações da API do seu projeto Supabase.</li>
+                        <li>3. Cole esses valores nas variáveis `supabaseUrl` e `supabaseAnonKey`.</li>
+                        <li>4. Salve o arquivo. A aplicação será atualizada automaticamente.</li>
+                    </ol>
+                </div>
+            </div>
+        );
+    }
+
+    const [session, setSession] = useState<Session | null>(null);
+    const [userProfile, setUserProfile] = useState<{ username: string; rank: string } | null>(null);
+    const [isProfileChecked, setIsProfileChecked] = useState(false);
     const [heroes, setHeroes] = useState<Record<string, Hero>>({});
-    const [isLoadingHeroes, setIsLoadingHeroes] = useState(true);
+    const [isLoadingApp, setIsLoadingApp] = useState(true);
     const [heroLoadingError, setHeroLoadingError] = useState<string | null>(null);
 
     const [gameMode, setGameMode] = useState<GameMode>('synergy');
@@ -80,7 +104,6 @@ const App: React.FC = () => {
     const [matchupData, setMatchupData] = useState<MatchupData | null>(null);
     const [matchupError, setMatchupError] = useState<string | null>(null);
     
-    // FIX: Add states for synergy data in 1v1 mode tab.
     const [synergyRelations1v1, setSynergyRelations1v1] = useState<HeroRelation | null>(null);
     const [synergyError1v1, setSynergyError1v1] = useState<string | null>(null);
     const [isSynergyLoading1v1, setIsSynergyLoading1v1] = useState(false);
@@ -94,6 +117,42 @@ const App: React.FC = () => {
             return {};
         }
     });
+
+    useEffect(() => {
+        const handleAuthChange = async (session: Session | null) => {
+            setIsProfileChecked(false); // Reset on each auth change
+            setSession(session);
+            if (session && supabase) {
+                const { data: profile, error } = await supabase
+                    .from('profiles')
+                    .select('username, rank')
+                    .eq('id', session.user.id)
+                    .maybeSingle(); // Use maybeSingle to prevent error on 0 rows
+                if (error) {
+                    // This will now only catch unexpected errors, not "0 rows"
+                    console.error("Erro inesperado ao buscar perfil do usuário:", error);
+                    setUserProfile(null);
+                } else {
+                    setUserProfile(profile as { username: string; rank: string } | null);
+                }
+            } else {
+                setUserProfile(null);
+            }
+            setIsProfileChecked(true); // Mark profile check as complete
+        };
+
+        if (supabase) {
+            supabase.auth.getSession().then(({ data: { session } }) => {
+                handleAuthChange(session);
+            });
+    
+            const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+                handleAuthChange(session);
+            });
+    
+            return () => subscription.unsubscribe();
+        }
+    }, []);
 
     useEffect(() => {
         try {
@@ -111,7 +170,7 @@ const App: React.FC = () => {
     const [rankDays, setRankDays] = useState<RankDays>(7);
     const [rankCategory, setRankCategory] = useState<RankCategory>('mythic');
     const [sortField, setSortField] = useState<SortField>('win_rate');
-    const [metaBanRankCategory, setMetaBanRankCategory] = useState<RankCategory>('glory');
+    const [metaBanRankCategory, setMetaBanRankCategory] = useState<RankCategory | null>(null);
 
     const [heroLanes, setHeroLanes] = useState<Record<number, Lane[]>>({});
 
@@ -134,7 +193,6 @@ const App: React.FC = () => {
             try {
                 const fetchedHeroesFromApi = await fetchHeroes();
                 
-                // Merge manual data with API data. API data takes precedence.
                 const allHeroesData = { ...MANUAL_HERO_DATA, ...fetchedHeroesFromApi };
 
                 const enrichedHeroes: Record<string, Hero> = {};
@@ -163,7 +221,7 @@ const App: React.FC = () => {
                 const errorMessage = error instanceof Error ? error.message : 'Ocorreu um erro desconhecido.';
                 setHeroLoadingError(`Falha ao carregar dados iniciais: ${errorMessage} Tente atualizar a página.`);
             } finally {
-                setIsLoadingHeroes(false);
+                setIsLoadingApp(false);
             }
         };
         loadInitialData();
@@ -201,7 +259,6 @@ const App: React.FC = () => {
         };
     }, [is1v1AnalysisLoading]);
 
-    // Efeito para buscar rankings para a tela de "Ranking"
     useEffect(() => {
         if (Object.keys(heroes).length === 0) return;
 
@@ -237,16 +294,38 @@ const App: React.FC = () => {
 
         fetchRankings();
     }, [rankDays, rankCategory, sortField, heroes, heroApiIdMap]);
-
-    // Efeito para buscar e definir as sugestões de banimento "Meta" com base no elo selecionado
+    
     useEffect(() => {
-        if (Object.keys(heroes).length === 0) return;
+        // Only set the initial rank for meta bans.
+        if (metaBanRankCategory !== null) return;
+    
+        // Wait until we have checked for a profile.
+        if (!isProfileChecked) return;
+    
+        if (session) { // User is logged in.
+            if (userProfile) { // And profile exists.
+                const lowerRanks = ['Guerreiro', 'Elite', 'Mestre', 'Grão-Mestre'];
+                if (lowerRanks.includes(userProfile.rank)) {
+                    setMetaBanRankCategory('mythic');
+                } else {
+                    setMetaBanRankCategory('glory');
+                }
+            } else {
+                // User is logged in, but no profile was found. Default to 'glory'.
+                setMetaBanRankCategory('glory');
+            }
+        } else { // User is logged out.
+            setMetaBanRankCategory('glory');
+        }
+    }, [userProfile, session, metaBanRankCategory, isProfileChecked]);
+
+    useEffect(() => {
+        if (Object.keys(heroes).length === 0 || !metaBanRankCategory) return;
 
         const fetchAndSetMetaBans = async () => {
             setIsMetaBansLoading(true);
             try {
                 const metaRankDays: RankDays = 7;
-                // Busca por taxa de escolha ('appearance_rate') para mais estabilidade da API, e ordena por ban_rate no cliente.
                 const rankingsData: ApiHeroRankData[] = await fetchHeroRankings(metaRankDays, metaBanRankCategory, 'appearance_rate');
                 
                 const rankLabel: Record<RankCategory, string> = { all: "Todos", epic: "Épico", legend: "Lenda", mythic: "Mítico", honor: "Honra", glory: "Glória" };
@@ -277,7 +356,6 @@ const App: React.FC = () => {
     }, [heroes, heroApiIdMap, metaBanRankCategory]);
 
 
-    // Efeito para calcular as sugestões de banimento "Counter"
     useEffect(() => {
         const calculateCounterBans = async () => {
             let personalCounters: BanSuggestion[] = [];
@@ -349,7 +427,6 @@ const App: React.FC = () => {
         calculateCounterBans();
     }, [matchupAllyPick, draftAllyPicks, draftEnemyPicks, synergyHeroPick, gameMode, heroes, heroApiIdMap]);
     
-    // FIX: Add useEffect to fetch synergy data for the 1v1 mode tab.
     useEffect(() => {
         if (gameMode !== '1v1' || !matchupAllyPick) {
             setSynergyRelations1v1(null);
@@ -417,7 +494,6 @@ const App: React.FC = () => {
     
         const combinedAnalysisTask = async () => {
             try {
-                // Fetch counters to find potential heroes for the AI to analyze
                 const counterData = await fetchCounters(selectedHero.apiId);
                 const relevantCounters = counterData
                     .filter(c => c.increase_win_rate > 0.01)
@@ -437,13 +513,11 @@ const App: React.FC = () => {
     
                 const analysisResult = await getSynergyAndStrategyAnalysis(heroToAnalyzeDetails, potentialCountersDetails);
     
-                // Process and set strategy analysis
                 const validItemNames = GAME_ITEMS.map(item => item.nome);
                 const correctedCoreItems = analysisResult.strategy.coreItems.map(item => ({ ...item, nome: findClosestString(item.nome, validItemNames) }));
                 const correctedSituationalItems = analysisResult.strategy.situationalItems.map(item => ({ ...item, nome: findClosestString(item.nome, validItemNames) }));
                 setStrategyAnalysis({ ...analysisResult.strategy, coreItems: correctedCoreItems, situationalItems: correctedSituationalItems });
     
-                // Process and set perfect counter
                 const bestSuggestion = analysisResult.perfectCounter;
                 const heroData = (Object.values(heroes) as Hero[]).find((h: Hero) => h.name === bestSuggestion.nome);
                 const stat = counterData.find(c => c.heroid === heroData?.apiId);
@@ -502,7 +576,6 @@ const App: React.FC = () => {
         }
     
         try {
-            // --- PREP DATA FOR GEMINI ---
             const isAnyLane = activeLane === 'NENHUMA';
             const roleForAnalysis: Role | 'Qualquer' = isAnyLane ? 'Qualquer' : laneToRoleMap[activeLane as Lane];
             const counterData = await fetchCounters(enemyHero.apiId);
@@ -520,7 +593,6 @@ const App: React.FC = () => {
                 throw new Error("Não foram encontrados counters estatísticos suficientes na API para uma análise de IA aprofundada.");
             }
     
-            // Filter and prepare potential counters for AI
             let potentialCountersForAI: Hero[];
             if (!isAnyLane) {
                 const roleCounters = allStatCounters.filter(item => item.hero.roles.includes(roleForAnalysis as Role)).map(item => item.hero);
@@ -532,7 +604,6 @@ const App: React.FC = () => {
             }
             const finalCountersForAI = potentialCountersForAI.slice(0, 7);
             
-            // Fetch hero details, using cache
             const allHeroesForDetails = [enemyHero, yourHero, ...finalCountersForAI].filter((h): h is Hero => h !== null);
             const detailsToFetch = allHeroesForDetails.filter(h => h.apiId && !heroDetailsCache[h.apiId]);
             let newCacheEntries: Record<number, HeroDetails> = {};
@@ -554,10 +625,9 @@ const App: React.FC = () => {
                 throw new Error("Falha ao carregar detalhes de um ou mais heróis para a análise.");
             }
             
-            // --- GET WIN RATE for matchup ---
             let winRate: number | null = null;
             if (yourHero && yourHero.apiId && enemyHero.apiId) {
-                 const enemyCounters = await fetchCounters(enemyHero.apiId); // Already fetched, can reuse
+                 const enemyCounters = await fetchCounters(enemyHero.apiId); 
                  const matchupStat = enemyCounters.find(counter => counter.heroid === yourHero.apiId);
                  let wr = matchupStat?.increase_win_rate ?? 0;
                  if (wr === 0) {
@@ -568,7 +638,6 @@ const App: React.FC = () => {
                  winRate = wr;
             }
     
-            // --- CALL COMBINED GEMINI FUNCTION ---
             const combinedAnalysis = await getCombined1v1Analysis(
                 enemyHeroDetails,
                 activeLane,
@@ -578,7 +647,6 @@ const App: React.FC = () => {
                 winRate
             );
     
-            // --- PROCESS AND SET STRATEGIC ANALYSIS ---
             const { strategicAnalysis, matchupAnalysis } = combinedAnalysis;
             const validItemNames = GAME_ITEMS.map(item => item.nome);
             const validSpellNames = Object.keys(SPELL_ICONS);
@@ -606,7 +674,6 @@ const App: React.FC = () => {
                 return { nome: correctedName, motivo: item.motivo, preco: gameItem?.preco || 0 };
             });
             
-            // Padding logic (same as before)
             const anulaSuggestions = heroSuggestions.filter(s => s.classificacao === 'ANULA');
             let vantagemSuggestions = heroSuggestions.filter(s => s.classificacao === 'VANTAGEM');
             const MIN_ANULA = activeLane === 'NENHUMA' ? 0 : 2;
@@ -628,7 +695,6 @@ const App: React.FC = () => {
             }
             setAnalysisResult({ sugestoesHerois: [...anulaSuggestions, ...vantagemSuggestions], sugestoesItens: correctedItems });
     
-            // --- PROCESS AND SET MATCHUP ANALYSIS ---
             if (matchupAnalysis && yourHero && winRate != null) {
                 const correctedSpell = { ...matchupAnalysis.recommendedSpell, nome: findClosestString(matchupAnalysis.recommendedSpell.nome, validSpellNames) };
                 setMatchupData({ 
@@ -644,7 +710,7 @@ const App: React.FC = () => {
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : "Ocorreu um erro desconhecido ao buscar a análise.";
             setAnalysisError(errorMessage);
-            setMatchupError(errorMessage); // Show error in both panels
+            setMatchupError(errorMessage);
         } finally {
             setIs1v1AnalysisLoading(false);
         }
@@ -705,7 +771,6 @@ const App: React.FC = () => {
 
                 const validItemNames = GAME_ITEMS.map(item => item.nome);
                 const strategicItems: StrategicItemSuggestion[] = analysisFromAI.strategicItems.map(item => {
-                    // FIX: Removed @ts-ignore and fallback to `item.itemName` as the schema in geminiService now correctly specifies `name`.
                     const correctedName = findClosestString(item.name, validItemNames);
                     const gameItem = GAME_ITEMS.find(i => i.nome === correctedName);
                     return {
@@ -749,7 +814,6 @@ const App: React.FC = () => {
             } else {
                 setMatchupEnemyPick(heroId);
             }
-            // Reset results on any hero change in 1v1
             setAnalysisResult(null); 
             setAnalysisError(null);
             setMatchupData(null); 
@@ -810,7 +874,6 @@ const App: React.FC = () => {
         },
         {
             label: "Sinergias",
-// FIX: Pass correct props to SynergyPanel and use the new state variables for synergy data.
             content: <SynergyPanel 
                 isLoading={isSynergyLoading1v1}
                 error={synergyError1v1}
@@ -820,8 +883,8 @@ const App: React.FC = () => {
         }
     ], [is1v1AnalysisLoading, matchupData, matchupError, isSynergyLoading1v1, synergyError1v1, synergyRelations1v1, heroApiIdMap]);
 
-    if (isLoadingHeroes) {
-        return <LoadingOverlay message={'CARREGANDO'} />;
+    if (isLoadingApp) {
+        return <LoadingOverlay message={'CARREGANDO DADOS...'} />;
     }
 
     if (heroLoadingError) {
@@ -830,6 +893,10 @@ const App: React.FC = () => {
                 <p className="text-red-500 p-8 text-xl font-semibold">{heroLoadingError}</p>
             </div>
         );
+    }
+    
+    if (!session) {
+        return <AuthScreen />;
     }
 
     const renderContent = () => {
@@ -845,9 +912,7 @@ const App: React.FC = () => {
                        </ol>
                     </CollapsibleTutorial>
 
-                    {/* Top Section: Hero Matchup */}
                     <div className="grid grid-cols-2 gap-4 items-start">
-                        {/* Ally Hero Column */}
                         <div className="col-span-1 flex flex-col gap-2 glassmorphism p-3 rounded-2xl border-2 panel-glow-blue">
                             <h2 className="text-xl font-black text-center text-blue-300 tracking-wider">SEU HERÓI</h2>
                             <HeroSlot 
@@ -860,7 +925,6 @@ const App: React.FC = () => {
                             />
                         </div>
 
-                        {/* Enemy Hero Column */}
                         <div className="col-span-1 flex flex-col gap-2 glassmorphism p-3 rounded-2xl border-2 panel-glow-red">
                             <h2 className="text-xl font-black text-center text-red-300 tracking-wider">INIMIGO</h2>
                             <HeroSlot 
@@ -899,7 +963,6 @@ const App: React.FC = () => {
                         </button>
                     </div>
 
-                    {/* Ban Suggestions Section */}
                     <BanSuggestions
                         counterSuggestions={counterBanSuggestions}
                         metaSuggestions={metaBanSuggestions}
@@ -909,13 +972,10 @@ const App: React.FC = () => {
                         onMetaRankChange={setMetaBanRankCategory}
                     />
 
-                    {/* Bottom Section: Detailed Analysis */}
                     <div ref={analysisSectionRef} className="flex flex-col lg:grid lg:grid-cols-2 gap-6">
-                        {/* Tabs Panel - now visually first on mobile */}
                         <div className="order-1 lg:order-2">
                             <TabbedPanel tabs={tabs} />
                         </div>
-                        {/* Analysis Panel - now visually second on mobile */}
                         <div className="order-2 lg:order-1">
                              <AnalysisPanel 
                                 isLoading={is1v1AnalysisLoading}
@@ -938,6 +998,7 @@ const App: React.FC = () => {
                     onSlotClick={handleSlotClick}
                     onClearSlot={handleClearDraftSlot}
                     counterBanSuggestions={counterBanSuggestions}
+                    // FIX: Corrected typo from `metaSuggestions` to `metaBanSuggestions` to match the component's prop definition.
                     metaBanSuggestions={metaBanSuggestions}
                     isBanLoading={isMetaBansLoading}
                     draftAnalysis={draftAnalysis}
@@ -980,7 +1041,7 @@ const App: React.FC = () => {
                 onClearHero={() => setSynergyHeroPick(null)}
                 counterBanSuggestions={counterBanSuggestions}
                 metaBanSuggestions={metaBanSuggestions}
-                // FIX: Pass the correct state variable 'isMetaBansLoading' instead of the undefined 'isBanLoading'.
+                // FIX: Corrected typo from `isBanLoading` to `isMetaBansLoading`.
                 isBanLoading={isMetaBansLoading}
                 activeMetaRank={metaBanRankCategory}
                 onMetaRankChange={setMetaBanRankCategory}
@@ -1003,7 +1064,13 @@ const App: React.FC = () => {
 
     return (
         <div className="flex flex-col min-h-screen p-4 sm:p-6 lg:p-8">
-            <Header activeMode={gameMode} onSetMode={setGameMode} />
+            <Header 
+                activeMode={gameMode} 
+                onSetMode={setGameMode} 
+                session={session}
+                userProfile={userProfile}
+                onLogout={() => supabase && supabase.auth.signOut()} 
+            />
 
             <main className="w-full max-w-7xl mx-auto flex-grow">
                 {renderContent()}

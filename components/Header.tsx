@@ -1,13 +1,18 @@
+
 import React from 'react';
+import { Session } from '@supabase/supabase-js';
 
 type GameMode = '1v1' | '5v5' | 'ranking' | 'item' | 'synergy' | 'heroes';
 
 interface HeaderProps {
     activeMode: GameMode;
     onSetMode: (mode: GameMode) => void;
+    session: Session | null;
+    userProfile: { username: string; rank: string } | null;
+    onLogout: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ activeMode, onSetMode }) => {
+const Header: React.FC<HeaderProps> = ({ activeMode, onSetMode, session, userProfile, onLogout }) => {
     const descriptions: Record<GameMode, string> = {
         'synergy': 'Selecione um herói para ver sugestões de ban, sinergias e uma análise estratégica completa da IA com build e estilo de jogo.',
         '1v1': 'Analise confrontos, descubra os melhores counters e domine sua lane com sugestões táticas baseadas em dados.',
@@ -27,7 +32,21 @@ const Header: React.FC<HeaderProps> = ({ activeMode, onSetMode }) => {
     ];
 
     return (
-        <header className="text-center mb-8 animated-entry">
+        <header className="relative text-center mb-8 animated-entry">
+             {session && (
+                <div className="absolute top-0 right-0 text-right bg-black/20 p-2 rounded-lg z-10">
+                    <p className="text-xs text-gray-300 truncate max-w-[200px]">
+                       Bem-vindo, <span className="font-bold">{userProfile?.username || session.user.email}</span>!
+                    </p>
+                    <button 
+                        onClick={onLogout} 
+                        className="text-xs font-semibold text-violet-400 hover:underline transition-colors"
+                    >
+                        Sair
+                    </button>
+                </div>
+            )}
+
             <img src="https://i.postimg.cc/ZK4nFyHG/mitica-logo-Photoroom.png" alt="Mítica Estratégia MLBB Logo" className="h-56 sm:h-80 lg:h-[27rem] mx-auto -mt-4 sm:-mt-10 lg:-mt-12 animated-logo" />
             <h1 className="text-4xl sm:text-7xl lg:text-8xl font-black tracking-tight title-main -mt-12 sm:-mt-20 lg:-mt-24 relative animated-logo max-w-sm sm:max-w-none mx-auto">
                 MÍTICA ESTRATÉGIA MLBB
