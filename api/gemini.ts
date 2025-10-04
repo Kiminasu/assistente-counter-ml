@@ -1,7 +1,11 @@
-import { GoogleGenAI, Type } from "@google/genai";
 import { Lane, Role, SpellSuggestion, MatchupClassification, GameItem, ROLES, Hero, DraftAnalysisResult, LaneOrNone, HeroStrategyAnalysis, HeroDetails, AnalysisResult } from "../types";
 import { SPELL_ICONS } from '../constants';
 import { GAME_ITEMS } from '../components/data/items';
+
+// Importa dinamicamente o módulo @google/genai de uma URL CDN para compatibilidade com o ambiente serverless.
+const genaiModule = await import("https://aistudiocdn.com/@google/genai@^1.22.0");
+const { GoogleGenAI, Type } = genaiModule;
+
 
 // A inicialização do cliente GenAI acontece aqui, no lado do servidor.
 // Ele usará a variável de ambiente 'API_KEY' configurada na Vercel.
