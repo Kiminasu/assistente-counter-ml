@@ -2,11 +2,11 @@
 // api/gemini.ts
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { GoogleGenAI, Type } from "@google/genai";
+import * as genai from "@google/genai";
 import { createClient } from '@supabase/supabase-js';
 
 // CORREÇÃO: Importando da pasta local _lib
-import { Hero, HeroDetails, DraftAnalysisResult, AnalysisResult, HeroStrategyAnalysis } from "./_lib/types";
+import { Hero, HeroDetails, DraftAnalysisResult, AnalysisResult, HeroStrategyAnalysis, ROLES, LaneOrNone, Role, SpellSuggestion, MatchupClassification } from "./_lib/types";
 import { GAME_ITEMS } from './_lib/items';
 import { SPELL_ICONS } from './_lib/constants';
 
