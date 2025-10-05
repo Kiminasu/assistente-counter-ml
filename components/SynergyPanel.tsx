@@ -86,9 +86,9 @@ const SynergyPanel: React.FC<SynergyPanelProps> = ({ isLoading, error, relations
                 </div>
                 
                 <div className="space-y-6">
-                    <SynergySection title="Bons Aliados" colorClass="text-blue-300" heroIds={relations.assist.target_hero_id} heroApiIdMap={heroApiIdMap} />
-                    <SynergySection title="Forte Contra" colorClass="text-green-300" heroIds={relations.strong.target_hero_id} heroApiIdMap={heroApiIdMap} />
-                    <SynergySection title="Fraco Contra" colorClass="text-red-300" heroIds={relations.weak.target_hero_id} heroApiIdMap={heroApiIdMap} />
+                    <SynergySection title="Bons Aliados" colorClass="text-blue-300" heroIds={relations.assist?.target_hero_id || []} heroApiIdMap={heroApiIdMap} />
+                    <SynergySection title="Forte Contra" colorClass="text-green-300" heroIds={relations.strong?.target_hero_id || []} heroApiIdMap={heroApiIdMap} />
+                    <SynergySection title="Fraco Contra" colorClass="text-red-300" heroIds={relations.weak?.target_hero_id || []} heroApiIdMap={heroApiIdMap} />
                 </div>
                 
                 {!hasRelations && !isLoading && (
