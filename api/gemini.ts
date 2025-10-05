@@ -76,7 +76,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             .eq('id', user.id)
             .single();
 
-        if (profileError) throw new Error('Perfil de usuário não encontrado.');
+        if (profileError) {
+            console.error('Erro ao buscar perfil do Supabase:', profileError);
+            throw new Error('Perfil de usuário não encontrado.');
+        }
 
         // Se for premium, pode passar direto
         if (profile.subscription_status !== 'premium') {
@@ -88,10 +91,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             }
 
             // Se for um novo dia, reseta a contagem
-            const newCount = lastAnalysisDate === today ? profile.analysis_count + 1 : 1;
+            const newCount = lastAnalysisDate === today ? (profile.analysis_count || 0) + 1 : 1;
             
             // Atualiza o perfil ANTES de fazer a análise
-            await supabase.from('profiles').update({ analysis_count: newCount, last_analysis_at: new Date().toISOString() }).eq('id', user.id);
+            const { error: updateError } = await supabase.from('profiles').update({ analysis_count: newCount, last_analysis_at: new Date().toISOString() }).eq('id', user.id);
+            if (updateError) {
+                console.error('Erro ao atualizar o perfil do Supabase:', updateError);
+                throw new Error('Não foi possível atualizar a contagem de análises do usuário.');
+            }
         }
 
         // 3. EXECUTAR A ANÁLISE (se passou pelas verificações)
