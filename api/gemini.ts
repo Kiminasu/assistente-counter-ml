@@ -1,8 +1,7 @@
-
 // api/gemini.ts
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import * as genai from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
 import { createClient } from '@supabase/supabase-js';
 
 // CORREÇÃO: Importando da pasta local _lib
