@@ -691,12 +691,15 @@ const App: React.FC = () => {
             const validItemNames = GAME_ITEMS.map(item => item.nome);
             const validSpellNames = Object.keys(SPELL_ICONS);
     
-            const heroSuggestions: HeroSuggestion[] = strategicAnalysis.sugestoesHerois.map((aiSuggestion): HeroSuggestion => {
+            const aiHeroSuggestions = strategicAnalysis?.sugestoesHerois || [];
+            const aiItemSuggestions = strategicAnalysis?.sugestoesItens || [];
+
+            const heroSuggestions: HeroSuggestion[] = aiHeroSuggestions.map((aiSuggestion): HeroSuggestion => {
                 const heroData = (Object.values(heroes) as Hero[]).find((h: Hero) => h.name === aiSuggestion.nome);
                 const stat = allStatCounters.find(c => c.hero.name === aiSuggestion.nome);
                 const winRateIncrease = stat?.increase_win_rate || 0;
                 const classificacao: 'ANULA' | 'VANTAGEM' = (winRateIncrease > 0.04 && activeLane !== 'NENHUMA' ? 'ANULA' : 'VANTAGEM');
-                const correctedSpells = aiSuggestion.spells.map(spell => ({ ...spell, nome: findClosestString(spell.nome, validSpellNames) }));
+                const correctedSpells = (aiSuggestion.spells || []).map(spell => ({ ...spell, nome: findClosestString(spell.nome, validSpellNames) }));
                 return {
                     nome: aiSuggestion.nome,
                     motivo: aiSuggestion.motivo,
@@ -708,7 +711,7 @@ const App: React.FC = () => {
                 };
             });
     
-            const correctedItems: ItemSuggestion[] = strategicAnalysis.sugestoesItens.map(item => {
+            const correctedItems: ItemSuggestion[] = aiItemSuggestions.map(item => {
                 const correctedName = findClosestString(item.nome, validItemNames);
                 const gameItem = GAME_ITEMS.find(i => i.nome === correctedName);
                 return { nome: correctedName, motivo: item.motivo, preco: gameItem?.preco || 0 };
