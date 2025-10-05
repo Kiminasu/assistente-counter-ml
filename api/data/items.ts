@@ -1,4 +1,4 @@
-import { GameItem } from "../types";
+import { GameItem } from "../types.js";
 
 export const GAME_ITEMS: GameItem[] = [
   {
