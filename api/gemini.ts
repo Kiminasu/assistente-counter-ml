@@ -3,9 +3,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import * as genai from "@google/genai"; // <-- MUDANÇA 1: Importa tudo como 'genai'
 import { createClient } from '@supabase/supabase-js';
-import { Hero, HeroDetails, DraftAnalysisResult, AnalysisResult, HeroStrategyAnalysis, ROLES, LaneOrNone, Role, SpellSuggestion, MatchupClassification } from "../types";
-import { GAME_ITEMS } from '../components/data/items';
-import { SPELL_ICONS } from '../constants';
+import { Hero, HeroDetails, DraftAnalysisResult, AnalysisResult, HeroStrategyAnalysis, ROLES, LaneOrNone, Role, SpellSuggestion, MatchupClassification } from "./types";
+import { GAME_ITEMS } from './data/items';
+import { SPELL_ICONS } from './constants';
 
 // --- INICIALIZAÇÃO SEGURA NO BACKEND (COM A CORREÇÃO) ---
 // @ts-ignore
