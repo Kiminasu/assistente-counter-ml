@@ -999,7 +999,6 @@ const App: React.FC = () => {
                     onSlotClick={handleSlotClick}
                     onClearSlot={handleClearDraftSlot}
                     counterBanSuggestions={counterBanSuggestions}
-                    // FIX: Corrected typo from `metaSuggestions` to `metaBanSuggestions` to match the component's prop definition.
                     metaBanSuggestions={metaBanSuggestions}
                     isBanLoading={isMetaBansLoading}
                     draftAnalysis={draftAnalysis}
@@ -1042,7 +1041,6 @@ const App: React.FC = () => {
                 onClearHero={() => setSynergyHeroPick(null)}
                 counterBanSuggestions={counterBanSuggestions}
                 metaBanSuggestions={metaBanSuggestions}
-                // FIX: Corrected prop name from `isBanLoading` to `isMetaBansLoading` to match the component's props interface.
                 isMetaBansLoading={isMetaBansLoading}
                 activeMetaRank={metaBanRankCategory}
                 onMetaRankChange={setMetaBanRankCategory}

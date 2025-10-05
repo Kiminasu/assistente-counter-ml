@@ -1,6 +1,8 @@
 
 
 
+
+
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { BanSuggestion, Hero, HeroStrategyAnalysis, HeroRankInfo, RankCategory, HeroDetails, HeroRelation, HeroSuggestion, ItemSuggestion, Role } from '../types';
 import CollapsibleTutorial from './CollapsibleTutorial';
@@ -20,7 +22,7 @@ interface SynergyExplorerScreenProps {
     onClearHero: () => void;
     counterBanSuggestions: BanSuggestion[];
     metaBanSuggestions: BanSuggestion[];
-    isBanLoading: boolean;
+    isMetaBansLoading: boolean;
     activeMetaRank: RankCategory | null;
     onMetaRankChange: (rank: RankCategory) => void;
     onAnalyze: () => void;
@@ -79,7 +81,7 @@ const SynergyExplorerScreen: React.FC<SynergyExplorerScreenProps> = ({
     onClearHero,
     counterBanSuggestions,
     metaBanSuggestions,
-    isBanLoading,
+    isMetaBansLoading,
     activeMetaRank,
     onMetaRankChange,
     onAnalyze,
@@ -286,7 +288,7 @@ const SynergyExplorerScreen: React.FC<SynergyExplorerScreenProps> = ({
             <BanSuggestions
                 counterSuggestions={counterBanSuggestions}
                 metaSuggestions={metaBanSuggestions}
-                isLoading={isBanLoading}
+                isLoading={isMetaBansLoading}
                 variant="1v1"
                 activeMetaRank={activeMetaRank}
                 onMetaRankChange={onMetaRankChange}

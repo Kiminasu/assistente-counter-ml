@@ -1,25 +1,24 @@
+
 // api/gemini.ts
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { GoogleGenAI, Type } from "@google/genai";
 import { createClient } from '@supabase/supabase-js';
-import { Hero, HeroDetails, DraftAnalysisResult, AnalysisResult, HeroStrategyAnalysis, ROLES } from "./types.js";
-import { GAME_ITEMS } from './data/items.js';
-import { SPELL_ICONS } from './constants.js';
 
-// --- INICIALIZAÇÃO CORRETA E FINAL ---
+// CORREÇÃO: Importando da pasta local _lib
+import { Hero, HeroDetails, DraftAnalysisResult, AnalysisResult, HeroStrategyAnalysis } from "./_lib/types";
+import { GAME_ITEMS } from './_lib/items';
+import { SPELL_ICONS } from './_lib/constants';
+
+// --- INICIALIZAÇÃO SEGURA NO BACKEND ---
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || "" });
-
-// As variáveis de ambiente do Supabase não estavam disponíveis no ambiente do servidor.
-// Para corrigir o erro 'supabaseUrl is required', as credenciais foram adicionadas diretamente aqui.
-const supabaseUrl = 'https://kuniwzaomcwixlnhachs.supabase.co';
-const supabaseServiceKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1bml3emFvbWN3aXhsbmhhY2hzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk2MDMwMTIsImV4cCI6MjA3NTE3OTAxMn0.IOS2Tv7xzPPKYGUfLrEvGRK4OJzZKKy0GwUncLk5q40';
+const supabaseUrl = process.env.SUPABASE_URL || "";
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY || "";
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
 
 const DAILY_LIMIT = 5;
 
-// --- FUNÇÕES AUXILIARES E SCHEMAS (TUDO INCLUÍDO) ---
+// --- FUNÇÕES AUXILIARES E SCHEMAS ---
 
 const formatHeroDetailsForPrompt = (details: HeroDetails): string => {
     if (!details || !details.skills) return `${details?.name || 'Herói Desconhecido'} (detalhes indisponíveis)`;
@@ -31,100 +30,14 @@ const formatHeroDetailsForPrompt = (details: HeroDetails): string => {
     return `Nome: ${details.name}\nResumo: ${details.summary}\nHabilidades:\n${skills}${combos ? `\nCombos Táticos:${combos}` : ''}`.trim();
 };
 
-const analysisResponseSchema = {
-    type: Type.OBJECT,
-    properties: {
-        sugestoesHerois: {
-            type: Type.ARRAY,
-            items: {
-                type: Type.OBJECT,
-                properties: {
-                    nome: { type: Type.STRING },
-                    motivo: { type: Type.STRING },
-                    avisos: { type: Type.ARRAY, items: { type: Type.STRING } },
-                    spells: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { nome: { type: Type.STRING }, motivo: { type: Type.STRING } }, required: ["nome", "motivo"] } }
-                },
-                required: ["nome", "motivo", "avisos", "spells"]
-            }
-        },
-        sugestoesItens: {
-            type: Type.ARRAY,
-            items: {
-                type: Type.OBJECT,
-                properties: { nome: { type: Type.STRING }, motivo: { type: Type.STRING } },
-                required: ["nome", "motivo"]
-            }
-        }
-    },
-    required: ["sugestoesHerois", "sugestoesItens"]
-};
-
-const matchupResponseSchema = {
-    type: Type.OBJECT,
-    properties: {
-        classification: { type: Type.STRING },
-        detailedAnalysis: { type: Type.STRING },
-        recommendedSpell: { type: Type.OBJECT, properties: { nome: { type: Type.STRING }, motivo: { type: Type.STRING } }, required: ["nome", "motivo"] }
-    },
-    required: ["classification", "detailedAnalysis", "recommendedSpell"]
-};
-
-const combined1v1Schema = {
-    type: Type.OBJECT,
-    properties: {
-        strategicAnalysis: analysisResponseSchema,
-        matchupAnalysis: { ...matchupResponseSchema, nullable: true }
-    },
-    required: ["strategicAnalysis"]
-};
-
-const compositionSchema = { type: Type.OBJECT, properties: { physicalDamage: { type: Type.INTEGER }, magicDamage: { type: Type.INTEGER }, tankiness: { type: Type.INTEGER }, control: { type: Type.INTEGER } } };
-
-const draftAnalysisSchema = {
-    type: Type.OBJECT,
-    properties: {
-        advantageScore: { type: Type.INTEGER },
-        advantageReason: { type: Type.STRING },
-        allyComposition: compositionSchema,
-        enemyComposition: compositionSchema,
-        teamStrengths: { type: Type.ARRAY, items: { type: Type.STRING } },
-        teamWeaknesses: { type: Type.ARRAY, items: { type: Type.STRING } },
-        nextPickSuggestion: { type: Type.OBJECT, properties: { heroName: { type: Type.STRING }, role: { type: Type.STRING }, reason: { type: Type.STRING } }, nullable: true },
-        strategicItems: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { name: { type: Type.STRING }, reason: { type: Type.STRING } }, required: ["name", "reason"] } }
-    },
-    required: ["advantageScore", "advantageReason", "allyComposition", "enemyComposition", "teamStrengths", "teamWeaknesses", "strategicItems"]
-};
-
-const heroStrategySchema = {
-    type: Type.OBJECT,
-    properties: {
-        coreItems: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { nome: { type: Type.STRING }, motivo: { type: Type.STRING } }, required: ["nome", "motivo"] } },
-        situationalItems: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { nome: { type: Type.STRING }, motivo: { type: Type.STRING } }, required: ["nome", "motivo"] } },
-        playstyle: { type: Type.STRING },
-        powerSpikes: { type: Type.STRING }
-    },
-    required: ["coreItems", "situationalItems", "playstyle", "powerSpikes"]
-};
-
-const perfectCounterSchema = {
-    type: Type.OBJECT,
-    properties: {
-        nome: { type: Type.STRING },
-        motivo: { type: Type.STRING },
-        avisos: { type: Type.ARRAY, items: { type: Type.STRING } },
-        spells: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { nome: { type: Type.STRING }, motivo: { type: Type.STRING } }, required: ["nome", "motivo"] } }
-    },
-    required: ["nome", "motivo", "avisos", "spells"]
-};
-
-const combinedSynergyAnalysisSchema = {
-    type: Type.OBJECT,
-    properties: {
-        strategy: heroStrategySchema,
-        perfectCounter: perfectCounterSchema
-    },
-    required: ["strategy", "perfectCounter"]
-};
+const analysisResponseSchema = { type: Type.OBJECT, properties: { sugestoesHerois: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { nome: { type: Type.STRING }, motivo: { type: Type.STRING }, avisos: { type: Type.ARRAY, items: { type: Type.STRING } }, spells: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { nome: { type: Type.STRING }, motivo: { type: Type.STRING } }, required: ["nome", "motivo"] } } }, required: ["nome", "motivo", "avisos", "spells"] } }, sugestoesItens: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { nome: { type: Type.STRING }, motivo: { type: Type.STRING } }, required: ["nome", "motivo"] } } }, required: ["sugestoesHerois", "sugestoesItens"] };
+const matchupResponseSchema = { type: Type.OBJECT, properties: { classification: { type: Type.STRING }, detailedAnalysis: { type: Type.STRING }, recommendedSpell: { type: Type.OBJECT, properties: { nome: { type: Type.STRING }, motivo: { type: Type.STRING } }, required: ["nome", "motivo"] } }, required: ["classification", "detailedAnalysis", "recommendedSpell"] };
+const combined1v1Schema = { type: Type.OBJECT, properties: { strategicAnalysis: analysisResponseSchema, matchupAnalysis: { ...matchupResponseSchema, nullable: true } }, required: ["strategicAnalysis"] };
+const compositionSchema = { type: Type.OBJECT, properties: { physicalDamage: { type: Type.INTEGER }, magicDamage: { type: Type.INTEGER }, tankiness: { type: Type.INTEGER }, control: { type: Type.INTEGER } }, required: ["physicalDamage", "magicDamage", "tankiness", "control"] };
+const draftAnalysisSchema = { type: Type.OBJECT, properties: { advantageScore: { type: Type.INTEGER }, advantageReason: { type: Type.STRING }, allyComposition: compositionSchema, enemyComposition: compositionSchema, teamStrengths: { type: Type.ARRAY, items: { type: Type.STRING } }, teamWeaknesses: { type: Type.ARRAY, items: { type: Type.STRING } }, nextPickSuggestion: { type: Type.OBJECT, properties: { heroName: { type: Type.STRING }, role: { type: Type.STRING }, reason: { type: Type.STRING } }, nullable: true }, strategicItems: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { name: { type: Type.STRING }, reason: { type: Type.STRING } }, required: ["name", "reason"] } } }, required: ["advantageScore", "advantageReason", "allyComposition", "enemyComposition", "teamStrengths", "teamWeaknesses", "strategicItems"] };
+const heroStrategySchema = { type: Type.OBJECT, properties: { coreItems: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { nome: { type: Type.STRING }, motivo: { type: Type.STRING } }, required: ["nome", "motivo"] } }, situationalItems: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { nome: { type: Type.STRING }, motivo: { type: Type.STRING } }, required: ["nome", "motivo"] } }, playstyle: { type: Type.STRING }, powerSpikes: { type: Type.STRING } }, required: ["coreItems", "situationalItems", "playstyle", "powerSpikes"] };
+const perfectCounterSchema = { type: Type.OBJECT, properties: { nome: { type: Type.STRING }, motivo: { type: Type.STRING }, avisos: { type: Type.ARRAY, items: { type: Type.STRING } }, spells: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { nome: { type: Type.STRING }, motivo: { type: Type.STRING } }, required: ["nome", "motivo"] } } }, required: ["nome", "motivo", "avisos", "spells"] };
+const combinedSynergyAnalysisSchema = { type: Type.OBJECT, properties: { strategy: heroStrategySchema, perfectCounter: perfectCounterSchema }, required: ["strategy", "perfectCounter"] };
 
 
 // --- FUNÇÕES DE ANÁLISE ---
@@ -135,53 +48,51 @@ async function handle1v1Analysis(payload: any) {
     const spellList = Object.keys(SPELL_ICONS).filter(spell => spell !== 'default').join(', ');
     const enemyDetailsPrompt = formatHeroDetailsForPrompt(enemyHeroDetails);
     const countersDetailsPrompt = potentialCountersDetails.map((d: HeroDetails) => formatHeroDetailsForPrompt(d)).join('\n\n---\n\n');
-    const systemPrompt = `Você é um analista de nível Mítico e engenheiro de jogo de Mobile Legends. Sua tarefa é fornecer uma análise tática infalível. Baseie-se ESTRITAMENTE nos dados fornecidos. Responda APENAS com um objeto JSON válido que siga o schema. Seja direto, preciso e use termos em português do Brasil.`;
-    const laneContext = lane === 'NENHUMA' ? 'em um confronto geral' : `na lane '${lane}'`;
-    const strategicInstructions = `**Parte 1: Análise Estratégica de Counters (strategicAnalysis)**\nO oponente ${laneContext} é ${enemyHeroDetails.name}.\n${selectedRole === 'Qualquer' ? "Analise os melhores counters possíveis, independente da função." : `Eu quero jogar com um herói da função '${selectedRole}'.`}\nAnalise CADA UM dos seguintes 'Heróis para Análise'.\nInstruções: Forneça um 'motivo' tático detalhado, 1-2 'avisos' críticos, sugira 1-2 'spells' da lista [${spellList}], e 3 'sugestoesItens' da lista [${itemNames}].`;
+    const systemPrompt = `Você é um analista de nível Mítico de Mobile Legends. Forneça uma análise tática infalível baseada ESTRITAMENTE nos dados. Responda APENAS com um objeto JSON válido que siga o schema.`;
+    const laneContext = lane === 'NENHUMA' ? 'em confronto geral' : `na lane '${lane}'`;
+    const strategicInstructions = `**Parte 1: Análise Estratégica (strategicAnalysis)**\nOponente: ${enemyHeroDetails.name} ${laneContext}.\nAnalisar counters para a função '${selectedRole}'.\nHeróis para Análise:\n${countersDetailsPrompt}\nInstruções: Forneça 'motivo', 'avisos', 'spells' da lista [${spellList}], e 3 'sugestoesItens' da lista [${itemNames}].`;
     let matchupInstructions = '';
     if (yourHeroDetails) {
-        let winRateDescription = `estatisticamente NEUTRO`;
-        if (winRate != null && winRate > 0.01) winRateDescription = `uma VANTAGEM estatística de +${(winRate * 100).toFixed(1)}%`;
-        else if (winRate != null && winRate < -0.01) winRateDescription = `uma DESVANTAGEM estatística de ${(winRate * 100).toFixed(1)}%`;
-        const yourHeroDetailsPrompt = formatHeroDetailsForPrompt(yourHeroDetails);
-        const matchupContextText = lane === 'NENHUMA' ? `Confronto direto geral: Meu Herói (${yourHeroDetails.name}) vs Inimigo (${enemyHeroDetails.name}).` : `Confronto na lane ${lane}: Meu Herói (${yourHeroDetails.name}) vs Inimigo (${enemyHeroDetails.name}).`;
-        matchupInstructions = `**Parte 2: Análise de Confronto Direto (matchupAnalysis)**\n${matchupContextText}\nDados Estatísticos: Meu herói tem ${winRateDescription}.\nMeu Herói:\n${yourHeroDetailsPrompt}\nInimigo:\n${enemyDetailsPrompt}\nInstruções: Determine a 'classification', forneça uma 'detailedAnalysis' e recomende o melhor 'recommendedSpell' da lista [${spellList}].`;
+        let winRateDesc = `NEUTRO`;
+        if (winRate > 0.01) winRateDesc = `VANTAGEM de +${(winRate * 100).toFixed(1)}%`;
+        else if (winRate < -0.01) winRateDesc = `DESVANTAGEM de ${(winRate * 100).toFixed(1)}%`;
+        matchupInstructions = `**Parte 2: Confronto Direto (matchupAnalysis)**\nMeu Herói (${yourHeroDetails.name}) vs Inimigo (${enemyHeroDetails.name}).\nEstatística: ${winRateDesc}.\nMeu Herói:\n${formatHeroDetailsForPrompt(yourHeroDetails)}\nInimigo:\n${enemyDetailsPrompt}\nInstruções: Determine 'classification', 'detailedAnalysis' e 'recommendedSpell' da lista [${spellList}].`;
     }
-    const userQuery = `${strategicInstructions}\nHeróis para Análise:\n${countersDetailsPrompt}\n${matchupInstructions}\n${!matchupInstructions ? 'O campo "matchupAnalysis" deve ser nulo.' : ''}`;
+    const userQuery = `${strategicInstructions}\n\n${matchupInstructions}\n\n${!matchupInstructions ? 'O campo "matchupAnalysis" deve ser nulo.' : ''}`;
     
-    const result = await ai.models.generateContent({
+    const response = await ai.models.generateContent({
         model: "gemini-2.5-flash",
         contents: userQuery,
         config: {
             systemInstruction: systemPrompt,
             responseMimeType: "application/json",
             responseSchema: combined1v1Schema,
-            temperature: 0.1,
-        },
+            temperature: 0.1
+        }
     });
-    return JSON.parse(result.text);
+    return JSON.parse(response.text);
 }
 
 async function handleDraftAnalysis(payload: any) {
     const { allyHeroesDetails, enemyHeroesDetails, availableHeroes } = payload;
     const itemNames = GAME_ITEMS.map(item => item.nome).join(', ');
     const availableHeroNames = availableHeroes.map((h: Hero) => h.name).join(', ');
-    const allyDetailsPrompt = allyHeroesDetails.length > 0 ? allyHeroesDetails.map(formatHeroDetailsForPrompt).join('\n\n---\n\n') : "Nenhum.";
-    const enemyDetailsPrompt = enemyHeroesDetails.length > 0 ? enemyHeroesDetails.map(formatHeroDetailsForPrompt).join('\n\n---\n\n') : "Nenhum.";
-    const systemPrompt = "Você é um analista de draft de nível Mítico de Mobile Legends. Analise o draft 5v5 e forneça conselhos estratégicos. Responda APENAS com um objeto JSON válido que siga o schema.";
-    const userQuery = `DRAFT 5v5:\nTime Aliado:\n${allyDetailsPrompt}\nTime Inimigo:\n${enemyDetailsPrompt}\nHeróis Disponíveis: [${availableHeroNames}]\nItens para Sugestão: [${itemNames}]\nINSTRUÇÕES: Forneça 'advantageScore' (-10 a 10), 'advantageReason' (específico), preencha 'allyComposition' e 'enemyComposition' (1 a 10), dê 2-3 'teamStrengths' e 'teamWeaknesses', sugira o 'nextPickSuggestion' se houver espaço (ou nulo), e 2 'strategicItems'.`;
-    
-    const result = await ai.models.generateContent({
+    const allyDetailsPrompt = allyHeroesDetails.length > 0 ? allyHeroesDetails.map(formatHeroDetailsForPrompt).join('\n---\n') : "Nenhum.";
+    const enemyDetailsPrompt = enemyHeroesDetails.length > 0 ? enemyHeroesDetails.map(formatHeroDetailsForPrompt).join('\n---\n') : "Nenhum.";
+    const systemPrompt = "Você é um analista de draft Mítico de Mobile Legends. Analise o draft e responda APENAS com um objeto JSON válido que siga o schema.";
+    const userQuery = `DRAFT 5v5:\nTime Aliado:\n${allyDetailsPrompt}\nTime Inimigo:\n${enemyDetailsPrompt}\nHeróis Disponíveis: [${availableHeroNames}]\nItens: [${itemNames}]\nINSTRUÇÕES: Forneça 'advantageScore', 'advantageReason', 'allyComposition', 'enemyComposition', 'teamStrengths', 'teamWeaknesses', 'nextPickSuggestion' (ou nulo), e 2 'strategicItems'.`;
+
+    const response = await ai.models.generateContent({
         model: "gemini-2.5-flash",
         contents: userQuery,
         config: {
             systemInstruction: systemPrompt,
             responseMimeType: "application/json",
             responseSchema: draftAnalysisSchema,
-            temperature: 0.1,
-        },
+            temperature: 0.1
+        }
     });
-    return JSON.parse(result.text);
+    return JSON.parse(response.text);
 }
 
 async function handleSynergyAnalysis(payload: any) {
@@ -190,20 +101,20 @@ async function handleSynergyAnalysis(payload: any) {
     const spellList = Object.keys(SPELL_ICONS).filter(spell => spell !== 'default').join(', ');
     const heroToAnalyzePrompt = formatHeroDetailsForPrompt(heroToAnalyzeDetails);
     const countersDetailsPrompt = potentialCountersDetails.map((d: HeroDetails) => formatHeroDetailsForPrompt(d)).join('\n\n---\n\n');
-    const systemPrompt = "Você é um analista de nível Mítico de Mobile Legends. Forneça uma análise estratégica completa de um herói. Responda APENAS com um objeto JSON válido que siga o schema.";
-    const userQuery = `ANÁLISE ESTRATÉGICA COMPLETA\nHERÓI PARA ANÁLISE:\n${heroToAnalyzePrompt}\nHeróis Potenciais para Counter Perfeito (escolha o melhor):\n${countersDetailsPrompt}\nItens: [${itemNames}]\nFeitiços: [${spellList}]\nINSTRUÇÕES: 1. Para 'strategy': sugira 3-4 'coreItems', 2-3 'situationalItems', descreva o 'playstyle' e 'powerSpikes'. 2. Para 'perfectCounter': escolha o melhor da lista, dê um 'motivo' tático, 1-2 'avisos' e 1-2 'spells'.`;
-
-    const result = await ai.models.generateContent({
+    const systemPrompt = "Você é um analista Mítico de Mobile Legends. Forneça uma análise estratégica completa e responda APENAS com um objeto JSON válido que siga o schema.";
+    const userQuery = `ANÁLISE ESTRATÉGICA\nHERÓI: ${heroToAnalyzePrompt}\nCOUNTERS POTENCIAIS (escolha o melhor): ${countersDetailsPrompt}\nItens: [${itemNames}]\nFeitiços: [${spellList}]\nINSTRUÇÕES: 1. Para 'strategy': sugira 'coreItems', 'situationalItems', 'playstyle' e 'powerSpikes'. 2. Para 'perfectCounter': escolha o melhor, dê 'motivo', 'avisos' e 'spells'.`;
+    
+    const response = await ai.models.generateContent({
         model: "gemini-2.5-flash",
         contents: userQuery,
         config: {
             systemInstruction: systemPrompt,
             responseMimeType: "application/json",
             responseSchema: combinedSynergyAnalysisSchema,
-            temperature: 0.1,
-        },
+            temperature: 0.1
+        }
     });
-    return JSON.parse(result.text);
+    return JSON.parse(response.text);
 }
 
 
@@ -217,7 +128,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method === 'OPTIONS') return res.status(200).end();
     if (req.method !== 'POST') return res.status(405).json({ error: 'Método Não Permitido' });
 
-    if (!process.env.API_KEY || !supabaseUrl || !supabaseServiceKey) {
+    if (!process.env.API_KEY || !process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
         return res.status(500).json({ error: "Variáveis de ambiente do servidor não configuradas corretamente." });
     }
 
@@ -235,7 +146,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (profile.subscription_status !== 'premium') {
             const today = new Date().toISOString().split('T')[0];
             const lastAnalysisDate = profile.last_analysis_at ? new Date(profile.last_analysis_at).toISOString().split('T')[0] : null;
-
             if (lastAnalysisDate === today && profile.analysis_count >= DAILY_LIMIT) {
                 return res.status(429).json({ error: `Você atingiu seu limite de ${DAILY_LIMIT} análises gratuitas por dia. Faça upgrade para análises ilimitadas!` });
             }
@@ -255,9 +165,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json(result);
     } catch (error: any) {
         console.error("Erro na função de API:", error);
-        if (error.message && error.message.includes("API_KEY_INVALID")) {
-            return res.status(500).json({ error: "A chave da API do Google Gemini não é válida. Verifique as variáveis de ambiente do servidor." });
-        }
         return res.status(500).json({ error: error.message || "Erro interno do servidor." });
     }
 }
