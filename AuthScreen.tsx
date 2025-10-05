@@ -63,8 +63,8 @@ const AuthScreen: React.FC = () => {
     return (
         <div className="min-h-screen flex flex-col items-center justify-center p-4">
             <div className="w-full max-w-md">
-                 <img src="https://i.postimg.cc/ZK4nFyHG/mitica-logo-Photoroom.png" alt="Mítica Estratégia MLBB Logo" className="h-48 mx-auto animated-logo" />
-                 <h1 className="text-4xl sm:text-5xl font-black tracking-tight title-main text-center -mt-8 relative animated-logo">
+                 <img src="https://i.postimg.cc/ZK4nFyHG/mitica-logo-Photoroom.png" alt="Mítica Estratégia MLBB Logo" className="h-48 mx-auto" />
+                 <h1 className="text-4xl sm:text-5xl font-black tracking-tight title-main text-center -mt-8 relative">
                     MÍTICA ESTRATÉGIA
                 </h1>
                 

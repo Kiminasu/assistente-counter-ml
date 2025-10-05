@@ -4,9 +4,10 @@ import React from 'react';
 interface UpgradeModalProps {
     isOpen: boolean;
     onClose: () => void;
+    onUpgradeClick: () => void;
 }
 
-const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose }) => {
+const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, onUpgradeClick }) => {
     if (!isOpen) return null;
 
     return (
@@ -36,9 +37,10 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose }) => {
                     
                     <div className="mt-6">
                         <button 
+                            onClick={onUpgradeClick}
                             className="w-full bg-gradient-to-r from-amber-400 to-yellow-500 text-black font-bold py-3 px-4 rounded-xl text-lg hover:from-amber-300 hover:to-yellow-400 transition-all duration-300 transform hover:scale-105 shadow-lg shadow-yellow-500/20"
                         >
-                            Fazer Upgrade Agora (Em Breve)
+                            Ver Planos Premium
                         </button>
                         <button 
                             onClick={onClose}

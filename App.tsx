@@ -32,9 +32,10 @@ import HeroDatabaseScreen from './components/HeroDatabaseScreen';
 import AuthScreen from './AuthScreen';
 import UserProfileModal from './components/UserProfileModal';
 import UpgradeModal from './components/UpgradeModal';
+import PremiumScreen from './components/PremiumScreen'; // Importa a nova tela
 import { supabase } from './supabaseClient';
 
-type GameMode = '1v1' | '5v5' | 'ranking' | 'item' | 'synergy' | 'heroes';
+type GameMode = '1v1' | '5v5' | 'ranking' | 'item' | 'synergy' | 'heroes' | 'premium';
 export interface UserProfile {
     username: string;
     rank: UserSignupRank;
@@ -1104,6 +1105,9 @@ const App: React.FC = () => {
         if (gameMode === 'heroes') {
             return <HeroDatabaseScreen heroes={heroes} heroLanes={heroLanes} />;
         }
+        if (gameMode === 'premium') {
+            return <PremiumScreen />;
+        }
         return null;
     };
 
@@ -1117,6 +1121,7 @@ const App: React.FC = () => {
                 userProfile={userProfile}
                 onLogout={() => supabase && supabase.auth.signOut()}
                 onEditProfile={() => setIsProfileModalOpen(true)}
+                onUpgradeClick={() => setGameMode('premium')}
                 analysisLimit={DAILY_ANALYSIS_LIMIT}
             />
 
@@ -1143,6 +1148,10 @@ const App: React.FC = () => {
             <UpgradeModal
                 isOpen={isUpgradeModalOpen}
                 onClose={() => setIsUpgradeModalOpen(false)}
+                onUpgradeClick={() => {
+                    setIsUpgradeModalOpen(false);
+                    setGameMode('premium');
+                }}
             />
             <Footer />
         </div>
