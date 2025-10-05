@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { Hero, Lane, AnalysisResult, LANES, ROLES, Role, HeroSuggestion, BanSuggestion, MatchupData, ItemSuggestion, RankCategory, RankDays, SortField, HeroRankInfo, Team, DraftAnalysisResult, NextPickSuggestion, StrategicItemSuggestion, LaneOrNone, HeroDetails, HeroRelation, HeroStrategyAnalysis } from './types';
@@ -1041,8 +1042,8 @@ const App: React.FC = () => {
                 onClearHero={() => setSynergyHeroPick(null)}
                 counterBanSuggestions={counterBanSuggestions}
                 metaBanSuggestions={metaBanSuggestions}
-                // FIX: Corrected typo from `isBanLoading` to `isMetaBansLoading`.
-                isBanLoading={isMetaBansLoading}
+                // FIX: Corrected prop name from `isBanLoading` to `isMetaBansLoading` to match the component's props interface.
+                isMetaBansLoading={isMetaBansLoading}
                 activeMetaRank={metaBanRankCategory}
                 onMetaRankChange={setMetaBanRankCategory}
                 onAnalyze={handleSynergyAnalysis}
