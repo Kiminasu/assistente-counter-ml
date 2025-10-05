@@ -1,4 +1,5 @@
 import { Lane, Role, SpellSuggestion, MatchupClassification, Hero, DraftAnalysisResult, LaneOrNone, HeroStrategyAnalysis, HeroDetails, AnalysisResult } from "../types";
+import { supabase } from '../supabaseClient';
 
 async function fetchGeminiWithCache<T>(cacheKey: string, fetchFunction: () => Promise<T>): Promise<T> {
     const ttl = 6 * 60 * 60 * 1000; // 6 horas
@@ -59,19 +60,30 @@ export interface CombinedSynergyAnalysisPayload {
 
 // Função genérica para chamar o endpoint do backend
 async function callBackendApi<T>(analysisType: string, payload: any): Promise<T> {
+    if (!supabase) {
+        throw new Error("Cliente Supabase não inicializado. Verifique as credenciais.");
+    }
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+        throw new Error('Você não está autenticado. Por favor, faça login para usar a análise de IA.');
+    }
+
     try {
-        const apiResponse = await fetch('/api/gemini', {
+        const response = await fetch('/api/gemini', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`
+            },
             body: JSON.stringify({ analysisType, payload })
         });
 
-        if (!apiResponse.ok) {
-            const errorData = await apiResponse.json();
-            throw new Error(errorData.error || 'Erro na comunicação com o servidor de análise.');
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ error: 'O servidor retornou uma resposta inválida.' }));
+            throw new Error(errorData.error || `Erro do servidor: ${response.statusText}`);
         }
 
-        return await apiResponse.json() as T;
+        return response.json() as T;
     } catch (error) {
         console.error(`Erro ao chamar a API backend para ${analysisType}:`, error);
         const errorMessage = error instanceof Error ? error.message : "Não foi possível gerar a análise da IA.";
