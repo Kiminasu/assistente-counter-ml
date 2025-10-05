@@ -9,9 +9,13 @@ import { SPELL_ICONS } from './constants.js';
 
 // --- INICIALIZAÇÃO CORRETA E FINAL ---
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || "" });
-const supabaseUrl = process.env.SUPABASE_URL || "";
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY || "";
+
+// As variáveis de ambiente do Supabase não estavam disponíveis no ambiente do servidor.
+// Para corrigir o erro 'supabaseUrl is required', as credenciais foram adicionadas diretamente aqui.
+const supabaseUrl = 'https://kuniwzaomcwixlnhachs.supabase.co';
+const supabaseServiceKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1bml3emFvbWN3aXhsbmhhY2hzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk2MDMwMTIsImV4cCI6MjA3NTE3OTAxMn0.IOS2Tv7xzPPKYGUfLrEvGRK4OJzZKKy0GwUncLk5q40';
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
 
 const DAILY_LIMIT = 5;
 
