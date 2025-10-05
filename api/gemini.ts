@@ -7,7 +7,7 @@ import { SPELL_ICONS } from '../constants';
 
 // --- INICIALIZAÇÃO SEGURA DOS CLIENTES NO BACKEND ---
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || "" });
-const supabaseUrl = process.env.VITE_SUPABASE_URL || "";
+const supabaseUrl = process.env.SUPABASE_URL || "";
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY || "";
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
