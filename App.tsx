@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Session } from '@supabase/supabase-js';
-import { Hero, Lane, AnalysisResult, LANES, ROLES, Role, HeroSuggestion, BanSuggestion, MatchupData, ItemSuggestion, RankCategory, RankDays, SortField, HeroRankInfo, Team, DraftAnalysisResult, NextPickSuggestion, StrategicItemSuggestion, LaneOrNone, HeroDetails, HeroRelation, HeroStrategyAnalysis } from './types';
+import { Hero, Lane, AnalysisResult, LANES, ROLES, Role, HeroSuggestion, BanSuggestion, MatchupData, ItemSuggestion, RankCategory, RankDays, SortField, HeroRankInfo, Team, DraftAnalysisResult, NextPickSuggestion, StrategicItemSuggestion, LaneOrNone, HeroDetails, HeroRelation, HeroStrategyAnalysis, UserSignupRank } from './types';
 import { fetchHeroes, fetchCounters, fetchHeroDetails, fetchHeroRankings, ApiHeroRankData, fetchHeroRelations } from './services/heroService';
 import { getCombined1v1Analysis, getDraftAnalysis, getSynergyAndStrategyAnalysis } from './services/geminiService';
 import { findClosestString } from './utils';
@@ -30,9 +30,19 @@ import CollapsibleTutorial from './components/CollapsibleTutorial';
 import SynergyExplorerScreen from './components/SynergyExplorerScreen';
 import HeroDatabaseScreen from './components/HeroDatabaseScreen';
 import AuthScreen from './AuthScreen';
+import UserProfileModal from './components/UserProfileModal';
+import UpgradeModal from './components/UpgradeModal';
 import { supabase } from './supabaseClient';
 
 type GameMode = '1v1' | '5v5' | 'ranking' | 'item' | 'synergy' | 'heroes';
+export interface UserProfile {
+    username: string;
+    rank: UserSignupRank;
+    subscription_status: 'free' | 'premium';
+    analysis_count: number;
+    last_analysis_at: string | null;
+}
+const DAILY_ANALYSIS_LIMIT = 5;
 
 const NUMBER_OF_META_BAN_SUGGESTIONS = 8;
 const NUMBER_OF_COUNTER_BAN_SUGGESTIONS = 6;
@@ -63,8 +73,11 @@ const App: React.FC = () => {
     }
 
     const [session, setSession] = useState<Session | null>(null);
-    const [userProfile, setUserProfile] = useState<{ username: string; rank: string } | null>(null);
+    const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
     const [isProfileChecked, setIsProfileChecked] = useState(false);
+    const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+    const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+
     const [heroes, setHeroes] = useState<Record<string, Hero>>({});
     const [isLoadingApp, setIsLoadingApp] = useState(true);
     const [heroLoadingError, setHeroLoadingError] = useState<string | null>(null);
@@ -119,27 +132,33 @@ const App: React.FC = () => {
         }
     });
 
+    const fetchUserProfile = useCallback(async (user: { id: string }) => {
+        if (!supabase) return;
+        const { data, error } = await supabase
+            .from('profiles')
+            .select('username, rank, subscription_status, analysis_count, last_analysis_at')
+            .eq('id', user.id)
+            .single();
+
+        if (error && error.code !== 'PGRST116') { // Ignore "0 rows" error
+            console.error("Erro ao buscar perfil:", error);
+            setUserProfile(null);
+        } else {
+            setUserProfile(data as UserProfile | null);
+        }
+    }, []);
+
+
     useEffect(() => {
         const handleAuthChange = async (session: Session | null) => {
-            setIsProfileChecked(false); // Reset on each auth change
+            setIsProfileChecked(false);
             setSession(session);
-            if (session && supabase) {
-                const { data: profile, error } = await supabase
-                    .from('profiles')
-                    .select('username, rank')
-                    .eq('id', session.user.id)
-                    .maybeSingle(); // Use maybeSingle to prevent error on 0 rows
-                if (error) {
-                    // This will now only catch unexpected errors, not "0 rows"
-                    console.error("Erro inesperado ao buscar perfil do usuário:", error);
-                    setUserProfile(null);
-                } else {
-                    setUserProfile(profile as { username: string; rank: string } | null);
-                }
+            if (session?.user) {
+                await fetchUserProfile(session.user);
             } else {
                 setUserProfile(null);
             }
-            setIsProfileChecked(true); // Mark profile check as complete
+            setIsProfileChecked(true);
         };
 
         if (supabase) {
@@ -153,7 +172,7 @@ const App: React.FC = () => {
     
             return () => subscription.unsubscribe();
         }
-    }, []);
+    }, [fetchUserProfile]);
 
     useEffect(() => {
         try {
@@ -470,8 +489,25 @@ const App: React.FC = () => {
             setIsSynergyAnalysisLoading(false);
         }
     }, [synergyHeroPick]);
+    
+    const checkAnalysisLimit = useCallback(() => {
+        if (!userProfile) return false;
+        if (userProfile.subscription_status === 'premium') return true;
+
+        const today = new Date().toISOString().split('T')[0];
+        const lastAnalysisDate = userProfile.last_analysis_at ? new Date(userProfile.last_analysis_at).toISOString().split('T')[0] : null;
+
+        if (lastAnalysisDate === today && userProfile.analysis_count >= DAILY_ANALYSIS_LIMIT) {
+            setIsUpgradeModalOpen(true);
+            return false;
+        }
+        return true;
+    }, [userProfile]);
+
 
     const handleSynergyAnalysis = useCallback(async () => {
+        if (!checkAnalysisLimit()) return;
+
         const selectedHero = synergyHeroPick ? heroes[synergyHeroPick] : null;
         if (!selectedHero || !selectedHero.apiId) return;
     
@@ -529,6 +565,7 @@ const App: React.FC = () => {
                     classificacao: 'PERFEITO',
                     estatistica: `+${((stat?.increase_win_rate || 0) * 100).toFixed(1)}% vs. ${selectedHero.name}`
                 });
+                 if (session?.user) await fetchUserProfile(session.user);
             } catch (err) {
                 const errorMessage = err instanceof Error ? err.message : "Erro na análise estratégica da IA.";
                 setStrategyAnalysisError(errorMessage);
@@ -552,10 +589,10 @@ const App: React.FC = () => {
         } finally {
             setIsSynergyAnalysisLoading(false);
         }
-    }, [synergyHeroPick, heroes, heroApiIdMap, heroDetailsCache]);
+    }, [synergyHeroPick, heroes, heroApiIdMap, heroDetailsCache, checkAnalysisLimit, session, fetchUserProfile]);
 
     const handleAnalysis = useCallback(async () => {
-        if (!matchupEnemyPick) return;
+        if (!matchupEnemyPick || !checkAnalysisLimit()) return;
         
         setTimeout(() => {
             analysisSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -647,6 +684,7 @@ const App: React.FC = () => {
                 yourHeroDetails,
                 winRate
             );
+             if (session?.user) await fetchUserProfile(session.user);
     
             const { strategicAnalysis, matchupAnalysis } = combinedAnalysis;
             const validItemNames = GAME_ITEMS.map(item => item.nome);
@@ -715,89 +753,90 @@ const App: React.FC = () => {
         } finally {
             setIs1v1AnalysisLoading(false);
         }
-    }, [matchupEnemyPick, matchupAllyPick, heroes, activeLane, heroDetailsCache, heroApiIdMap, laneToRoleMap]);
+    }, [matchupEnemyPick, matchupAllyPick, heroes, activeLane, heroDetailsCache, heroApiIdMap, laneToRoleMap, checkAnalysisLimit, session, fetchUserProfile]);
     
-    useEffect(() => {
-        if (gameMode !== '5v5' || Object.keys(heroes).length === 0) return;
+    const runDraftAnalysis = useCallback(async () => {
+        if (!checkAnalysisLimit()) return;
+        const pickedAllyHeroes = draftAllyPicks.map(id => id ? heroes[id] : null).filter((h): h is Hero => h !== null);
+        const pickedEnemyHeroes = draftEnemyPicks.map(id => id ? heroes[id] : null).filter((h): h is Hero => h !== null);
 
-        const runDraftAnalysis = async () => {
-            const pickedAllyHeroes = draftAllyPicks.map(id => id ? heroes[id] : null).filter((h): h is Hero => h !== null);
-            const pickedEnemyHeroes = draftEnemyPicks.map(id => id ? heroes[id] : null).filter((h): h is Hero => h !== null);
-
-            if (pickedAllyHeroes.length === 0 && pickedEnemyHeroes.length === 0) {
-                setDraftAnalysis(null);
-                setDraftAnalysisError(null);
-                return;
-            }
-
-            setIsDraftAnalysisLoading(true);
+        if (pickedAllyHeroes.length === 0 && pickedEnemyHeroes.length === 0) {
             setDraftAnalysis(null);
             setDraftAnalysisError(null);
+            return;
+        }
 
-            try {
-                const allPickedHeroes = [...pickedAllyHeroes, ...pickedEnemyHeroes];
-                const detailsToFetch = allPickedHeroes.filter(h => h.apiId && !heroDetailsCache[h.apiId]);
-                let newCacheEntries: Record<number, HeroDetails> = {};
-                
-                if (detailsToFetch.length > 0) {
-                    const fetchedDetails = await Promise.all(
-                        detailsToFetch.map(h => fetchHeroDetails(h.apiId).then(details => ({ apiId: h.apiId, details })))
-                    );
-                    fetchedDetails.forEach(item => { newCacheEntries[item.apiId] = item.details; });
-                    setHeroDetailsCache(prev => ({ ...prev, ...newCacheEntries }));
-                }
-                
-                const currentCache = { ...heroDetailsCache, ...newCacheEntries };
-                const allyDetails = pickedAllyHeroes.map(h => currentCache[h.apiId]).filter((d): d is HeroDetails => !!d);
-                const enemyDetails = pickedEnemyHeroes.map(h => currentCache[h.apiId]).filter((d): d is HeroDetails => !!d);
+        setIsDraftAnalysisLoading(true);
+        setDraftAnalysis(null);
+        setDraftAnalysisError(null);
 
-                const pickedHeroIds = new Set(allPickedHeroes.map((h: Hero) => h.id));
-                const availableHeroes = (Object.values(heroes) as Hero[]).filter((h: Hero) => !pickedHeroIds.has(h.id));
-                
-                const analysisFromAI = await getDraftAnalysis(allyDetails, enemyDetails, availableHeroes);
-
-                let nextPick: NextPickSuggestion | null = null;
-                if (analysisFromAI.nextPickSuggestion) {
-                    const heroData = (Object.values(heroes) as Hero[]).find((h: Hero) => h.name === analysisFromAI.nextPickSuggestion?.heroName);
-                    const role = findClosestString(analysisFromAI.nextPickSuggestion.role, ROLES as any) as Role;
-                    if (heroData) {
-                        nextPick = {
-                            heroName: heroData.name,
-                            imageUrl: heroData.imageUrl,
-                            role: role || heroData.roles[0] || 'Soldado',
-                            reason: analysisFromAI.nextPickSuggestion.reason,
-                        };
-                    }
-                }
-
-                const validItemNames = GAME_ITEMS.map(item => item.nome);
-                const strategicItems: StrategicItemSuggestion[] = analysisFromAI.strategicItems.map(item => {
-                    const correctedName = findClosestString(item.name, validItemNames);
-                    const gameItem = GAME_ITEMS.find(i => i.nome === correctedName);
-                    return {
-                        name: correctedName,
-                        reason: item.reason,
-                        preco: gameItem?.preco || 0,
-                    };
-                });
-                
-                setDraftAnalysis({
-                    ...analysisFromAI,
-                    nextPickSuggestion: nextPick,
-                    strategicItems: strategicItems,
-                });
-
-            } catch (error) {
-                setDraftAnalysisError(error instanceof Error ? error.message : "Erro desconhecido ao analisar o draft.");
-            } finally {
-                setIsDraftAnalysisLoading(false);
+        try {
+            const allPickedHeroes = [...pickedAllyHeroes, ...pickedEnemyHeroes];
+            const detailsToFetch = allPickedHeroes.filter(h => h.apiId && !heroDetailsCache[h.apiId]);
+            let newCacheEntries: Record<number, HeroDetails> = {};
+            
+            if (detailsToFetch.length > 0) {
+                const fetchedDetails = await Promise.all(
+                    detailsToFetch.map(h => fetchHeroDetails(h.apiId).then(details => ({ apiId: h.apiId, details })))
+                );
+                fetchedDetails.forEach(item => { newCacheEntries[item.apiId] = item.details; });
+                setHeroDetailsCache(prev => ({ ...prev, ...newCacheEntries }));
             }
-        };
+            
+            const currentCache = { ...heroDetailsCache, ...newCacheEntries };
+            const allyDetails = pickedAllyHeroes.map(h => currentCache[h.apiId]).filter((d): d is HeroDetails => !!d);
+            const enemyDetails = pickedEnemyHeroes.map(h => currentCache[h.apiId]).filter((d): d is HeroDetails => !!d);
 
+            const pickedHeroIds = new Set(allPickedHeroes.map((h: Hero) => h.id));
+            const availableHeroes = (Object.values(heroes) as Hero[]).filter((h: Hero) => !pickedHeroIds.has(h.id));
+            
+            const analysisFromAI = await getDraftAnalysis(allyDetails, enemyDetails, availableHeroes);
+             if (session?.user) await fetchUserProfile(session.user);
+
+            let nextPick: NextPickSuggestion | null = null;
+            if (analysisFromAI.nextPickSuggestion) {
+                const heroData = (Object.values(heroes) as Hero[]).find((h: Hero) => h.name === analysisFromAI.nextPickSuggestion?.heroName);
+                const role = findClosestString(analysisFromAI.nextPickSuggestion.role, ROLES as any) as Role;
+                if (heroData) {
+                    nextPick = {
+                        heroName: heroData.name,
+                        imageUrl: heroData.imageUrl,
+                        role: role || heroData.roles[0] || 'Soldado',
+                        reason: analysisFromAI.nextPickSuggestion.reason,
+                    };
+                }
+            }
+
+            const validItemNames = GAME_ITEMS.map(item => item.nome);
+            const strategicItems: StrategicItemSuggestion[] = analysisFromAI.strategicItems.map(item => {
+                const correctedName = findClosestString(item.name, validItemNames);
+                const gameItem = GAME_ITEMS.find(i => i.nome === correctedName);
+                return {
+                    name: correctedName,
+                    reason: item.reason,
+                    preco: gameItem?.preco || 0,
+                };
+            });
+            
+            setDraftAnalysis({
+                ...analysisFromAI,
+                nextPickSuggestion: nextPick,
+                strategicItems: strategicItems,
+            });
+
+        } catch (error) {
+            setDraftAnalysisError(error instanceof Error ? error.message : "Erro desconhecido ao analisar o draft.");
+        } finally {
+            setIsDraftAnalysisLoading(false);
+        }
+    }, [draftAllyPicks, draftEnemyPicks, heroes, heroDetailsCache, checkAnalysisLimit, session, fetchUserProfile]);
+
+
+    useEffect(() => {
+        if (gameMode !== '5v5' || Object.keys(heroes).length === 0) return;
         const debounceTimeout = setTimeout(runDraftAnalysis, 1000);
         return () => clearTimeout(debounceTimeout);
-
-    }, [draftAllyPicks, draftEnemyPicks, gameMode, heroes, heroDetailsCache]);
+    }, [draftAllyPicks, draftEnemyPicks, gameMode, heroes, runDraftAnalysis]);
 
     const handleSlotClick = useCallback((team: Team | 'synergy', index: number) => {
         setActiveSlot({ team, index });
@@ -867,6 +906,14 @@ const App: React.FC = () => {
             setDraftEnemyPicks(newPicks);
         }
     }, [draftAllyPicks, draftEnemyPicks]);
+
+    const handleSetGameMode = useCallback((mode: GameMode) => {
+        if (mode === '5v5' && userProfile?.subscription_status !== 'premium') {
+            setIsUpgradeModalOpen(true);
+        } else {
+            setGameMode(mode);
+        }
+    }, [userProfile]);
 
     const tabs = useMemo(() => [
         {
@@ -1065,10 +1112,12 @@ const App: React.FC = () => {
         <div className="flex flex-col min-h-screen p-4 sm:p-6 lg:p-8">
             <Header 
                 activeMode={gameMode} 
-                onSetMode={setGameMode} 
+                onSetMode={handleSetGameMode}
                 session={session}
                 userProfile={userProfile}
-                onLogout={() => supabase && supabase.auth.signOut()} 
+                onLogout={() => supabase && supabase.auth.signOut()}
+                onEditProfile={() => setIsProfileModalOpen(true)}
+                analysisLimit={DAILY_ANALYSIS_LIMIT}
             />
 
             <main className="w-full max-w-7xl mx-auto flex-grow">
@@ -1081,6 +1130,19 @@ const App: React.FC = () => {
                 onHeroSelect={handleHeroSelect}
                 heroes={heroes}
                 heroLanes={heroLanes}
+            />
+            {isProfileModalOpen && userProfile && session?.user && (
+                 <UserProfileModal
+                    isOpen={isProfileModalOpen}
+                    onClose={() => setIsProfileModalOpen(false)}
+                    userProfile={userProfile}
+                    userId={session.user.id}
+                    onProfileUpdate={() => fetchUserProfile(session.user!)}
+                />
+            )}
+            <UpgradeModal
+                isOpen={isUpgradeModalOpen}
+                onClose={() => setIsUpgradeModalOpen(false)}
             />
             <Footer />
         </div>

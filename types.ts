@@ -1,4 +1,6 @@
 
+import { UserProfile } from "./App";
+
 export interface Hero {
   id: string;
   apiId: number;

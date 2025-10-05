@@ -31,7 +31,7 @@ const UserPanel: React.FC<Pick<HeaderProps, 'userProfile' | 'onLogout' | 'onEdit
     const today = new Date().toISOString().split('T')[0];
     const lastAnalysisDate = userProfile?.last_analysis_at ? new Date(userProfile.last_analysis_at).toISOString().split('T')[0] : null;
     const analysesToday = lastAnalysisDate === today ? userProfile?.analysis_count || 0 : 0;
-    const analysesRemaining = Math.max(0, analysisLimit - analysesToday);
+    const analysesRemaining = analysisLimit - analysesToday;
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -49,26 +49,10 @@ const UserPanel: React.FC<Pick<HeaderProps, 'userProfile' | 'onLogout' | 'onEdit
         <div ref={menuRef} className="absolute top-0 right-0 text-right z-20">
             <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="flex items-center gap-3 bg-black/30 p-2 rounded-lg cursor-pointer hover:bg-black/50 transition-colors">
                 <div className="flex flex-col items-end">
-                    <div className="flex items-center gap-2">
-                        {userProfile.subscription_status === 'premium' ? (
-                            <span className="text-yellow-400" title="Conta Premium">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                </svg>
-                            </span>
-                        ) : (
-                            <span className="text-xs font-mono bg-slate-700 text-slate-300 px-1.5 py-0.5 rounded-md flex items-center gap-1" title="Análises restantes">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-violet-400" viewBox="0 0 20 20" fill="currentColor">
-                                  <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
-                                </svg>
-                                {analysesRemaining}/{analysisLimit}
-                            </span>
-                        )}
-                        <span className="font-bold text-sm text-white truncate max-w-[120px] sm:max-w-[150px]">{userProfile.username}</span>
-                    </div>
-                    <span className="text-xs text-slate-400 mt-0.5">{userProfile.rank}</span>
+                    <span className="font-bold text-sm text-white truncate max-w-[150px]">{userProfile.username}</span>
+                    <span className="text-xs text-slate-400">{userProfile.rank}</span>
                 </div>
-                <div className="w-10 h-10 rounded-full bg-violet-800 flex items-center justify-center font-bold text-violet-300 border-2 border-violet-600 flex-shrink-0">
+                <div className="w-10 h-10 rounded-full bg-violet-800 flex items-center justify-center font-bold text-violet-300 border-2 border-violet-600">
                     {getInitials(userProfile.username)}
                 </div>
             </button>
