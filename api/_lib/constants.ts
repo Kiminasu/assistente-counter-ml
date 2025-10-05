@@ -1,5 +1,6 @@
 
-import { Lane, Role, LaneOrNone } from './types';
+
+import { Lane, Role, LaneOrNone } from './types.js';
 
 export const LANE_ICONS: Record<LaneOrNone, string> = {
     'OURO': 'https://i.postimg.cc/rsHmgdzW/icon-lane-1.png',
