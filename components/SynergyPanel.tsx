@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Hero, HeroRelation } from '../types';
 import CollapsibleTutorial from './CollapsibleTutorial';
