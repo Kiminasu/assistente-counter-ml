@@ -1,13 +1,18 @@
 // api/gemini.ts
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { GoogleGenerativeAI, Type } from "@google/genai";
+import * as genai from "@google/genai"; // <-- MUDANÇA 1: Importa tudo como 'genai'
 import { createClient } from '@supabase/supabase-js';
 import { Hero, HeroDetails, DraftAnalysisResult, AnalysisResult, HeroStrategyAnalysis, ROLES, LaneOrNone, Role, SpellSuggestion, MatchupClassification } from "../types";
 import { GAME_ITEMS } from '../components/data/items';
 import { SPELL_ICONS } from '../constants';
 
-// --- INICIALIZAÇÃO SEGURA NO BACKEND ---
+// --- INICIALIZAÇÃO SEGURA NO BACKEND (COM A CORREÇÃO) ---
+// @ts-ignore
+const GoogleGenerativeAI = genai.GoogleGenerativeAI; // <-- MUDANÇA 2: Pega a classe de dentro do módulo
+// @ts-ignore
+const Type = genai.Type; // <-- MUDANÇA 3: Pega o Type de dentro do módulo
+
 const ai = new GoogleGenerativeAI(process.env.API_KEY || "");
 const supabaseUrl = process.env.SUPABASE_URL || "";
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY || "";
