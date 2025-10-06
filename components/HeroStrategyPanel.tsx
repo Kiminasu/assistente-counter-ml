@@ -1,10 +1,11 @@
 import React from 'react';
-import { Hero, HeroStrategyAnalysis, ItemSuggestion } from '../types';
+// FIX: The type 'HeroStrategyAnalysis' does not exist in '../types'. The correct type for the 'analysis' prop is 'HeroStrategy'.
+import { Hero, HeroStrategy, ItemSuggestion } from '../types';
 import { ITEM_ICONS } from '../constants';
 
 interface HeroStrategyPanelProps {
     selectedHero: Hero | null;
-    analysis: HeroStrategyAnalysis | null;
+    analysis: HeroStrategy | null;
     isLoading: boolean;
     error: string | null;
 }

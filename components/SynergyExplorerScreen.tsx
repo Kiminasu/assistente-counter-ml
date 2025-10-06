@@ -1,12 +1,14 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { BanSuggestion, Hero, HeroStrategyAnalysis, RankCategory, HeroSuggestion, HeroRelation, HeroRankInfo, Lane } from '../types';
+// FIX: The type 'HeroStrategyAnalysis' does not exist in '../types'. The correct type for the 'strategyAnalysis' prop is 'HeroStrategy'.
+import { BanSuggestion, Hero, HeroStrategy, RankCategory, HeroSuggestion, HeroRelation, AITacticalCounter } from '../types';
 import CollapsibleTutorial from './CollapsibleTutorial';
 import HeroSlot from './HeroSlot';
 import SynergyPanel from './SynergyPanel';
 import HeroStrategyPanel from './HeroStrategyPanel';
 import BanSuggestions from './BanSuggestions';
 import { RATING_STYLES, LANE_ICONS } from '../constants';
-import { fetchHeroRankings } from '../services/heroService';
+import { fetchHeroRankings, ApiHeroRankData } from '../services/heroService';
+import { HeroRankInfo } from '../types';
 
 interface SynergyExplorerScreenProps {
     selectedHeroId: string | null;
@@ -21,71 +23,13 @@ interface SynergyExplorerScreenProps {
     onMetaRankChange: (rank: RankCategory) => void;
     onAnalyze: () => void;
     isAnalysisLoading: boolean;
-    strategyAnalysis: HeroStrategyAnalysis | null;
+    strategyAnalysis: HeroStrategy | null;
     strategyAnalysisError: string | null;
     synergyRelations: HeroRelation | null;
     synergyError: string | null;
-    // FIX: Changed prop name and type to accept an array of perfect counters.
-    perfectCounters: HeroSuggestion[];
-    perfectCounterError: string | null;
+    tacticalCounters: AITacticalCounter[];
+    tacticalCountersError: string | null;
 }
-
-
-const PerfectCountersPanel: React.FC<{ heroName: string, suggestions: HeroSuggestion[], isLoading: boolean, error: string | null }> = ({ heroName, suggestions, isLoading, error }) => {
-    const renderContent = () => {
-        if (isLoading) {
-            return (
-                <div className="flex flex-col items-center justify-center p-8 h-full">
-                    <div className="w-10 h-10 border-2 border-dashed rounded-full animate-spin border-red-400"></div>
-                    <p className="mt-3 text-sm text-gray-300">Analisando os counters perfeitos...</p>
-                </div>
-            );
-        }
-        if (error) {
-            return <p className="text-center text-sm text-yellow-400 p-4">{error}</p>;
-        }
-        if (!suggestions || suggestions.length === 0) {
-             return (
-                <div className="text-center p-8 text-gray-400 flex flex-col items-center justify-center h-full">
-                    <p className="font-semibold">Counters Perfeitos por Lane</p>
-                    <p className="text-xs text-gray-500 mt-1">A análise da IA revelará os melhores heróis para counterar {heroName || 'seu herói'} em cada rota.</p>
-                </div>
-            );
-        }
-
-        return (
-             <div className="space-y-3 p-1">
-                {suggestions.map((suggestion) => {
-                    const styles = RATING_STYLES['PERFEITO'];
-                    return (
-                        <div key={suggestion.nome} className="p-3 bg-black/30 rounded-xl animated-entry border-l-4 border-red-500">
-                             <div className="flex items-center gap-4">
-                                <div className="flex-shrink-0 text-center">
-                                    <img src={suggestion.imageUrl} alt={suggestion.nome} className={`w-16 h-16 rounded-full border-4 ${styles.border}`} />
-                                    <div className="flex items-center justify-center gap-1 mt-1 bg-black/40 px-2 py-0.5 rounded-full">
-                                        <img src={LANE_ICONS[suggestion.lane!]} alt={suggestion.lane} className="w-4 h-4" />
-                                        <span className="text-[10px] font-bold text-slate-300">{suggestion.lane}</span>
-                                    </div>
-                                </div>
-                                <div className="flex-grow">
-                                    <h4 className="font-bold text-lg text-white">{suggestion.nome}</h4>
-                                    <p className="text-xs text-gray-300 mt-1">{suggestion.motivo}</p>
-                                </div>
-                            </div>
-                        </div>
-                    );
-                })}
-            </div>
-        );
-    };
-
-    return (
-        <div className="glassmorphism p-4 rounded-2xl border-2 panel-glow-red h-full">
-            <h2 className="text-xl font-black text-center mb-2 tracking-wider text-red-300">COUNTERS PERFEITOS (vs. {heroName})</h2>
-            {renderContent()}
-        </div>
-    );
-};
 
 const StatBar: React.FC<{ label: string, value: number, color: string }> = ({ label, value, color }) => {
     const percentage = Math.min(value * 100, 100);
@@ -120,8 +64,8 @@ const SynergyExplorerScreen: React.FC<SynergyExplorerScreenProps> = ({
     strategyAnalysisError,
     synergyRelations,
     synergyError,
-    perfectCounters,
-    perfectCounterError
+    tacticalCounters,
+    tacticalCountersError,
 }) => {
     const selectedHero = selectedHeroId ? heroes[selectedHeroId] : null;
     const analysisSectionRef = useRef<HTMLDivElement>(null);
@@ -144,7 +88,7 @@ const SynergyExplorerScreen: React.FC<SynergyExplorerScreenProps> = ({
             };
 
             try {
-                const rankingsData = await fetchHeroRankings(7, 'glory', 'win_rate');
+                const rankingsData: ApiHeroRankData[] = await fetchHeroRankings(7, 'glory', 'win_rate');
                 const heroStatsData = rankingsData.find(data => data.main_heroid === hero.apiId);
                 
                 if (heroStatsData) {
@@ -255,33 +199,24 @@ const SynergyExplorerScreen: React.FC<SynergyExplorerScreenProps> = ({
                         onMetaRankChange={onMetaRankChange}
                     />
                     
-                    <div ref={analysisSectionRef} className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-                        <div className="lg:col-span-3 flex flex-col gap-6">
-                            <div className="glassmorphism p-4 rounded-2xl border-2 panel-glow-primary flex flex-col">
-                                <h2 className="text-xl font-black text-center mb-3 tracking-wider text-amber-300">Análise Estratégica da IA</h2>
-                                <HeroStrategyPanel
-                                    selectedHero={selectedHero}
-                                    analysis={strategyAnalysis}
-                                    isLoading={isAnalysisLoading}
-                                    error={strategyAnalysisError}
-                                />
-                            </div>
-                            <div className="glassmorphism p-4 rounded-2xl border-2 panel-glow-primary flex flex-col">
-                                <h2 className="text-xl font-black text-center mb-3 tracking-wider text-amber-300">Sinergias de Batalha</h2>
-                                <SynergyPanel
-                                    isLoading={isAnalysisLoading}
-                                    error={synergyError}
-                                    relations={synergyRelations}
-                                    heroApiIdMap={heroApiIdMap}
-                                />
-                            </div>
-                        </div>
-                        <div className="lg:col-span-2">
-                            <PerfectCountersPanel 
-                                heroName={selectedHero?.name || ''}
-                                suggestions={perfectCounters}
+                    <div ref={analysisSectionRef} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                         <div className="glassmorphism p-4 rounded-2xl border-2 panel-glow-primary flex flex-col">
+                            <h2 className="text-xl font-black text-center mb-3 tracking-wider text-amber-300">Análise Estratégica da IA</h2>
+                            <HeroStrategyPanel
+                                selectedHero={selectedHero}
+                                analysis={strategyAnalysis}
                                 isLoading={isAnalysisLoading}
-                                error={perfectCounterError}
+                                error={strategyAnalysisError}
+                            />
+                        </div>
+                        <div className="glassmorphism p-4 rounded-2xl border-2 panel-glow-primary flex flex-col">
+                            <h2 className="text-xl font-black text-center mb-3 tracking-wider text-amber-300">Sinergias de Batalha</h2>
+                            <SynergyPanel
+                                isLoading={isAnalysisLoading || isStatsLoading}
+                                error={synergyError || tacticalCountersError}
+                                relations={synergyRelations}
+                                heroApiIdMap={heroApiIdMap}
+                                tacticalCounters={tacticalCounters}
                             />
                         </div>
                     </div>

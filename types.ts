@@ -130,9 +130,10 @@ export interface TeamCompositionStats {
   control: number;
 }
 
-export interface AIBanSuggestion {
+export interface AITacticalCounter {
   heroName: string;
   reason: string;
+  counterType: 'HARD' | 'SOFT';
 }
 
 export interface DraftAnalysisResult {
@@ -144,15 +145,21 @@ export interface DraftAnalysisResult {
   teamWeaknesses: string[];
   nextPickSuggestion: NextPickSuggestion | null;
   strategicItems: StrategicItemSuggestion[];
-  banSuggestions: AIBanSuggestion[];
+  banSuggestions: AITacticalCounter[];
 }
 
-export interface HeroStrategyAnalysis {
+export interface HeroStrategy {
   coreItems: ItemSuggestion[];
   situationalItems: ItemSuggestion[];
   playstyle: string;
   powerSpikes: string;
 }
+
+export interface HeroStrategicAnalysis {
+    strategy: HeroStrategy;
+    tacticalCounters: AITacticalCounter[];
+}
+
 
 export interface HeroSkill {
     skillname: string;

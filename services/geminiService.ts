@@ -1,4 +1,4 @@
-import { Lane, Role, SpellSuggestion, MatchupClassification, Hero, DraftAnalysisResult, LaneOrNone, HeroStrategyAnalysis, HeroDetails, AnalysisResult, HeroRelation, AIBanSuggestion } from "../types";
+import { Lane, Role, SpellSuggestion, MatchupClassification, Hero, DraftAnalysisResult, LaneOrNone, HeroStrategy, HeroDetails, AnalysisResult, HeroRelation, AITacticalCounter, HeroStrategicAnalysis } from "../types";
 import { supabase } from '../supabaseClient';
 
 async function fetchGeminiWithCache<T>(cacheKey: string, fetchFunction: () => Promise<T>): Promise<T> {
@@ -47,14 +47,7 @@ export interface Combined1v1AnalysisPayload {
   strategicAnalysis: AnalysisResult;
   matchupAnalysis: DetailedMatchupPayload | null;
   synergyRelations: HeroRelation | null;
-  banSuggestions: AIBanSuggestion[];
-}
-
-export interface CombinedSynergyAnalysisPayload {
-  strategy: HeroStrategyAnalysis;
-  perfectCounters: (Omit<AnalysisResult['sugestoesHerois'][0], 'classificacao'> & { lane: Lane })[];
-  synergyRelations: HeroRelation | null;
-  banSuggestions: AIBanSuggestion[];
+  banSuggestions: AITacticalCounter[];
 }
 
 // Função genérica para chamar o endpoint do backend
@@ -130,16 +123,12 @@ export async function getDraftAnalysis(
     }));
 }
 
-export async function getSynergyAndStrategyAnalysis(
-  heroToAnalyze: Hero,
+export async function getHeroStrategicAnalysis(
   heroToAnalyzeDetails: HeroDetails,
-  potentialCountersDetails: HeroDetails[]
-): Promise<CombinedSynergyAnalysisPayload> {
-    const cacheKey = `gemini_synergy_full_${heroToAnalyzeDetails.name}`;
+): Promise<HeroStrategicAnalysis> {
+    const cacheKey = `gemini_strategic_${heroToAnalyzeDetails.name}`;
 
-    return fetchGeminiWithCache(cacheKey, () => callBackendApi<CombinedSynergyAnalysisPayload>('synergy', {
-        heroToAnalyze,
-        heroToAnalyzeDetails,
-        potentialCountersDetails
+    return fetchGeminiWithCache(cacheKey, () => callBackendApi<HeroStrategicAnalysis>('strategic', {
+        heroToAnalyzeDetails
     }));
 }
