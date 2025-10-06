@@ -87,7 +87,6 @@ async function callBackendApi<T>(analysisType: string, payload: any): Promise<T>
 export async function getCombined1v1Analysis(
   enemyHeroDetails: HeroDetails,
   lane: LaneOrNone,
-  potentialCountersDetails: HeroDetails[],
   selectedRole: Role | 'Qualquer',
   yourHero: Hero | null,
   yourHeroDetails: HeroDetails | null,
@@ -98,7 +97,6 @@ export async function getCombined1v1Analysis(
     return fetchGeminiWithCache(cacheKey, () => callBackendApi<Combined1v1AnalysisPayload>('1v1', {
         enemyHeroDetails,
         lane,
-        potentialCountersDetails,
         selectedRole,
         yourHero,
         yourHeroDetails,

@@ -1,8 +1,10 @@
 
 
+
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Session } from '@supabase/supabase-js';
-import { Hero, Lane, AnalysisResult, LANES, ROLES, Role, HeroSuggestion, BanSuggestion, MatchupData, ItemSuggestion, RankCategory, RankDays, SortField, HeroRankInfo, Team, DraftAnalysisResult, NextPickSuggestion, StrategicItemSuggestion, LaneOrNone, HeroDetails, HeroRelation, HeroStrategy, UserSignupRank, GameMode, AITacticalCounter } from './types';
+// FIX: Import HeroStrategicAnalysis to handle the complete analysis object.
+import { Hero, Lane, AnalysisResult, LANES, ROLES, Role, HeroSuggestion, BanSuggestion, MatchupData, ItemSuggestion, RankCategory, RankDays, SortField, HeroRankInfo, Team, DraftAnalysisResult, NextPickSuggestion, StrategicItemSuggestion, LaneOrNone, HeroDetails, HeroRelation, HeroStrategy, UserSignupRank, GameMode, AITacticalCounter, HeroStrategicAnalysis } from './types';
 import { fetchHeroes, fetchCounters, fetchHeroDetails, fetchHeroRankings, ApiHeroRankData, fetchHeroRelations } from './services/heroService';
 import { getCombined1v1Analysis, getDraftAnalysis, getHeroStrategicAnalysis } from './services/geminiService';
 import { findClosestString } from './utils';
@@ -95,12 +97,11 @@ const App: React.FC = () => {
 
     // State for Synergy mode
     const [synergyHeroPick, setSynergyHeroPick] = useState<string | null>(null);
-    const [strategyAnalysis, setStrategyAnalysis] = useState<HeroStrategy | null>(null);
-    const [strategyAnalysisError, setStrategyAnalysisError] = useState<string | null>(null);
+    // FIX: Consolidate strategy and tactical counters into a single state object for better data management.
+    const [heroStrategicAnalysis, setHeroStrategicAnalysis] = useState<HeroStrategicAnalysis | null>(null);
+    const [strategicAnalysisError, setStrategicAnalysisError] = useState<string | null>(null);
     const [synergyRelations, setSynergyRelations] = useState<HeroRelation | null>(null);
     const [synergyError, setSynergyError] = useState<string | null>(null);
-    const [tacticalCounters, setTacticalCounters] = useState<AITacticalCounter[]>([]);
-    const [tacticalCountersError, setTacticalCountersError] = useState<string | null>(null);
     const [isSynergyAnalysisLoading, setIsSynergyAnalysisLoading] = useState(false);
 
     const [activeLane, setActiveLane] = useState<LaneOrNone>('NENHUMA'); 
@@ -410,14 +411,13 @@ const App: React.FC = () => {
         fetchSynergyData();
     }, [matchupAllyPick, gameMode, heroes, heroApiIdMap]);
 
+    // FIX: Consolidate state resets for strategic analysis.
     useEffect(() => {
         if (!synergyHeroPick) {
-            setStrategyAnalysis(null);
-            setStrategyAnalysisError(null);
+            setHeroStrategicAnalysis(null);
+            setStrategicAnalysisError(null);
             setSynergyRelations(null);
             setSynergyError(null);
-            setTacticalCounters([]);
-            setTacticalCountersError(null);
             setIsSynergyAnalysisLoading(false);
             setCounterBanSuggestions([]);
         }
@@ -452,13 +452,11 @@ const App: React.FC = () => {
         if (!selectedHero || !selectedHero.apiId) return;
     
         setIsSynergyAnalysisLoading(true);
-        // Reset all relevant states
-        setStrategyAnalysis(null);
-        setStrategyAnalysisError(null);
+        // FIX: Reset consolidated state objects.
+        setHeroStrategicAnalysis(null);
+        setStrategicAnalysisError(null);
         setSynergyRelations(null);
         setSynergyError(null);
-        setTacticalCounters([]);
-        setTacticalCountersError(null);
         setCounterBanSuggestions([]);
         
         // Fetch hero details (only for the selected hero)
@@ -479,14 +477,17 @@ const App: React.FC = () => {
                 fetchHeroRelations(selectedHero.apiId, heroes, heroApiIdMap)
             ]);
     
-            // Process AI analysis result
+            // FIX: Process and set the entire strategic analysis object.
             const { strategy, tacticalCounters: aiCounters } = analysisResult;
             const validItemNames = GAME_ITEMS.map(item => item.nome);
             const correctedCoreItems = strategy.coreItems.map(item => ({ ...item, nome: findClosestString(item.nome, validItemNames) }));
             const correctedSituationalItems = strategy.situationalItems.map(item => ({ ...item, nome: findClosestString(item.nome, validItemNames) }));
-            setStrategyAnalysis({ ...strategy, coreItems: correctedCoreItems, situationalItems: correctedSituationalItems });
             
-            setTacticalCounters(aiCounters);
+            setHeroStrategicAnalysis({
+                strategy: { ...strategy, coreItems: correctedCoreItems, situationalItems: correctedSituationalItems },
+                tacticalCounters: aiCounters
+            });
+            
             setCounterBanSuggestions(processAIBanSuggestions(aiCounters));
     
             // Process statistical synergy result
@@ -495,8 +496,8 @@ const App: React.FC = () => {
             if (session?.user) await fetchUserProfile(session.user);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : "Erro na análise estratégica da IA.";
-            setStrategyAnalysisError(errorMessage);
-            setTacticalCountersError(errorMessage);
+            // FIX: Set a single error state.
+            setStrategicAnalysisError(errorMessage);
             setSynergyError(errorMessage);
         } finally {
             setIsSynergyAnalysisLoading(false);
@@ -534,34 +535,10 @@ const App: React.FC = () => {
         try {
             const isAnyLane = activeLane === 'NENHUMA';
             const roleForAnalysis: Role | 'Qualquer' = isAnyLane ? 'Qualquer' : laneToRoleMap[activeLane as Lane];
-            const counterData = await fetchCounters(enemyHero.apiId);
     
-            if (counterData.length === 0) {
-                throw new Error("A API não retornou dados de counters estatísticos para este herói.");
-            }
-    
-            const allStatCounters = counterData
-                .map(c => ({ hero: heroApiIdMap[c.heroid], increase_win_rate: c.increase_win_rate }))
-                .filter((item): item is { hero: Hero; increase_win_rate: number } => !!item.hero && item.increase_win_rate > 0.01)
-                .sort((a, b) => b.increase_win_rate - a.increase_win_rate);
-    
-            if (allStatCounters.length < 2) {
-                throw new Error("Não foram encontrados counters estatísticos suficientes na API para uma análise de IA aprofundada.");
-            }
-    
-            let potentialCountersForAI: Hero[];
-            if (!isAnyLane) {
-                const roleCounters = allStatCounters.filter(item => item.hero.roles.includes(roleForAnalysis as Role)).map(item => item.hero);
-                const otherCounters = allStatCounters.filter(item => !item.hero.roles.includes(roleForAnalysis as Role)).map(item => item.hero);
-                const combined = [...roleCounters, ...otherCounters];
-                potentialCountersForAI = Array.from(new Set(combined.map(h => h.id))).map(id => combined.find(h => h.id === id)!);
-            } else {
-                potentialCountersForAI = allStatCounters.map(item => item.hero);
-            }
-            const finalCountersForAI = potentialCountersForAI.slice(0, 7);
-            
-            const allHeroesForDetails = [enemyHero, yourHero, ...finalCountersForAI].filter((h): h is Hero => h !== null);
-            const detailsToFetch = allHeroesForDetails.filter(h => h.apiId && !heroDetailsCache[h.apiId]);
+            // Otimização: Buscar detalhes apenas dos heróis necessários
+            const heroesForDetails = [enemyHero, yourHero].filter((h): h is Hero => h !== null);
+            const detailsToFetch = heroesForDetails.filter(h => h.apiId && !heroDetailsCache[h.apiId]);
             let newCacheEntries: Record<number, HeroDetails> = {};
             
             if (detailsToFetch.length > 0) {
@@ -574,13 +551,13 @@ const App: React.FC = () => {
     
             const currentCache = { ...heroDetailsCache, ...newCacheEntries };
             const enemyHeroDetails = currentCache[enemyHero.apiId];
-            const potentialCountersDetails = finalCountersForAI.map(h => currentCache[h.apiId]).filter((d): d is HeroDetails => !!d);
             const yourHeroDetails = yourHero ? currentCache[yourHero.apiId] : null;
     
-            if (!enemyHeroDetails || potentialCountersDetails.length < finalCountersForAI.length) {
-                throw new Error("Falha ao carregar detalhes de um ou mais heróis para a análise.");
+            if (!enemyHeroDetails) {
+                throw new Error("Falha ao carregar detalhes do herói inimigo para a análise.");
             }
             
+            // Otimização: Buscar winrate em paralelo com a chamada da IA (se possível)
             let winRate: number | null = null;
             if (yourHero && yourHero.apiId && enemyHero.apiId) {
                  const enemyCounters = await fetchCounters(enemyHero.apiId); 
@@ -594,19 +571,26 @@ const App: React.FC = () => {
                  winRate = wr;
             }
     
+            // Otimização: Chamar IA com dados mínimos
             const combinedAnalysis = await getCombined1v1Analysis(
                 enemyHeroDetails,
                 activeLane,
-                potentialCountersDetails,
                 roleForAnalysis,
                 yourHero,
                 yourHeroDetails,
                 winRate
             );
-             if (session?.user) await fetchUserProfile(session.user);
+            if (session?.user) await fetchUserProfile(session.user);
     
-            const { strategicAnalysis, matchupAnalysis, banSuggestions } = combinedAnalysis;
+            // Após a resposta da IA, buscar dados estatísticos para enriquecer a UI
+            const counterData = await fetchCounters(enemyHero.apiId);
+            const allStatCounters = counterData
+                .map(c => ({ hero: heroApiIdMap[c.heroid], increase_win_rate: c.increase_win_rate }))
+                .filter((item): item is { hero: Hero; increase_win_rate: number } => !!item.hero)
+                .sort((a, b) => b.increase_win_rate - a.increase_win_rate);
 
+            const { strategicAnalysis, matchupAnalysis, banSuggestions } = combinedAnalysis;
+    
             setCounterBanSuggestions(processAIBanSuggestions(banSuggestions));
             
             const validItemNames = GAME_ITEMS.map(item => item.nome);
@@ -638,26 +622,7 @@ const App: React.FC = () => {
                 return { nome: correctedName, motivo: item.motivo, preco: gameItem?.preco || 0 };
             });
             
-            const anulaSuggestions = heroSuggestions.filter(s => s.classificacao === 'ANULA');
-            let vantagemSuggestions = heroSuggestions.filter(s => s.classificacao === 'VANTAGEM');
-            const MIN_ANULA = activeLane === 'NENHUMA' ? 0 : 2;
-            const MIN_VANTAGEM = 3;
-    
-            const existingNames = new Set(heroSuggestions.map(s => s.nome));
-            const availablePaddingHeroes = allStatCounters.filter(c => !existingNames.has(c.hero.name));
-    
-            while (vantagemSuggestions.length < MIN_VANTAGEM && availablePaddingHeroes.length > 0) {
-                const heroToAdd = availablePaddingHeroes.shift()!;
-                vantagemSuggestions.push({
-                    nome: heroToAdd.hero.name, imageUrl: heroToAdd.hero.imageUrl, motivo: "Vantagem estatística significativa de acordo com a API.",
-                    avisos: [], classificacao: 'VANTAGEM', estatistica: `+${(heroToAdd.increase_win_rate * 100).toFixed(1)}% vs. ${enemyHero.name}`, spells: [],
-                });
-            }
-            while (anulaSuggestions.length < MIN_ANULA && vantagemSuggestions.length > 0) {
-                const heroToPromote = vantagemSuggestions.shift()!;
-                anulaSuggestions.push({ ...heroToPromote, classificacao: 'ANULA' });
-            }
-            setAnalysisResult({ sugestoesHerois: [...anulaSuggestions, ...vantagemSuggestions], sugestoesItens: correctedItems });
+            setAnalysisResult({ sugestoesHerois: heroSuggestions, sugestoesItens: correctedItems });
     
             if (matchupAnalysis && yourHero && winRate != null) {
                 const correctedSpell = { ...matchupAnalysis.recommendedSpell, nome: findClosestString(matchupAnalysis.recommendedSpell.nome, validSpellNames) };
@@ -1030,12 +995,10 @@ const App: React.FC = () => {
                 onMetaRankChange={setMetaBanRankCategory}
                 onAnalyze={handleSynergyAnalysis}
                 isAnalysisLoading={isSynergyAnalysisLoading}
-                strategyAnalysis={strategyAnalysis}
-                strategyAnalysisError={strategyAnalysisError}
+                strategyAnalysis={heroStrategicAnalysis}
+                strategyAnalysisError={strategicAnalysisError}
                 synergyRelations={synergyRelations}
                 synergyError={synergyError}
-                tacticalCounters={tacticalCounters}
-                tacticalCountersError={tacticalCountersError}
             />;
         }
         if (gameMode === 'heroes') {

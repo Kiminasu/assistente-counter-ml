@@ -246,7 +246,7 @@ export async function fetchHeroRankings(
     const ttl = 1 * 60 * 60 * 1000; // 1 hora
 
     return fetchWithCache(cacheKey, async () => {
-        const apiUrl = `https://mlbb-stats.ridwaanhall.com/api/hero-rank/?days=${days}&rank=${rank}&sort_field=${sortField}&sort_order=desc&size=50`;
+        const apiUrl = `https://mlbb-stats.ridwaanhall.com/api/hero-rank/?days=${days}&rank=${rank}&sort_field=${sortField}&sort_order=desc&size=200`;
         const proxyUrl = 'https://corsproxy.io/?';
         const fetchUrl = proxyUrl + encodeURIComponent(apiUrl);
 

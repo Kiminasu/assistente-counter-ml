@@ -41,16 +41,15 @@ const heroStrategicAnalysisSchema = { type: Type.OBJECT, properties: { strategy:
 // --- FUNÇÕES DE ANÁLISE ---
 
 async function handle1v1Analysis(payload: any) {
-    const { enemyHeroDetails, lane, potentialCountersDetails, selectedRole, yourHero, yourHeroDetails, winRate } = payload;
+    const { enemyHeroDetails, lane, selectedRole, yourHero, yourHeroDetails, winRate } = payload;
     
     const itemNames = GAME_ITEMS.map(item => item.nome).join(', ');
     const spellList = Object.keys(SPELL_ICONS).filter(spell => spell !== 'default').join(', ');
     const enemyDetailsPrompt = formatHeroDetailsForPrompt(enemyHeroDetails);
-    const countersDetailsPrompt = potentialCountersDetails.map((d: HeroDetails) => formatHeroDetailsForPrompt(d)).join('\n\n---\n\n');
     const systemPrompt = `Você é um analista de nível Mítico de Mobile Legends. Forneça uma análise tática infalível baseada ESTRITAMENTE nos dados. Responda APENAS com um objeto JSON válido que siga o schema.`;
     const laneContext = lane === 'NENHUMA' ? 'em confronto geral' : `na lane '${lane}'`;
     
-    const strategicInstructions = `**Parte 1: Análise Estratégica (strategicAnalysis)**\nOponente: ${enemyHeroDetails.name} ${laneContext}.\nAnalisar counters para a função '${selectedRole}'.\nHeróis para Análise:\n${countersDetailsPrompt}\nInstruções: Forneça 'motivo', 'avisos', 'spells' da lista [${spellList}], e 3 'sugestoesItens' da lista [${itemNames}].`;
+    const strategicInstructions = `**Parte 1: Análise Estratégica (strategicAnalysis)**\nOponente: ${enemyHeroDetails.name} ${laneContext}.\nINSTRUÇÕES:\n- Sugira 3 a 5 dos melhores heróis de counter para a função '${selectedRole}'. Para cada um, forneça 'motivo', 'avisos', e 'spells' da lista [${spellList}]. A análise deve ser de nível profissional, considerando interações de habilidades, mobilidade e matchups conhecidos.\n- Sugira 3 'sugestoesItens' para counterar ${enemyHeroDetails.name} da lista [${itemNames}].`;
     
     let matchupInstructions = '';
     if (yourHeroDetails) {
@@ -112,7 +111,7 @@ async function handleHeroStrategicAnalysis(payload: any): Promise<HeroStrategicA
     const itemNames = GAME_ITEMS.map(item => item.nome).join(', ');
     const heroToAnalyzePrompt = formatHeroDetailsForPrompt(heroToAnalyzeDetails);
     const systemPrompt = "Você é um analista Mítico de Mobile Legends. Sua análise é tática, precisa e direta. Responda APENAS com um objeto JSON válido que siga o schema.";
-    const userQuery = `ANÁLISE ESTRATÉGICA\nHERÓI: ${heroToAnalyzePrompt}\nItens Disponíveis: [${itemNames}]\nINSTRUÇÕES:\n1. Para 'strategy': sugira 3 'coreItems' e 3 'situationalItems', um 'playstyle' conciso e os 'powerSpikes' do herói.\n2. Para 'tacticalCounters': Forneça uma lista de 3 a 5 dos melhores counters táticos CONTRA ${heroToAnalyzeDetails.name}. A 'reason' deve explicar interações de habilidades específicas. Classifique cada um como 'HARD' ou 'SOFT' counter.`;
+    const userQuery = `ANÁLISE ESTRATÉGICA PROFUNDA\nHERÓI: ${heroToAnalyzePrompt}\nItens Disponíveis: [${itemNames}]\nINSTRUÇÕES:\n1. Para 'strategy': sugira 3 'coreItems' e 3 'situationalItems', um 'playstyle' detalhado e os 'powerSpikes' (momentos de força) do herói.\n2. Para 'tacticalCounters': Forneça uma lista de 3 a 5 dos melhores counters táticos CONTRA ${heroToAnalyzeDetails.name}. A 'reason' deve ser de nível profissional, explicando interações de habilidades específicas. Considere heróis que: a) anulam a habilidade principal (ex: imunidade a CC), b) exploram sua falta de mobilidade ou superam sua mobilidade, c) sobrevivem ao seu burst e contra-atacam. Inclua matchups cruciais conhecidos por jogadores experientes (ex: Yin contra Angela). Classifique cada um como 'HARD' ou 'SOFT' counter.`;
     
     const response = await ai.models.generateContent({
         model: "gemini-2.5-flash",

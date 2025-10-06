@@ -1,12 +1,11 @@
 import React, { useRef, useEffect, useState } from 'react';
-// FIX: The type 'HeroStrategyAnalysis' does not exist in '../types'. The correct type for the 'strategyAnalysis' prop is 'HeroStrategy'.
-import { BanSuggestion, Hero, HeroStrategy, RankCategory, HeroSuggestion, HeroRelation, AITacticalCounter } from '../types';
+// FIX: Use the combined HeroStrategicAnalysis type for better data flow and to resolve type errors.
+import { BanSuggestion, Hero, HeroStrategicAnalysis, RankCategory, HeroSuggestion, HeroRelation } from '../types';
 import CollapsibleTutorial from './CollapsibleTutorial';
 import HeroSlot from './HeroSlot';
 import SynergyPanel from './SynergyPanel';
 import HeroStrategyPanel from './HeroStrategyPanel';
 import BanSuggestions from './BanSuggestions';
-import { RATING_STYLES, LANE_ICONS } from '../constants';
 import { fetchHeroRankings, ApiHeroRankData } from '../services/heroService';
 import { HeroRankInfo } from '../types';
 
@@ -23,12 +22,10 @@ interface SynergyExplorerScreenProps {
     onMetaRankChange: (rank: RankCategory) => void;
     onAnalyze: () => void;
     isAnalysisLoading: boolean;
-    strategyAnalysis: HeroStrategy | null;
+    strategyAnalysis: HeroStrategicAnalysis | null;
     strategyAnalysisError: string | null;
     synergyRelations: HeroRelation | null;
     synergyError: string | null;
-    tacticalCounters: AITacticalCounter[];
-    tacticalCountersError: string | null;
 }
 
 const StatBar: React.FC<{ label: string, value: number, color: string }> = ({ label, value, color }) => {
@@ -64,8 +61,6 @@ const SynergyExplorerScreen: React.FC<SynergyExplorerScreenProps> = ({
     strategyAnalysisError,
     synergyRelations,
     synergyError,
-    tacticalCounters,
-    tacticalCountersError,
 }) => {
     const selectedHero = selectedHeroId ? heroes[selectedHeroId] : null;
     const analysisSectionRef = useRef<HTMLDivElement>(null);
@@ -122,6 +117,9 @@ const SynergyExplorerScreen: React.FC<SynergyExplorerScreenProps> = ({
         }
     }, [isAnalysisLoading]);
     
+    // FIX: Derive tactical counters from the main strategyAnalysis object.
+    const tacticalCounters = strategyAnalysis?.tacticalCounters ?? [];
+
     return (
         <div className="w-full max-w-7xl mx-auto animated-entry flex flex-col gap-8">
             <CollapsibleTutorial title="Como Usar a Análise de Herói">
@@ -204,7 +202,7 @@ const SynergyExplorerScreen: React.FC<SynergyExplorerScreenProps> = ({
                             <h2 className="text-xl font-black text-center mb-3 tracking-wider text-amber-300">Análise Estratégica da IA</h2>
                             <HeroStrategyPanel
                                 selectedHero={selectedHero}
-                                analysis={strategyAnalysis}
+                                analysis={strategyAnalysis?.strategy ?? null}
                                 isLoading={isAnalysisLoading}
                                 error={strategyAnalysisError}
                             />
@@ -213,7 +211,7 @@ const SynergyExplorerScreen: React.FC<SynergyExplorerScreenProps> = ({
                             <h2 className="text-xl font-black text-center mb-3 tracking-wider text-amber-300">Sinergias de Batalha</h2>
                             <SynergyPanel
                                 isLoading={isAnalysisLoading || isStatsLoading}
-                                error={synergyError || tacticalCountersError}
+                                error={synergyError || strategyAnalysisError}
                                 relations={synergyRelations}
                                 heroApiIdMap={heroApiIdMap}
                                 tacticalCounters={tacticalCounters}
