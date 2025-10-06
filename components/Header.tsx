@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { UserProfile } from '../App'; 
@@ -48,24 +46,28 @@ const UserPanel: React.FC<Pick<HeaderProps, 'userProfile' | 'onLogout' | 'onEdit
 
     return (
         <div ref={menuRef} className="absolute top-4 right-0 text-right z-20">
-            <div className="flex items-center gap-3 bg-black/30 p-2 rounded-lg">
+            <div className="flex items-center gap-3">
                 {userProfile.subscription_status === 'premium' ? (
-                    <div className="flex items-center gap-2">
-                        <span className="text-yellow-400 font-bold flex items-center gap-1" title="Conta Premium">👑</span>
-                        <span className="font-bold text-sm text-white truncate max-w-[150px]">{userProfile.username}</span>
+                    <div className="flex items-center gap-3 bg-amber-900/30 backdrop-blur-sm p-1.5 rounded-full border border-amber-600/50">
+                        <div className="flex items-center gap-2 px-3">
+                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-amber-400" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                            <span className="font-bold text-sm text-amber-300 truncate max-w-[150px]">{userProfile.username}</span>
+                        </div>
                     </div>
                 ) : (
-                    <div className="flex items-center gap-2">
-                         <button onClick={onUpgradeClick} className="text-xs font-bold bg-gradient-to-r from-amber-400 to-yellow-500 text-black px-2 py-1 rounded-md hover:opacity-90 transition-opacity whitespace-nowrap">
-                            👑 SEJA PREMIUM
-                        </button>
-                        <span className="text-xs font-mono bg-slate-700 text-slate-300 px-1.5 py-0.5 rounded-md flex items-center gap-1 whitespace-nowrap" title="Análises restantes">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-violet-400" viewBox="0 0 20 20" fill="currentColor">
+                    <div className="flex items-center gap-2 bg-slate-900/50 backdrop-blur-sm p-1.5 rounded-full border border-slate-700">
+                         <span className="text-xs font-mono text-slate-300 px-3 flex items-center gap-1.5 whitespace-nowrap" title="Análises restantes">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-violet-400" viewBox="0 0 20 20" fill="currentColor">
                               <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
                             </svg>
-                            {analysesRemaining}/{analysisLimit}
+                            <span className="font-semibold">{analysesRemaining}/{analysisLimit}</span>
                         </span>
-                        <span className="font-bold text-sm text-white truncate max-w-[100px] sm:max-w-[150px] hidden sm:inline">{userProfile.username}</span>
+                         <button onClick={onUpgradeClick} className="flex items-center gap-1.5 text-xs font-bold bg-gradient-to-r from-amber-400 to-yellow-500 text-black px-3 py-1.5 rounded-full hover:opacity-90 transition-all duration-300 transform hover:scale-105 whitespace-nowrap">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
+                            UPGRADE
+                        </button>
                     </div>
                 )}
                 <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="flex-shrink-0">

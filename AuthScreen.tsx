@@ -11,6 +11,7 @@ const AuthScreen: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [message, setMessage] = useState<string | null>(null);
+    const [passwordPlaceholder, setPasswordPlaceholder] = useState('••••••••');
 
     const handleAuth = async (event: React.FormEvent) => {
         event.preventDefault();
@@ -127,7 +128,9 @@ const AuthScreen: React.FC = () => {
                                 required
                                 minLength={6}
                                 className="mt-1 block w-full bg-slate-800/50 border border-slate-700 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-violet-500 focus:border-violet-500 sm:text-sm"
-                                placeholder="••••••••"
+                                placeholder={passwordPlaceholder}
+                                onFocus={() => setPasswordPlaceholder('')}
+                                onBlur={(e) => { if (!e.target.value) { setPasswordPlaceholder('••••••••'); } }}
                             />
                         </div>
 

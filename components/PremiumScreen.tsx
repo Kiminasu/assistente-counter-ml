@@ -1,44 +1,55 @@
-
-
 import React from 'react';
 
-const CheckmarkIcon = () => (
-    <svg className="w-5 h-5 text-green-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-    </svg>
-);
+const FeatureIcon: React.FC<{ included: boolean; icon: 'lightning' | 'book' | 'chart' | 'chess' | 'star' | 'group' | 'chat' }> = ({ included, icon }) => {
+    const iconColor = included ? 'text-green-400' : 'text-red-400';
+    const icons = {
+        lightning: <path d="M13 10V3L4 14h7v7l9-11h-7z" />,
+        book: <path d="M4 6a2 2 0 012-2h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm2 0v12h12V6H6zm2 4h8v2H8v-2zm0 4h8v2H8v-2z" />,
+        chart: <path d="M3 12v7a2 2 0 002 2h14a2 2 0 002-2v-7H3zm4-10v5h2V2h-2zm4 0v9h2V2h-2zm4 0v3h2V2h-2z" />,
+        chess: <path d="M17 2H7C5.9 2 5 2.9 5 4v16l7-3 7 3V4c0-1.1-.9-2-2-2z" />,
+        star: <path d="M10 1l2.5 5.5L18 7l-4 4.5 1 6-5-3.5-5 3.5 1-6-4-4.5 5.5-.5L10 1z" />,
+        group: <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />,
+        chat: <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z" />
+    };
 
-const CrossIcon = () => (
-    <svg className="w-5 h-5 text-red-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
-    </svg>
-);
+    return (
+        <svg className={`w-5 h-5 ${iconColor} flex-shrink-0`} fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            {icons[icon]}
+        </svg>
+    );
+};
+
 
 const PlanCard: React.FC<{
     title: string;
+    subtitle: string;
     price?: string;
     period?: string;
-    features: { text: string; included: boolean }[];
+    features: { text: string; included: boolean; icon: 'lightning' | 'book' | 'chart' | 'chess' | 'star' | 'group' | 'chat' }[];
     isRecommended?: boolean;
     isCurrent?: boolean;
-}> = ({ title, price, period, features, isRecommended, isCurrent }) => {
+}> = ({ title, subtitle, price, period, features, isRecommended, isCurrent }) => {
     const handleSubscribe = () => {
         alert('O sistema de pagamento está em fase final de implementação. Agradecemos seu interesse!');
     };
 
-    const borderColor = isRecommended ? 'border-amber-400 panel-glow-primary' : isCurrent ? 'border-gray-600' : 'border-violet-500 panel-glow-purple';
+    const borderColor = isRecommended ? 'border-amber-400' : isCurrent ? 'border-gray-600' : 'border-violet-500';
+    const glowShadow = isRecommended ? 'shadow-[0_0_25px_rgba(251,191,36,0.4)]' : 'shadow-[0_0_25px_rgba(167,139,250,0.3)]';
     const buttonClass = isRecommended 
         ? 'bg-gradient-to-r from-amber-400 to-yellow-500 text-black shadow-yellow-500/30' 
         : 'bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white shadow-violet-500/40';
 
     return (
-        <div className={`relative glassmorphism p-6 rounded-2xl border-2 flex flex-col ${borderColor}`}>
+        <div className={`relative glassmorphism p-6 rounded-2xl border-2 flex flex-col ${borderColor} ${glowShadow} transform transition-transform hover:scale-105`}>
             {isRecommended && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-400 text-black text-xs font-bold px-3 py-1 rounded-full shadow-lg">
                     MAIS POPULAR
                 </div>
             )}
-            <h3 className="text-2xl font-bold text-center">{title}</h3>
+            <div className="text-center">
+                 <h3 className="text-2xl font-bold">{title}</h3>
+                 <p className="text-sm text-slate-400">{subtitle}</p>
+            </div>
             {price && (
                 <div className="text-center my-4">
                     <span className="text-4xl font-black text-white">{price}</span>
@@ -48,8 +59,8 @@ const PlanCard: React.FC<{
             <ul className="space-y-3 mt-6 mb-8 flex-grow">
                 {features.map((feature, index) => (
                     <li key={index} className="flex items-start gap-3">
-                        {feature.included ? <CheckmarkIcon /> : <CrossIcon />}
-                        <span className="text-slate-300 text-sm">{feature.text}</span>
+                        <FeatureIcon included={feature.included} icon={feature.icon} />
+                        <span className={`text-sm ${feature.included ? 'text-slate-200' : 'text-slate-500 line-through'}`}>{feature.text}</span>
                     </li>
                 ))}
             </ul>
@@ -71,55 +82,59 @@ const PremiumScreen: React.FC = () => {
 
     const plans = [
         {
-            title: 'Plano Free',
+            title: 'Épico Gratuito',
+            subtitle: 'Estrategista Casual',
             isCurrent: true,
             features: [
-                { text: '5 Análises de IA por dia', included: true },
-                { text: 'Análise de Herói (1v1 e Sinergia)', included: true },
-                { text: 'Acesso ao Banco de Dados de Itens e Heróis', included: true },
-                { text: 'Acesso ao Ranking de Heróis', included: true },
-                { text: 'Acesso ao Draft 5vs5', included: false },
-                { text: 'Acesso Antecipado a Novos Recursos', included: false },
+                { text: '5 Análises de IA por dia', included: true, icon: 'lightning' as const },
+                { text: 'Análise de Herói e 1vs1', included: true, icon: 'lightning' as const },
+                { text: 'Enciclopédia de Heróis e Itens', included: true, icon: 'book' as const },
+                { text: 'Ranking de Heróis', included: true, icon: 'chart' as const },
+                { text: 'Analisador de Draft 5vs5', included: false, icon: 'chess' as const },
+                { text: 'Acesso Antecipado a Novos Recursos', included: false, icon: 'star' as const },
             ],
         },
         {
-            title: 'Lenda Mensal',
-            price: 'R$19,90',
+            title: 'Lendário',
+            subtitle: 'Jogador Dedicado',
+            price: 'R$9,90',
             period: 'mês',
             features: [
-                { text: 'Análises de IA Ilimitadas', included: true },
-                { text: 'Análise de Herói (1v1 e Sinergia)', included: true },
-                { text: 'Acesso ao Banco de Dados de Itens e Heróis', included: true },
-                { text: 'Acesso ao Ranking de Heróis', included: true },
-                { text: 'Acesso Completo ao Draft 5vs5', included: true },
-                { text: 'Acesso Antecipado a Novos Recursos', included: true },
+                { text: 'Análises de IA Ilimitadas', included: true, icon: 'lightning' as const },
+                { text: 'Histórico de Análises (em breve)', included: true, icon: 'star' as const },
+                { text: 'Listas de Builds Personalizadas (em breve)', included: true, icon: 'star' as const },
+                { text: 'Enciclopédia e Ranking completos', included: true, icon: 'book' as const },
+                { text: 'Analisador de Draft 5vs5', included: false, icon: 'chess' as const },
+                { text: 'Acesso Antecipado a Novos Recursos', included: false, icon: 'star' as const },
             ],
         },
         {
-            title: 'Mítico Trimestral',
-            price: 'R$49,90',
-            period: '3 meses',
+            title: 'Mítico',
+            subtitle: 'Estrategista de Equipe',
+            price: 'R$19,90',
+            period: 'mês',
             isRecommended: true,
             features: [
-                { text: 'Análises de IA Ilimitadas', included: true },
-                { text: 'Análise de Herói (1v1 e Sinergia)', included: true },
-                { text: 'Acesso ao Banco de Dados de Itens e Heróis', included: true },
-                { text: 'Acesso ao Ranking de Heróis', included: true },
-                { text: 'Acesso Completo ao Draft 5vs5', included: true },
-                { text: 'Acesso Antecipado a Novos Recursos', included: true },
+                { text: 'Tudo do plano Lendário', included: true, icon: 'star' as const },
+                { text: 'Acesso Completo ao Analisador de Draft 5vs5', included: true, icon: 'chess' as const },
+                { text: 'Salvar e Compartilhar Drafts (em breve)', included: true, icon: 'star' as const },
+                { text: 'Acesso Antecipado a Novas Ferramentas', included: true, icon: 'star' as const },
+                { text: 'Sem Anúncios (futuramente)', included: true, icon: 'star' as const },
+                { text: 'Análises de IA Ilimitadas', included: true, icon: 'lightning' as const },
             ],
         },
         {
-            title: 'Glória Anual',
-            price: 'R$99,90',
-            period: 'ano',
+            title: 'Glória Imortal',
+            subtitle: 'Técnico / Profissional',
+            price: 'R$59,90',
+            period: 'mês',
             features: [
-                { text: 'Análises de IA Ilimitadas', included: true },
-                { text: 'Análise de Herói (1v1 e Sinergia)', included: true },
-                { text: 'Acesso ao Banco de Dados de Itens e Heróis', included: true },
-                { text: 'Acesso ao Ranking de Heróis', included: true },
-                { text: 'Acesso Completo ao Draft 5vs5', included: true },
-                { text: 'Acesso Antecipado a Novos Recursos', included: true },
+                { text: 'Tudo do plano Mítico', included: true, icon: 'star' as const },
+                { text: 'Gerenciamento de Time (Até 6 Contas)', included: true, icon: 'group' as const },
+                { text: 'Dashboard do Técnico (em breve)', included: true, icon: 'star' as const },
+                { text: 'Suporte Prioritário Direto', included: true, icon: 'chat' as const },
+                { text: 'Acesso Beta a Novas Ferramentas', included: true, icon: 'star' as const },
+                { text: 'Análises de IA Ilimitadas', included: true, icon: 'lightning' as const },
             ],
         }
     ];

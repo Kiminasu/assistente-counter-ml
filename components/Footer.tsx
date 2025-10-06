@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 const licenseText = `
 Licença BSD de 3 cláusulas
@@ -31,30 +31,64 @@ DESTE SOFTWARE, MESMO QUE AVISADO DA POSSIBILIDADE DE TAIS DANOS.
 `;
 
 const Footer: React.FC = () => {
+    const [isLicenseVisible, setIsLicenseVisible] = useState(false);
+
     return (
-        <footer className="w-full max-w-7xl mx-auto mt-8 text-center text-gray-500">
-            <div className="bg-black bg-opacity-20 p-4 rounded-lg">
-                <p className="text-sm mb-2">
-                    Desenvolvido por <a href="https://github.com/Kiminasu" target="_blank" rel="noopener noreferrer" className="font-bold text-amber-400 hover:underline">Lucas Kimi</a>
-                </p>
-                <p className="text-sm">
-                    Os dados estatísticos dos heróis são fornecidos através da API MLBB-Stats, criada por{' '}
-                    <a 
-                        href="https://github.com/ridwaanhall" 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-amber-400 hover:underline"
-                    >
-                        ridwaanhall
-                    </a>
-                    .
-                </p>
-                <details className="mt-2 text-xs cursor-pointer">
-                    <summary className="hover:text-gray-300">Ver Licença da API</summary>
-                    <pre className="mt-2 text-left bg-gray-900 p-3 rounded-md overflow-x-auto whitespace-pre-wrap text-gray-400">
+        <footer className="w-full max-w-7xl mx-auto mt-16 text-gray-400 text-sm">
+            <div 
+                className="glassmorphism rounded-t-2xl p-6"
+                style={{
+                    borderTop: '2px solid',
+                    borderImageSource: 'linear-gradient(to right, var(--color-primary-accent), var(--color-secondary-accent))',
+                    borderImageSlice: 1,
+                    borderBottom: 0,
+                    borderLeft: 0,
+                    borderRight: 0,
+                }}
+            >
+                <div className="flex flex-col md:flex-row justify-between items-center gap-6 text-center md:text-left">
+                    <div className="flex items-center gap-3">
+                        <img src="https://i.postimg.cc/ZK4nFyHG/mitica-logo-Photoroom.png" alt="Logo" className="h-12 w-12" />
+                        <div>
+                            <h4 className="font-bold text-white text-base">Mítica Estratégia MLBB</h4>
+                            <p className="text-xs text-slate-400">Análises de IA para Mobile Legends</p>
+                        </div>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                         <p>
+                            Desenvolvido por <a href="https://github.com/Kiminasu" target="_blank" rel="noopener noreferrer" className="font-semibold text-amber-400 hover:underline">Lucas Kimi</a>
+                        </p>
+                        <p>
+                            Dados da API por{' '}
+                            <a 
+                                href="https://github.com/ridwaanhall" 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="font-semibold text-amber-400 hover:underline"
+                            >
+                                ridwaanhall
+                            </a>
+                        </p>
+                    </div>
+                     <div>
+                        <button 
+                            onClick={() => setIsLicenseVisible(!isLicenseVisible)}
+                            className="font-semibold text-slate-300 hover:text-white transition-colors"
+                        >
+                            Ver Licença da API
+                        </button>
+                    </div>
+                </div>
+
+                <div className={`transition-all duration-500 ease-in-out overflow-hidden ${isLicenseVisible ? 'max-h-96 mt-6' : 'max-h-0'}`}>
+                    <pre className="text-left bg-black/30 p-3 rounded-md overflow-x-auto whitespace-pre-wrap text-xs text-gray-500">
                         {licenseText.trim()}
                     </pre>
-                </details>
+                </div>
+
+                <div className="text-center text-xs text-gray-500 mt-6 pt-4 border-t border-slate-700/50">
+                    <p>&copy; {new Date().getFullYear()} Mítica Estratégia. Todos os direitos reservados.</p>
+                </div>
             </div>
         </footer>
     );
