@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Session } from '@supabase/supabase-js';
-import { Hero, Lane, AnalysisResult, LANES, ROLES, Role, HeroSuggestion, BanSuggestion, MatchupData, ItemSuggestion, RankCategory, RankDays, SortField, HeroRankInfo, Team, DraftAnalysisResult, NextPickSuggestion, StrategicItemSuggestion, LaneOrNone, HeroDetails, HeroRelation, HeroStrategyAnalysis, UserSignupRank, GameMode } from './types';
+import { Hero, Lane, AnalysisResult, LANES, ROLES, Role, HeroSuggestion, BanSuggestion, MatchupData, ItemSuggestion, RankCategory, RankDays, SortField, HeroRankInfo, Team, DraftAnalysisResult, NextPickSuggestion, StrategicItemSuggestion, LaneOrNone, HeroDetails, HeroRelation, HeroStrategyAnalysis, UserSignupRank, GameMode, AIBanSuggestion } from './types';
 import { fetchHeroes, fetchCounters, fetchHeroDetails, fetchHeroRankings, ApiHeroRankData, fetchHeroRelations } from './services/heroService';
 import { getCombined1v1Analysis, getDraftAnalysis, getSynergyAndStrategyAnalysis } from './services/geminiService';
 import { findClosestString } from './utils';
@@ -46,8 +46,6 @@ export interface UserProfile {
 const DAILY_ANALYSIS_LIMIT = 5;
 
 const NUMBER_OF_META_BAN_SUGGESTIONS = 8;
-const NUMBER_OF_COUNTER_BAN_SUGGESTIONS = 6;
-const INITIAL_COUNTERS_TO_FETCH = 12; // Fetch more to account for filtering
 
 const App: React.FC = () => {
     // Verificação de configuração do Supabase.
@@ -377,77 +375,10 @@ const App: React.FC = () => {
         fetchAndSetMetaBans();
     }, [heroes, heroApiIdMap, metaBanRankCategory]);
 
-
+    // Reseta sugestões de ban de counter ao mudar de modo para evitar mostrar sugestões incorretas
     useEffect(() => {
-        const calculateCounterBans = async () => {
-            let personalCounters: BanSuggestion[] = [];
-            try {
-                const heroIdForCounters = gameMode === '1v1' ? matchupAllyPick : synergyHeroPick;
-
-                if ((gameMode === '1v1' || gameMode === 'synergy') && heroIdForCounters) {
-                    const yourHero = heroes[heroIdForCounters];
-                    if (yourHero?.apiId) {
-                        const counterData = await fetchCounters(yourHero.apiId);
-                        personalCounters = counterData
-                            .sort((a, b) => b.increase_win_rate - a.increase_win_rate)
-                            .slice(0, INITIAL_COUNTERS_TO_FETCH)
-                            .map(data => {
-                                const hero = heroApiIdMap[data.heroid];
-                                if (!hero) return null;
-                                return {
-                                    hero,
-                                    reason: `Forte counter para ${yourHero.name} (+${(data.increase_win_rate * 100).toFixed(1)}% de vitória).`
-                                };
-                            })
-                            .filter((s): s is BanSuggestion => s !== null)
-                            .slice(0, NUMBER_OF_COUNTER_BAN_SUGGESTIONS);
-                    }
-                } else if (gameMode === '5v5') {
-                    const pickedAllyHeroes = draftAllyPicks
-                        .map(id => id ? heroes[id] : null)
-                        .filter((h): h is Hero => h !== null && !!h.apiId);
-
-                    if (pickedAllyHeroes.length > 0) {
-                        const counterPromises = pickedAllyHeroes.map(hero => fetchCounters(hero.apiId));
-                        const allCountersData = await Promise.all(counterPromises);
-                        
-                        const aggregatedCounters: Record<number, { hero: Hero; count: number; totalWinRate: number }> = {};
-                        const pickedHeroIds = new Set([...draftAllyPicks, ...draftEnemyPicks].filter(Boolean));
-
-                        allCountersData.flat().forEach(counter => {
-                            const hero = heroApiIdMap[counter.heroid];
-                            if (!hero || pickedHeroIds.has(hero.id)) return;
-
-                            if (aggregatedCounters[counter.heroid]) {
-                                aggregatedCounters[counter.heroid].count++;
-                                aggregatedCounters[counter.heroid].totalWinRate += counter.increase_win_rate;
-                            } else {
-                                aggregatedCounters[counter.heroid] = { hero, count: 1, totalWinRate: counter.increase_win_rate };
-                            }
-                        });
-
-                        personalCounters = Object.values(aggregatedCounters)
-                            .sort((a, b) => {
-                                if (b.count !== a.count) return b.count - a.count;
-                                return (b.totalWinRate / b.count) - (a.totalWinRate / a.count);
-                            })
-                            .slice(0, INITIAL_COUNTERS_TO_FETCH)
-                            .map(agg => ({
-                                hero: agg.hero,
-                                reason: `Countera ${agg.count} herói(s) aliado(s). Ameaça: +${((agg.totalWinRate / agg.count) * 100).toFixed(1)}% de vitória.`
-                            }))
-                            .slice(0, NUMBER_OF_COUNTER_BAN_SUGGESTIONS);
-                    }
-                }
-            } catch (error) {
-                console.error("Erro ao buscar counters para sugestão de ban:", error);
-                personalCounters = [];
-            }
-            setCounterBanSuggestions(personalCounters);
-        };
-
-        calculateCounterBans();
-    }, [matchupAllyPick, draftAllyPicks, draftEnemyPicks, synergyHeroPick, gameMode, heroes, heroApiIdMap]);
+        setCounterBanSuggestions([]);
+    }, [gameMode]);
     
     useEffect(() => {
         if (gameMode !== '1v1' || !matchupAllyPick) {
@@ -486,10 +417,10 @@ const App: React.FC = () => {
             setStrategyAnalysisError(null);
             setSynergyRelations(null);
             setSynergyError(null);
-            // FIX: Resetting the array state for perfect counters.
             setPerfectCounters([]);
             setPerfectCounterError(null);
             setIsSynergyAnalysisLoading(false);
+            setCounterBanSuggestions([]);
         }
     }, [synergyHeroPick]);
     
@@ -507,6 +438,13 @@ const App: React.FC = () => {
         return true;
     }, [userProfile]);
 
+    const processAIBanSuggestions = (suggestions: AIBanSuggestion[]): BanSuggestion[] => {
+        return suggestions.map(suggestion => {
+            const heroData = Object.values(heroes).find((h: Hero) => h.name === suggestion.heroName);
+            return heroData ? { hero: heroData, reason: suggestion.reason } : null;
+        }).filter((s): s is BanSuggestion => s !== null);
+    };
+
 
     const handleSynergyAnalysis = useCallback(async () => {
         if (!checkAnalysisLimit()) return;
@@ -519,9 +457,9 @@ const App: React.FC = () => {
         setStrategyAnalysisError(null);
         setSynergyRelations(null);
         setSynergyError(null);
-        // FIX: Resetting the array state for perfect counters.
         setPerfectCounters([]);
         setPerfectCounterError(null);
+        setCounterBanSuggestions([]);
         
         const localDetailsCache = { ...heroDetailsCache };
     
@@ -533,67 +471,51 @@ const App: React.FC = () => {
             return details;
         };
     
-        const combinedAnalysisTask = async () => {
-            try {
-                const counterData = await fetchCounters(selectedHero.apiId);
-                const relevantCounters = counterData
-                    .filter(c => c.increase_win_rate > 0.01)
-                    .sort((a, b) => b.increase_win_rate - a.increase_win_rate)
-                    .map(c => heroApiIdMap[c.heroid])
-                    .filter((h): h is Hero => !!h);
-    
-                if (relevantCounters.length < 1) {
-                    throw new Error("Nenhum counter estatístico forte encontrado na API para a análise de IA.");
-                }
-                
-                const potentialCounters = relevantCounters.slice(0, 3);
-                const heroToAnalyzeDetails = await getDetails(selectedHero);
-                const potentialCountersDetails = await Promise.all(potentialCounters.map(getDetails));
-                
-                setHeroDetailsCache(prev => ({...prev, ...localDetailsCache}));
-    
-                // FIX: Added 'selectedHero' as the first argument to match the function signature.
-                const analysisResult = await getSynergyAndStrategyAnalysis(selectedHero, heroToAnalyzeDetails, potentialCountersDetails);
-    
-                const validItemNames = GAME_ITEMS.map(item => item.nome);
-                const correctedCoreItems = analysisResult.strategy.coreItems.map(item => ({ ...item, nome: findClosestString(item.nome, validItemNames) }));
-                const correctedSituationalItems = analysisResult.strategy.situationalItems.map(item => ({ ...item, nome: findClosestString(item.nome, validItemNames) }));
-                setStrategyAnalysis({ ...analysisResult.strategy, coreItems: correctedCoreItems, situationalItems: correctedSituationalItems });
-    
-                // FIX: Process the 'perfectCounters' array from the analysis result.
-                const perfectCounterSuggestions = analysisResult.perfectCounters.map(suggestion => {
-                    const heroData = (Object.values(heroes) as Hero[]).find((h: Hero) => h.name === suggestion.nome);
-                    const stat = counterData.find(c => c.heroid === heroData?.apiId);
-                    return {
-                        ...suggestion,
-                        imageUrl: heroData?.imageUrl || '',
-                        classificacao: 'PERFEITO' as const,
-                        estatistica: `+${((stat?.increase_win_rate || 0) * 100).toFixed(1)}% vs. ${selectedHero.name}`
-                    };
-                });
-    
-                setPerfectCounters(perfectCounterSuggestions);
-                 if (session?.user) await fetchUserProfile(session.user);
-            } catch (err) {
-                const errorMessage = err instanceof Error ? err.message : "Erro na análise estratégica da IA.";
-                setStrategyAnalysisError(errorMessage);
-                setPerfectCounterError(errorMessage);
-            }
-        };
-        
-        const synergyTask = async () => {
-            try {
-                const relationsData = await fetchHeroRelations(selectedHero.apiId, heroes, heroApiIdMap);
-                setSynergyRelations(relationsData);
-            } catch (err) {
-                setSynergyError(err instanceof Error ? err.message : "Erro ao buscar sinergias.");
-            }
-        };
-    
         try {
-            await Promise.all([combinedAnalysisTask(), synergyTask()]);
+            const counterData = await fetchCounters(selectedHero.apiId);
+            const relevantCounters = counterData
+                .filter(c => c.increase_win_rate > 0.01)
+                .sort((a, b) => b.increase_win_rate - a.increase_win_rate)
+                .map(c => heroApiIdMap[c.heroid])
+                .filter((h): h is Hero => !!h);
+
+            if (relevantCounters.length < 1) {
+                throw new Error("Nenhum counter estatístico forte encontrado na API para a análise de IA.");
+            }
+            
+            const potentialCounters = relevantCounters.slice(0, 3);
+            const heroToAnalyzeDetails = await getDetails(selectedHero);
+            const potentialCountersDetails = await Promise.all(potentialCounters.map(getDetails));
+            
+            setHeroDetailsCache(prev => ({...prev, ...localDetailsCache}));
+
+            const analysisResult = await getSynergyAndStrategyAnalysis(selectedHero, heroToAnalyzeDetails, potentialCountersDetails);
+
+            const validItemNames = GAME_ITEMS.map(item => item.nome);
+            const correctedCoreItems = analysisResult.strategy.coreItems.map(item => ({ ...item, nome: findClosestString(item.nome, validItemNames) }));
+            const correctedSituationalItems = analysisResult.strategy.situationalItems.map(item => ({ ...item, nome: findClosestString(item.nome, validItemNames) }));
+            setStrategyAnalysis({ ...analysisResult.strategy, coreItems: correctedCoreItems, situationalItems: correctedSituationalItems });
+
+            const perfectCounterSuggestions = analysisResult.perfectCounters.map(suggestion => {
+                const heroData = (Object.values(heroes) as Hero[]).find((h: Hero) => h.name === suggestion.nome);
+                const stat = counterData.find(c => c.heroid === heroData?.apiId);
+                return {
+                    ...suggestion,
+                    imageUrl: heroData?.imageUrl || '',
+                    classificacao: 'PERFEITO' as const,
+                    estatistica: `+${((stat?.increase_win_rate || 0) * 100).toFixed(1)}% vs. ${selectedHero.name}`
+                };
+            });
+            setPerfectCounters(perfectCounterSuggestions);
+            
+            setCounterBanSuggestions(processAIBanSuggestions(analysisResult.banSuggestions));
+            setSynergyRelations(analysisResult.synergyRelations);
+            if (session?.user) await fetchUserProfile(session.user);
         } catch (err) {
-             console.error("Erro durante a análise de sinergia:", err);
+            const errorMessage = err instanceof Error ? err.message : "Erro na análise estratégica da IA.";
+            setStrategyAnalysisError(errorMessage);
+            setPerfectCounterError(errorMessage);
+            setSynergyError(errorMessage);
         } finally {
             setIsSynergyAnalysisLoading(false);
         }
@@ -616,6 +538,7 @@ const App: React.FC = () => {
         setAnalysisError(null);
         setMatchupData(null);
         setMatchupError(null);
+        setCounterBanSuggestions([]);
     
         const enemyHero = heroes[matchupEnemyPick];
         const yourHero = matchupAllyPick ? heroes[matchupAllyPick] : null;
@@ -689,7 +612,6 @@ const App: React.FC = () => {
                  winRate = wr;
             }
     
-            // FIX: Added 'yourHero' argument to match the function signature.
             const combinedAnalysis = await getCombined1v1Analysis(
                 enemyHeroDetails,
                 activeLane,
@@ -701,7 +623,10 @@ const App: React.FC = () => {
             );
              if (session?.user) await fetchUserProfile(session.user);
     
-            const { strategicAnalysis, matchupAnalysis } = combinedAnalysis;
+            const { strategicAnalysis, matchupAnalysis, banSuggestions } = combinedAnalysis;
+
+            setCounterBanSuggestions(processAIBanSuggestions(banSuggestions));
+            
             const validItemNames = GAME_ITEMS.map(item => item.nome);
             const validSpellNames = Object.keys(SPELL_ICONS);
     
@@ -781,12 +706,14 @@ const App: React.FC = () => {
         if (pickedAllyHeroes.length === 0 && pickedEnemyHeroes.length === 0) {
             setDraftAnalysis(null);
             setDraftAnalysisError(null);
+            setCounterBanSuggestions([]);
             return;
         }
 
         setIsDraftAnalysisLoading(true);
         setDraftAnalysis(null);
         setDraftAnalysisError(null);
+        setCounterBanSuggestions([]);
 
         try {
             const allPickedHeroes = [...pickedAllyHeroes, ...pickedEnemyHeroes];
@@ -810,6 +737,8 @@ const App: React.FC = () => {
             
             const analysisFromAI = await getDraftAnalysis(allyDetails, enemyDetails, availableHeroes);
              if (session?.user) await fetchUserProfile(session.user);
+
+            setCounterBanSuggestions(processAIBanSuggestions(analysisFromAI.banSuggestions));
 
             let nextPick: NextPickSuggestion | null = null;
             if (analysisFromAI.nextPickSuggestion) {

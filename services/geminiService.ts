@@ -1,4 +1,4 @@
-import { Lane, Role, SpellSuggestion, MatchupClassification, Hero, DraftAnalysisResult, LaneOrNone, HeroStrategyAnalysis, HeroDetails, AnalysisResult, HeroRelation } from "../types";
+import { Lane, Role, SpellSuggestion, MatchupClassification, Hero, DraftAnalysisResult, LaneOrNone, HeroStrategyAnalysis, HeroDetails, AnalysisResult, HeroRelation, AIBanSuggestion } from "../types";
 import { supabase } from '../supabaseClient';
 
 async function fetchGeminiWithCache<T>(cacheKey: string, fetchFunction: () => Promise<T>): Promise<T> {
@@ -47,12 +47,14 @@ export interface Combined1v1AnalysisPayload {
   strategicAnalysis: AnalysisResult;
   matchupAnalysis: DetailedMatchupPayload | null;
   synergyRelations: HeroRelation | null;
+  banSuggestions: AIBanSuggestion[];
 }
 
 export interface CombinedSynergyAnalysisPayload {
   strategy: HeroStrategyAnalysis;
   perfectCounters: (Omit<AnalysisResult['sugestoesHerois'][0], 'classificacao'> & { lane: Lane })[];
   synergyRelations: HeroRelation | null;
+  banSuggestions: AIBanSuggestion[];
 }
 
 // Função genérica para chamar o endpoint do backend

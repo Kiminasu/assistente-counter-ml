@@ -1,4 +1,5 @@
 
+
 export interface Hero {
   id: string;
   apiId: number;
@@ -124,6 +125,11 @@ export interface TeamCompositionStats {
   control: number;
 }
 
+export interface AIBanSuggestion {
+  heroName: string;
+  reason: string;
+}
+
 export interface DraftAnalysisResult {
   advantageScore: number;
   advantageReason: string;
@@ -133,6 +139,7 @@ export interface DraftAnalysisResult {
   teamWeaknesses: string[];
   nextPickSuggestion: NextPickSuggestion | null;
   strategicItems: StrategicItemSuggestion[];
+  banSuggestions: AIBanSuggestion[];
 }
 
 export interface HeroStrategyAnalysis {

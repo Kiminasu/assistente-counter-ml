@@ -62,8 +62,8 @@ const CounterOfTheDay: React.FC<{ heroes: Record<string, Hero> }> = ({ heroes })
     const challenge = useMemo(() => getChallengeForToday(), []);
     const { heroToCounter, options, correctCounter, explanation } = challenge;
     
-    // FIX: Explicitly typed the 'h' parameter to avoid it being inferred as 'unknown'.
-    const heroToCounterData = Object.values(heroes).find((h: Hero) => h.name === heroToCounter.name);
+    // FIX: Cast the result of Object.values to Hero[] to ensure proper type inference.
+    const heroToCounterData = (Object.values(heroes) as Hero[]).find(h => h.name === heroToCounter.name);
 
 
     const handleVote = (option: string) => {
@@ -233,9 +233,9 @@ const Tools: React.FC<{ onSetMode: (mode: GameMode) => void }> = ({ onSetMode })
         { label: "Análise de Herói", mode: 'synergy', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" /></svg> },
         { label: "Análise 1vs1", mode: '1v1', icon: <span className="font-black text-xl tracking-tighter">1vs1</span> },
         { label: "Draft 5vs5", mode: '5v5', icon: <span className="font-black text-xl tracking-tighter">5vs5</span>, isPremium: true },
-        { label: "Heróis", mode: 'heroes', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a1 1 0 011-1h14a1 1 0 110 2H3a1 1 0 01-1-1z" /></svg> },
-        { label: "Itens", mode: 'item', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4z" clipRule="evenodd" /></svg> },
-        { label: "Ranking", mode: 'ranking', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z" /><path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z" /></svg> },
+        { label: "Heróis", mode: 'heroes', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zm-1.5 5.5a3 3 0 00-3 0V13a1 1 0 00-1 1v1a1 1 0 001 1h3a1 1 0 001-1v-1a1 1 0 00-1-1v-.5zM16.5 8.5a3 3 0 100-6 3 3 0 000 6zm-3 5.5a3 3 0 00-3 0V15a1 1 0 00-1 1v1a1 1 0 001 1h6a1 1 0 001-1v-1a1 1 0 00-1-1v-.5z" /></svg> },
+        { label: "Itens", mode: 'item', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v2h2a2 2 0 012 2v5a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h2V4zm2 0v2h6V4H7zm2 4a1 1 0 011 1v1h-2V9a1 1 0 011-1z" /></svg> },
+        { label: "Ranking", mode: 'ranking', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 24 24" fill="currentColor"><path d="M18,21H6V18H18M11,12V17H13V12H11M7,14V17H9V14H7M15,13V17H17V13H15M22,8H17.8L15,4H9L6.2,8H2V6H22V8Z" /></svg> },
     ];
 
     return (
