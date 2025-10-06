@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Session } from '@supabase/supabase-js';
-import { Hero, Lane, AnalysisResult, LANES, ROLES, Role, HeroSuggestion, BanSuggestion, MatchupData, ItemSuggestion, RankCategory, RankDays, SortField, HeroRankInfo, Team, DraftAnalysisResult, NextPickSuggestion, StrategicItemSuggestion, LaneOrNone, HeroDetails, HeroRelation, HeroStrategyAnalysis, UserSignupRank } from './types';
+import { Hero, Lane, AnalysisResult, LANES, ROLES, Role, HeroSuggestion, BanSuggestion, MatchupData, ItemSuggestion, RankCategory, RankDays, SortField, HeroRankInfo, Team, DraftAnalysisResult, NextPickSuggestion, StrategicItemSuggestion, LaneOrNone, HeroDetails, HeroRelation, HeroStrategyAnalysis, UserSignupRank, GameMode } from './types';
 import { fetchHeroes, fetchCounters, fetchHeroDetails, fetchHeroRankings, ApiHeroRankData, fetchHeroRelations } from './services/heroService';
 import { getCombined1v1Analysis, getDraftAnalysis, getSynergyAndStrategyAnalysis } from './services/geminiService';
 import { findClosestString } from './utils';
@@ -32,10 +32,10 @@ import HeroDatabaseScreen from './components/HeroDatabaseScreen';
 import AuthScreen from './AuthScreen';
 import UserProfileModal from './components/UserProfileModal';
 import UpgradeModal from './components/UpgradeModal';
-import PremiumScreen from './components/PremiumScreen'; // Importa a nova tela
+import PremiumScreen from './components/PremiumScreen';
+import DashboardScreen from './components/DashboardScreen';
 import { supabase } from './supabaseClient';
 
-type GameMode = '1v1' | '5v5' | 'ranking' | 'item' | 'synergy' | 'heroes' | 'premium';
 export interface UserProfile {
     username: string;
     rank: UserSignupRank;
@@ -83,7 +83,7 @@ const App: React.FC = () => {
     const [isLoadingApp, setIsLoadingApp] = useState(true);
     const [heroLoadingError, setHeroLoadingError] = useState<string | null>(null);
 
-    const [gameMode, setGameMode] = useState<GameMode>('synergy');
+    const [gameMode, setGameMode] = useState<GameMode>('dashboard');
 
     // State for 1v1 mode
     const [matchupAllyPick, setMatchupAllyPick] = useState<string | null>(null);
@@ -592,6 +592,11 @@ const App: React.FC = () => {
         }
     }, [synergyHeroPick, heroes, heroApiIdMap, heroDetailsCache, checkAnalysisLimit, session, fetchUserProfile]);
 
+    const handleNavigateToHeroAnalysis = useCallback((heroId: string) => {
+        setSynergyHeroPick(heroId);
+        setGameMode('synergy');
+    }, []);
+
     const handleAnalysis = useCallback(async () => {
         if (!matchupEnemyPick || !checkAnalysisLimit()) return;
         
@@ -912,12 +917,8 @@ const App: React.FC = () => {
     }, [draftAllyPicks, draftEnemyPicks]);
 
     const handleSetGameMode = useCallback((mode: GameMode) => {
-        if (mode === '5v5' && userProfile?.subscription_status !== 'premium') {
-            setIsUpgradeModalOpen(true);
-        } else {
-            setGameMode(mode);
-        }
-    }, [userProfile]);
+        setGameMode(mode);
+    }, []);
 
     const tabs = useMemo(() => [
         {
@@ -952,6 +953,15 @@ const App: React.FC = () => {
     }
 
     const renderContent = () => {
+        if (gameMode === 'dashboard') {
+            return <DashboardScreen 
+                heroes={heroes}
+                heroApiIdMap={heroApiIdMap}
+                onNavigateToHeroAnalysis={handleNavigateToHeroAnalysis}
+                onSetMode={handleSetGameMode}
+                userProfile={userProfile}
+            />
+        }
         if (gameMode === '1v1') {
             return (
                  <div className="flex flex-col gap-6">
@@ -1058,6 +1068,8 @@ const App: React.FC = () => {
                     onClearDraft={handleClearDraft}
                     activeMetaRank={metaBanRankCategory}
                     onMetaRankChange={setMetaBanRankCategory}
+                    userProfile={userProfile}
+                    onUpgradeClick={() => setIsUpgradeModalOpen(true)}
                 />
             );
         }

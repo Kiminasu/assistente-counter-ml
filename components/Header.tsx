@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { UserProfile } from '../App'; 
-
-type GameMode = '1v1' | '5v5' | 'ranking' | 'item' | 'synergy' | 'heroes' | 'premium';
+import { GameMode } from '../types';
 
 interface HeaderProps {
     activeMode: GameMode;
@@ -101,6 +100,7 @@ const UserPanel: React.FC<Pick<HeaderProps, 'userProfile' | 'onLogout' | 'onEdit
 
 const Header: React.FC<HeaderProps> = ({ activeMode, onSetMode, session, userProfile, onLogout, onEditProfile, onUpgradeClick, analysisLimit }) => {
     const descriptions: Record<GameMode, string> = {
+        'dashboard': 'Seu centro de comando estratégico com insights do meta, desafios diários e acesso rápido às principais ferramentas.',
         'synergy': 'Selecione um herói para ver sugestões de ban, sinergias e uma análise estratégica completa da IA com build e estilo de jogo.',
         '1v1': 'Analise confrontos, descubra os melhores counters e domine sua lane com sugestões táticas baseadas em dados.',
         '5v5': 'Planeje o draft da sua equipe, selecione heróis para cada time e visualize a composição completa da partida.',
@@ -111,6 +111,7 @@ const Header: React.FC<HeaderProps> = ({ activeMode, onSetMode, session, userPro
     };
 
     const modes: { id: GameMode; label: string, isPro?: boolean }[] = [
+        { id: 'dashboard', label: 'Painel' },
         { id: 'synergy', label: 'Análise de Herói' },
         { id: '1v1', label: 'Análise 1vs1' },
         { id: '5v5', label: 'Draft 5vs5', isPro: true },
@@ -126,7 +127,7 @@ const Header: React.FC<HeaderProps> = ({ activeMode, onSetMode, session, userPro
         <header className="relative text-center mb-8 animated-entry">
             {activeMode === 'premium' && (
                  <button 
-                    onClick={() => onSetMode('synergy')} 
+                    onClick={() => onSetMode('dashboard')} 
                     className="absolute top-4 left-0 text-slate-300 hover:text-white font-semibold transition-colors text-lg p-2 rounded-lg flex items-center gap-2 z-30"
                     aria-label="Voltar"
                 >
@@ -159,7 +160,7 @@ const Header: React.FC<HeaderProps> = ({ activeMode, onSetMode, session, userPro
                     <div className="mt-8">
                         <div className="inline-flex flex-wrap justify-center bg-black bg-opacity-30 p-1 rounded-xl gap-1">
                             {modes.map((mode) => {
-                                const isProFeature = mode.isPro && userProfile?.subscription_status !== 'premium';
+                                const isPremiumFeature = mode.isPro;
                                 return (
                                     <button
                                         key={mode.id}
@@ -171,9 +172,9 @@ const Header: React.FC<HeaderProps> = ({ activeMode, onSetMode, session, userPro
                                         }`}
                                     >
                                         {mode.label}
-                                        {isProFeature && (
-                                             <span className="absolute -top-1.5 -right-1.5 bg-gradient-to-br from-amber-400 to-yellow-500 text-black text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow-lg animate-pulse">
-                                                PRO
+                                        {isPremiumFeature && (
+                                             <span className="absolute -top-1.5 -right-1.5 bg-gradient-to-br from-amber-400 to-yellow-500 text-black text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow-lg animate-soft-blink">
+                                                PREMIUM
                                             </span>
                                         )}
                                     </button>

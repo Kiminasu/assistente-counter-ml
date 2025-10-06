@@ -101,7 +101,7 @@ async function handleSynergyAnalysis(payload: any) {
     const heroToAnalyzePrompt = formatHeroDetailsForPrompt(heroToAnalyzeDetails);
     const countersDetailsPrompt = potentialCountersDetails.map((d: HeroDetails) => formatHeroDetailsForPrompt(d)).join('\n\n---\n\n');
     const systemPrompt = "Você é um analista Mítico de Mobile Legends. Forneça uma análise estratégica completa e responda APENAS com um objeto JSON válido que siga o schema.";
-    const userQuery = `ANÁLISE ESTRATÉGICA\nHERÓI: ${heroToAnalyzePrompt}\nCOUNTERS POTENCIAIS (escolha o melhor): ${countersDetailsPrompt}\nItens: [${itemNames}]\nFeitiços: [${spellList}]\nINSTRUÇÕES: 1. Para 'strategy': sugira 'coreItems', 'situationalItems', 'playstyle' e 'powerSpikes'. 2. Para 'perfectCounter': escolha o melhor, dê 'motivo', 'avisos' e 'spells'.`;
+    const userQuery = `ANÁLISE ESTRATÉGICA\nHERÓI: ${heroToAnalyzePrompt}\nCOUNTERS POTENCIAIS (escolha o melhor): ${countersDetailsPrompt}\nItens: [${itemNames}]\nFeitiços: [${spellList}]\nINSTRUÇÕES:\n1. Para 'strategy': sugira 'coreItems', 'situationalItems', 'playstyle' e 'powerSpikes'.\n2. Para 'perfectCounter': escolha o melhor contra-ataque TATICAMENTE SÓLIDO. Considere as mecânicas das habilidades, como mobilidade, controle de grupo e imunidades. A lógica tática é mais importante que apenas os dados brutos. Exemplo: NÃO sugira heróis de baixa mobilidade (ex: Layla) contra iniciadores fortes (ex: Atlas). Forneça 'motivo', 'avisos' e 'spells'.`;
     
     const response = await ai.models.generateContent({
         model: "gemini-2.5-flash",

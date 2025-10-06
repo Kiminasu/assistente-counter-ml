@@ -1,5 +1,8 @@
 
+
 import { UserProfile } from "./App";
+
+export type GameMode = 'dashboard' | '1v1' | '5v5' | 'ranking' | 'item' | 'synergy' | 'heroes' | 'premium';
 
 export interface Hero {
   id: string;

@@ -5,6 +5,7 @@ import BanSuggestions from './BanSuggestions';
 import DraftStatsPanel from './DraftStatsPanel';
 import DraftStrategySection from './DraftStrategySection';
 import CollapsibleTutorial from './CollapsibleTutorial';
+import { UserProfile } from '../App';
 
 interface DraftScreenProps {
     allyPicks: (string | null)[];
@@ -21,6 +22,8 @@ interface DraftScreenProps {
     onClearDraft: () => void;
     activeMetaRank: RankCategory | null;
     onMetaRankChange: (rank: RankCategory) => void;
+    userProfile: UserProfile | null;
+    onUpgradeClick: () => void;
 }
 
 const DraftScreen: React.FC<DraftScreenProps> = ({ 
@@ -37,8 +40,19 @@ const DraftScreen: React.FC<DraftScreenProps> = ({
     draftAnalysisError,
     onClearDraft,
     activeMetaRank,
-    onMetaRankChange
+    onMetaRankChange,
+    userProfile,
+    onUpgradeClick
 }) => {
+
+    const handleProtectedSlotClick = (team: Team, index: number) => {
+        if (userProfile?.subscription_status !== 'premium') {
+            onUpgradeClick();
+            return;
+        }
+        onSlotClick(team, index);
+    };
+
     return (
         <div className="flex flex-col gap-6 animated-entry">
             <CollapsibleTutorial title="Como Usar o Analisador de Draft">
@@ -60,7 +74,7 @@ const DraftScreen: React.FC<DraftScreenProps> = ({
                             type="ally" 
                             heroId={heroId} 
                             heroes={heroes} 
-                            onClick={() => onSlotClick('ally', index)} 
+                            onClick={() => handleProtectedSlotClick('ally', index)} 
                             onClear={() => onClearSlot('ally', index)}
                         />
                     ))}
@@ -75,7 +89,7 @@ const DraftScreen: React.FC<DraftScreenProps> = ({
                             type="enemy" 
                             heroId={heroId} 
                             heroes={heroes} 
-                            onClick={() => onSlotClick('enemy', index)} 
+                            onClick={() => handleProtectedSlotClick('enemy', index)} 
                             onClear={() => onClearSlot('enemy', index)}
                         />
                     ))}
