@@ -101,7 +101,8 @@ const App: React.FC = () => {
     const [strategyAnalysisError, setStrategyAnalysisError] = useState<string | null>(null);
     const [synergyRelations, setSynergyRelations] = useState<HeroRelation | null>(null);
     const [synergyError, setSynergyError] = useState<string | null>(null);
-    const [perfectCounter, setPerfectCounter] = useState<HeroSuggestion | null>(null);
+    // FIX: Changed state to handle an array of perfect counters, and renamed for clarity.
+    const [perfectCounters, setPerfectCounters] = useState<HeroSuggestion[]>([]);
     const [perfectCounterError, setPerfectCounterError] = useState<string | null>(null);
     const [isSynergyAnalysisLoading, setIsSynergyAnalysisLoading] = useState(false);
 
@@ -485,7 +486,8 @@ const App: React.FC = () => {
             setStrategyAnalysisError(null);
             setSynergyRelations(null);
             setSynergyError(null);
-            setPerfectCounter(null);
+            // FIX: Resetting the array state for perfect counters.
+            setPerfectCounters([]);
             setPerfectCounterError(null);
             setIsSynergyAnalysisLoading(false);
         }
@@ -517,7 +519,8 @@ const App: React.FC = () => {
         setStrategyAnalysisError(null);
         setSynergyRelations(null);
         setSynergyError(null);
-        setPerfectCounter(null);
+        // FIX: Resetting the array state for perfect counters.
+        setPerfectCounters([]);
         setPerfectCounterError(null);
         
         const localDetailsCache = { ...heroDetailsCache };
@@ -549,23 +552,27 @@ const App: React.FC = () => {
                 
                 setHeroDetailsCache(prev => ({...prev, ...localDetailsCache}));
     
-                const analysisResult = await getSynergyAndStrategyAnalysis(heroToAnalyzeDetails, potentialCountersDetails);
+                // FIX: Added 'selectedHero' as the first argument to match the function signature.
+                const analysisResult = await getSynergyAndStrategyAnalysis(selectedHero, heroToAnalyzeDetails, potentialCountersDetails);
     
                 const validItemNames = GAME_ITEMS.map(item => item.nome);
                 const correctedCoreItems = analysisResult.strategy.coreItems.map(item => ({ ...item, nome: findClosestString(item.nome, validItemNames) }));
                 const correctedSituationalItems = analysisResult.strategy.situationalItems.map(item => ({ ...item, nome: findClosestString(item.nome, validItemNames) }));
                 setStrategyAnalysis({ ...analysisResult.strategy, coreItems: correctedCoreItems, situationalItems: correctedSituationalItems });
     
-                const bestSuggestion = analysisResult.perfectCounter;
-                const heroData = (Object.values(heroes) as Hero[]).find((h: Hero) => h.name === bestSuggestion.nome);
-                const stat = counterData.find(c => c.heroid === heroData?.apiId);
-    
-                setPerfectCounter({
-                    ...bestSuggestion,
-                    imageUrl: heroData?.imageUrl || '',
-                    classificacao: 'PERFEITO',
-                    estatistica: `+${((stat?.increase_win_rate || 0) * 100).toFixed(1)}% vs. ${selectedHero.name}`
+                // FIX: Process the 'perfectCounters' array from the analysis result.
+                const perfectCounterSuggestions = analysisResult.perfectCounters.map(suggestion => {
+                    const heroData = (Object.values(heroes) as Hero[]).find((h: Hero) => h.name === suggestion.nome);
+                    const stat = counterData.find(c => c.heroid === heroData?.apiId);
+                    return {
+                        ...suggestion,
+                        imageUrl: heroData?.imageUrl || '',
+                        classificacao: 'PERFEITO' as const,
+                        estatistica: `+${((stat?.increase_win_rate || 0) * 100).toFixed(1)}% vs. ${selectedHero.name}`
+                    };
                 });
+    
+                setPerfectCounters(perfectCounterSuggestions);
                  if (session?.user) await fetchUserProfile(session.user);
             } catch (err) {
                 const errorMessage = err instanceof Error ? err.message : "Erro na análise estratégica da IA.";
@@ -682,11 +689,13 @@ const App: React.FC = () => {
                  winRate = wr;
             }
     
+            // FIX: Added 'yourHero' argument to match the function signature.
             const combinedAnalysis = await getCombined1v1Analysis(
                 enemyHeroDetails,
                 activeLane,
                 potentialCountersDetails,
                 roleForAnalysis,
+                yourHero,
                 yourHeroDetails,
                 winRate
             );
@@ -1113,7 +1122,7 @@ const App: React.FC = () => {
                 strategyAnalysisError={strategyAnalysisError}
                 synergyRelations={synergyRelations}
                 synergyError={synergyError}
-                perfectCounter={perfectCounter}
+                perfectCounters={perfectCounters}
                 perfectCounterError={perfectCounterError}
             />;
         }

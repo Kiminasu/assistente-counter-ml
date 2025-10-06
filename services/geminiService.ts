@@ -1,4 +1,4 @@
-import { Lane, Role, SpellSuggestion, MatchupClassification, Hero, DraftAnalysisResult, LaneOrNone, HeroStrategyAnalysis, HeroDetails, AnalysisResult } from "../types";
+import { Lane, Role, SpellSuggestion, MatchupClassification, Hero, DraftAnalysisResult, LaneOrNone, HeroStrategyAnalysis, HeroDetails, AnalysisResult, HeroRelation } from "../types";
 import { supabase } from '../supabaseClient';
 
 async function fetchGeminiWithCache<T>(cacheKey: string, fetchFunction: () => Promise<T>): Promise<T> {
@@ -46,16 +46,13 @@ export interface DetailedMatchupPayload {
 export interface Combined1v1AnalysisPayload {
   strategicAnalysis: AnalysisResult;
   matchupAnalysis: DetailedMatchupPayload | null;
+  synergyRelations: HeroRelation | null;
 }
 
 export interface CombinedSynergyAnalysisPayload {
   strategy: HeroStrategyAnalysis;
-  perfectCounter: {
-    nome: string;
-    motivo: string;
-    avisos: string[];
-    spells: SpellSuggestion[];
-  };
+  perfectCounters: (Omit<AnalysisResult['sugestoesHerois'][0], 'classificacao'> & { lane: Lane })[];
+  synergyRelations: HeroRelation | null;
 }
 
 // Função genérica para chamar o endpoint do backend
@@ -97,16 +94,18 @@ export async function getCombined1v1Analysis(
   lane: LaneOrNone,
   potentialCountersDetails: HeroDetails[],
   selectedRole: Role | 'Qualquer',
+  yourHero: Hero | null,
   yourHeroDetails: HeroDetails | null,
   winRate: number | null
 ): Promise<Combined1v1AnalysisPayload> {
-    const cacheKey = `gemini_1v1_${enemyHeroDetails.name}_${yourHeroDetails?.name || 'none'}_${lane}_${selectedRole}`;
+    const cacheKey = `gemini_1v1_full_${enemyHeroDetails.name}_${yourHeroDetails?.name || 'none'}_${lane}_${selectedRole}`;
     
     return fetchGeminiWithCache(cacheKey, () => callBackendApi<Combined1v1AnalysisPayload>('1v1', {
         enemyHeroDetails,
         lane,
         potentialCountersDetails,
         selectedRole,
+        yourHero,
         yourHeroDetails,
         winRate
     }));
@@ -130,12 +129,14 @@ export async function getDraftAnalysis(
 }
 
 export async function getSynergyAndStrategyAnalysis(
+  heroToAnalyze: Hero,
   heroToAnalyzeDetails: HeroDetails,
   potentialCountersDetails: HeroDetails[]
 ): Promise<CombinedSynergyAnalysisPayload> {
-    const cacheKey = `gemini_synergy_${heroToAnalyzeDetails.name}`;
+    const cacheKey = `gemini_synergy_full_${heroToAnalyzeDetails.name}`;
 
     return fetchGeminiWithCache(cacheKey, () => callBackendApi<CombinedSynergyAnalysisPayload>('synergy', {
+        heroToAnalyze,
         heroToAnalyzeDetails,
         potentialCountersDetails
     }));

@@ -11,7 +11,7 @@ const AuthScreen: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [message, setMessage] = useState<string | null>(null);
-    const [passwordPlaceholder, setPasswordPlaceholder] = useState('••••••••');
+    const [showPassword, setShowPassword] = useState(false);
 
     const handleAuth = async (event: React.FormEvent) => {
         event.preventDefault();
@@ -120,18 +120,36 @@ const AuthScreen: React.FC = () => {
 
                         <div>
                             <label htmlFor="password"  className="block text-sm font-medium text-gray-300">Senha (mínimo 6 caracteres)</label>
-                            <input
-                                id="password"
-                                type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                                minLength={6}
-                                className="mt-1 block w-full bg-slate-800/50 border border-slate-700 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-violet-500 focus:border-violet-500 sm:text-sm"
-                                placeholder={passwordPlaceholder}
-                                onFocus={() => setPasswordPlaceholder('')}
-                                onBlur={(e) => { if (!e.target.value) { setPasswordPlaceholder('••••••••'); } }}
-                            />
+                            <div className="relative mt-1">
+                                <input
+                                    id="password"
+                                    type={showPassword ? 'text' : 'password'}
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    required
+                                    minLength={6}
+                                    className="block w-full bg-slate-800/50 border border-slate-700 rounded-md shadow-sm py-2 px-3 pr-10 text-white focus:outline-none focus:ring-violet-500 focus:border-violet-500 sm:text-sm"
+                                    placeholder="••••••••"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-white"
+                                    aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                                >
+                                    {showPassword ? (
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fillRule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074L3.707 2.293zM10 12a2 2 0 110-4 2 2 0 010 4z" clipRule="evenodd" />
+                                            <path d="M10 17.5c-4.478 0-8.268-2.943-9.542-7-1.274-4.057.065-8.357 3.328-10.745l1.414 1.414A8.025 8.025 0 001.958 10.5c1.274 4.057 5.064 7 9.542 7 1.145 0 2.24-.165 3.261-.478l-1.543-1.543A8.023 8.023 0 0110 17.5z" />
+                                        </svg>
+                                    ) : (
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                            <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                                            <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                                        </svg>
+                                    )}
+                                </button>
+                            </div>
                         </div>
 
                         <div className="pt-2">

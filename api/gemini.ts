@@ -5,7 +5,7 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { createClient } from '@supabase/supabase-js';
 
 // CORREÇÃO: Importando da pasta local _lib com extensões .js para compatibilidade com ESM no Node.js
-import { Hero, HeroDetails, DraftAnalysisResult, AnalysisResult, HeroStrategyAnalysis, ROLES, LaneOrNone, Role, SpellSuggestion, MatchupClassification } from "./_lib/types.js";
+import { Hero, HeroDetails, DraftAnalysisResult, AnalysisResult, HeroStrategyAnalysis, ROLES, LaneOrNone, Role, SpellSuggestion, MatchupClassification, HeroRelation, Lane, LANES } from "./_lib/types.js";
 import { GAME_ITEMS } from './_lib/items.js';
 import { SPELL_ICONS } from './_lib/constants.js';
 
@@ -31,23 +31,80 @@ const formatHeroDetailsForPrompt = (details: HeroDetails): string => {
 
 const analysisResponseSchema = { type: Type.OBJECT, properties: { sugestoesHerois: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { nome: { type: Type.STRING }, motivo: { type: Type.STRING }, avisos: { type: Type.ARRAY, items: { type: Type.STRING } }, spells: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { nome: { type: Type.STRING }, motivo: { type: Type.STRING } }, required: ["nome", "motivo"] } } }, required: ["nome", "motivo", "avisos", "spells"] } }, sugestoesItens: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { nome: { type: Type.STRING }, motivo: { type: Type.STRING } }, required: ["nome", "motivo"] } } }, required: ["sugestoesHerois", "sugestoesItens"] };
 const matchupResponseSchema = { type: Type.OBJECT, properties: { classification: { type: Type.STRING }, detailedAnalysis: { type: Type.STRING }, recommendedSpell: { type: Type.OBJECT, properties: { nome: { type: Type.STRING }, motivo: { type: Type.STRING } }, required: ["nome", "motivo"] } }, required: ["classification", "detailedAnalysis", "recommendedSpell"] };
-const combined1v1Schema = { type: Type.OBJECT, properties: { strategicAnalysis: analysisResponseSchema, matchupAnalysis: { ...matchupResponseSchema, nullable: true } }, required: ["strategicAnalysis"] };
+const heroRelationSchema = { type: Type.OBJECT, properties: { assist: { type: Type.OBJECT, properties: { target_hero_id: { type: Type.ARRAY, items: { type: Type.INTEGER } } } }, strong: { type: Type.OBJECT, properties: { target_hero_id: { type: Type.ARRAY, items: { type: Type.INTEGER } } } }, weak: { type: Type.OBJECT, properties: { target_hero_id: { type: Type.ARRAY, items: { type: Type.INTEGER } } } } }, nullable: true };
+const combined1v1Schema = { type: Type.OBJECT, properties: { strategicAnalysis: analysisResponseSchema, matchupAnalysis: { ...matchupResponseSchema, nullable: true }, synergyRelations: heroRelationSchema }, required: ["strategicAnalysis"] };
 const compositionSchema = { type: Type.OBJECT, properties: { physicalDamage: { type: Type.INTEGER }, magicDamage: { type: Type.INTEGER }, tankiness: { type: Type.INTEGER }, control: { type: Type.INTEGER } }, required: ["physicalDamage", "magicDamage", "tankiness", "control"] };
 const draftAnalysisSchema = { type: Type.OBJECT, properties: { advantageScore: { type: Type.INTEGER }, advantageReason: { type: Type.STRING }, allyComposition: compositionSchema, enemyComposition: compositionSchema, teamStrengths: { type: Type.ARRAY, items: { type: Type.STRING } }, teamWeaknesses: { type: Type.ARRAY, items: { type: Type.STRING } }, nextPickSuggestion: { type: Type.OBJECT, properties: { heroName: { type: Type.STRING }, role: { type: Type.STRING }, reason: { type: Type.STRING } }, nullable: true }, strategicItems: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { name: { type: Type.STRING }, reason: { type: Type.STRING } }, required: ["name", "reason"] } } }, required: ["advantageScore", "advantageReason", "allyComposition", "enemyComposition", "teamStrengths", "teamWeaknesses", "strategicItems"] };
 const heroStrategySchema = { type: Type.OBJECT, properties: { coreItems: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { nome: { type: Type.STRING }, motivo: { type: Type.STRING } }, required: ["nome", "motivo"] } }, situationalItems: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { nome: { type: Type.STRING }, motivo: { type: Type.STRING } }, required: ["nome", "motivo"] } }, playstyle: { type: Type.STRING }, powerSpikes: { type: Type.STRING } }, required: ["coreItems", "situationalItems", "playstyle", "powerSpikes"] };
-const perfectCounterSchema = { type: Type.OBJECT, properties: { nome: { type: Type.STRING }, motivo: { type: Type.STRING }, avisos: { type: Type.ARRAY, items: { type: Type.STRING } }, spells: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { nome: { type: Type.STRING }, motivo: { type: Type.STRING } }, required: ["nome", "motivo"] } } }, required: ["nome", "motivo", "avisos", "spells"] };
-const combinedSynergyAnalysisSchema = { type: Type.OBJECT, properties: { strategy: heroStrategySchema, perfectCounter: perfectCounterSchema }, required: ["strategy", "perfectCounter"] };
+const perfectCounterSchema = { type: Type.OBJECT, properties: { nome: { type: Type.STRING }, motivo: { type: Type.STRING }, avisos: { type: Type.ARRAY, items: { type: Type.STRING } }, spells: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { nome: { type: Type.STRING }, motivo: { type: Type.STRING } }, required: ["nome", "motivo"] } }, lane: { type: Type.STRING } }, required: ["nome", "motivo", "avisos", "spells", "lane"] };
+const combinedSynergyAnalysisSchema = { type: Type.OBJECT, properties: { strategy: heroStrategySchema, perfectCounters: { type: Type.ARRAY, items: perfectCounterSchema }, synergyRelations: heroRelationSchema }, required: ["strategy", "perfectCounters", "synergyRelations"] };
+
+
+async function getHeroRelations(heroApiId: number): Promise<HeroRelation | null> {
+    const relationApiUrl = `https://mlbb-stats.ridwaanhall.com/api/hero-relation/${heroApiId}/`;
+    const counterApiUrl = `https://mlbb-stats.ridwaanhall.com/api/hero-counter/${heroApiId}/`;
+    const proxyUrl = 'https://corsproxy.io/?';
+
+    try {
+        const [relationResponse, countersResponse] = await Promise.all([
+            fetch(proxyUrl + encodeURIComponent(relationApiUrl)).catch(() => null),
+            fetch(proxyUrl + encodeURIComponent(counterApiUrl)).catch(() => null)
+        ]);
+
+        let assistIds: number[] = [];
+        let strongIds: number[] = [];
+        if (relationResponse && relationResponse.ok) {
+            const apiResponse = await relationResponse.json();
+            const record = apiResponse?.data?.records?.[0]?.data;
+            if (record?.relation) {
+                assistIds = (record.relation.assist?.target_hero_id || []).filter((id: number) => id !== 0);
+                strongIds = (record.relation.strong?.target_hero_id || []).filter((id: number) => id !== 0);
+            }
+        }
+
+        let weakIds: number[] = [];
+        if (countersResponse && countersResponse.ok) {
+            const apiResponse = await countersResponse.json();
+            const counterHeroes = apiResponse?.data?.records?.[0]?.data?.sub_hero;
+            if (counterHeroes) {
+                weakIds = counterHeroes
+                    .sort((a: any, b: any) => b.increase_win_rate - a.increase_win_rate)
+                    .map((c: any) => c.heroid);
+            }
+        }
+
+        const weakIdSet = new Set(weakIds);
+        const filteredStrongIds = strongIds.filter(id => !weakIdSet.has(id));
+        const filteredAssistIds = assistIds.filter(id => !weakIdSet.has(id));
+
+        if (filteredAssistIds.length === 0 && filteredStrongIds.length === 0 && weakIds.length === 0) {
+            return null;
+        }
+
+        return {
+            assist: { target_hero_id: filteredAssistIds },
+            strong: { target_hero_id: filteredStrongIds },
+            weak: { target_hero_id: weakIds },
+        };
+    } catch (error) {
+        console.error(`Falha ao buscar relações combinadas para o herói ID ${heroApiId}:`, error);
+        return null; // Retorna nulo em caso de erro para não quebrar a análise principal
+    }
+}
 
 
 // --- FUNÇÕES DE ANÁLISE ---
 
 async function handle1v1Analysis(payload: any) {
-    const { enemyHeroDetails, lane, potentialCountersDetails, selectedRole, yourHeroDetails, winRate } = payload;
+    const { enemyHeroDetails, lane, potentialCountersDetails, selectedRole, yourHero, yourHeroDetails, winRate } = payload;
+    
+    const synergyRelationsTask = yourHero?.apiId ? getHeroRelations(yourHero.apiId) : Promise.resolve(null);
+    
     const itemNames = GAME_ITEMS.map(item => item.nome).join(', ');
     const spellList = Object.keys(SPELL_ICONS).filter(spell => spell !== 'default').join(', ');
     const enemyDetailsPrompt = formatHeroDetailsForPrompt(enemyHeroDetails);
     const countersDetailsPrompt = potentialCountersDetails.map((d: HeroDetails) => formatHeroDetailsForPrompt(d)).join('\n\n---\n\n');
-    const systemPrompt = `Você é um analista de nível Mítico de Mobile Legends. Forneça uma análise tática infalível baseada ESTRITAMENTE nos dados. Responda APENAS com um objeto JSON válido que siga o schema.`;
+    const systemPrompt = `Você é um analista de nível Mítico de Mobile Legends. Forneça uma análise tática infalível baseada ESTRITAMENTE nos dados. Responda APENAS com um objeto JSON válido que siga o schema. O campo 'synergyRelations' deve ser nulo.`;
     const laneContext = lane === 'NENHUMA' ? 'em confronto geral' : `na lane '${lane}'`;
     const strategicInstructions = `**Parte 1: Análise Estratégica (strategicAnalysis)**\nOponente: ${enemyHeroDetails.name} ${laneContext}.\nAnalisar counters para a função '${selectedRole}'.\nHeróis para Análise:\n${countersDetailsPrompt}\nInstruções: Forneça 'motivo', 'avisos', 'spells' da lista [${spellList}], e 3 'sugestoesItens' da lista [${itemNames}].`;
     let matchupInstructions = '';
@@ -59,7 +116,7 @@ async function handle1v1Analysis(payload: any) {
     }
     const userQuery = `${strategicInstructions}\n\n${matchupInstructions}\n\n${!matchupInstructions ? 'O campo "matchupAnalysis" deve ser nulo.' : ''}`;
     
-    const response = await ai.models.generateContent({
+    const geminiTask = ai.models.generateContent({
         model: "gemini-2.5-flash",
         contents: userQuery,
         config: {
@@ -69,7 +126,12 @@ async function handle1v1Analysis(payload: any) {
             temperature: 0.1
         }
     });
-    return JSON.parse(response.text);
+
+    const [geminiResponse, synergyRelations] = await Promise.all([geminiTask, synergyRelationsTask]);
+    const result = JSON.parse(geminiResponse.text);
+    result.synergyRelations = synergyRelations; // Adiciona os dados de sinergia à resposta final
+
+    return result;
 }
 
 async function handleDraftAnalysis(payload: any) {
@@ -95,15 +157,18 @@ async function handleDraftAnalysis(payload: any) {
 }
 
 async function handleSynergyAnalysis(payload: any) {
-    const { heroToAnalyzeDetails, potentialCountersDetails } = payload;
+    const { heroToAnalyze, heroToAnalyzeDetails, potentialCountersDetails } = payload;
+
+    const synergyRelationsTask = getHeroRelations(heroToAnalyze.apiId);
+
     const itemNames = GAME_ITEMS.map(item => item.nome).join(', ');
     const spellList = Object.keys(SPELL_ICONS).filter(spell => spell !== 'default').join(', ');
     const heroToAnalyzePrompt = formatHeroDetailsForPrompt(heroToAnalyzeDetails);
     const countersDetailsPrompt = potentialCountersDetails.map((d: HeroDetails) => formatHeroDetailsForPrompt(d)).join('\n\n---\n\n');
-    const systemPrompt = "Você é um analista Mítico de Mobile Legends. Forneça uma análise estratégica completa e responda APENAS com um objeto JSON válido que siga o schema.";
-    const userQuery = `ANÁLISE ESTRATÉGICA\nHERÓI: ${heroToAnalyzePrompt}\nCOUNTERS POTENCIAIS (escolha o melhor): ${countersDetailsPrompt}\nItens: [${itemNames}]\nFeitiços: [${spellList}]\nINSTRUÇÕES:\n1. Para 'strategy': sugira 'coreItems', 'situationalItems', 'playstyle' e 'powerSpikes'.\n2. Para 'perfectCounter': escolha o melhor contra-ataque TATICAMENTE SÓLIDO. Considere as mecânicas das habilidades, como mobilidade, controle de grupo e imunidades. A lógica tática é mais importante que apenas os dados brutos. Exemplo: NÃO sugira heróis de baixa mobilidade (ex: Layla) contra iniciadores fortes (ex: Atlas). Forneça 'motivo', 'avisos' e 'spells'.`;
+    const systemPrompt = "Você é um analista Mítico de Mobile Legends. Forneça uma análise estratégica completa e responda APENAS com um objeto JSON válido que siga o schema. O campo 'synergyRelations' deve ser nulo.";
+    const userQuery = `ANÁLISE ESTRATÉGICA\nHERÓI: ${heroToAnalyzePrompt}\nCOUNTERS POTENCIAIS (para escolher os perfeitos): ${countersDetailsPrompt}\nItens: [${itemNames}]\nFeitiços: [${spellList}]\nLanes: [${LANES.join(', ')}]\nINSTRUÇÕES:\n1. Para 'strategy': sugira 'coreItems', 'situationalItems', 'playstyle' e 'powerSpikes'.\n2. Para 'perfectCounters': forneça uma lista de 5 sugestões, UMA PARA CADA LANE: 'EXP', 'SELVA', 'MEIO', 'OURO', 'ROTAÇÃO'. Cada sugestão deve ser taticamente sólida, incluindo 'nome', 'motivo', 'avisos', 'spells' e a 'lane' correspondente. A lógica tática é mais importante que dados brutos.`;
     
-    const response = await ai.models.generateContent({
+    const geminiTask = ai.models.generateContent({
         model: "gemini-2.5-flash",
         contents: userQuery,
         config: {
@@ -113,7 +178,12 @@ async function handleSynergyAnalysis(payload: any) {
             temperature: 0.1
         }
     });
-    return JSON.parse(response.text);
+
+    const [geminiResponse, synergyRelations] = await Promise.all([geminiTask, synergyRelationsTask]);
+    const result = JSON.parse(geminiResponse.text);
+    result.synergyRelations = synergyRelations; // Adiciona os dados de sinergia à resposta final
+
+    return result;
 }
 
 

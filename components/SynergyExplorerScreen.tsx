@@ -1,11 +1,11 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { BanSuggestion, Hero, HeroStrategyAnalysis, RankCategory, HeroSuggestion, HeroRelation, HeroRankInfo } from '../types';
+import { BanSuggestion, Hero, HeroStrategyAnalysis, RankCategory, HeroSuggestion, HeroRelation, HeroRankInfo, Lane } from '../types';
 import CollapsibleTutorial from './CollapsibleTutorial';
 import HeroSlot from './HeroSlot';
 import SynergyPanel from './SynergyPanel';
 import HeroStrategyPanel from './HeroStrategyPanel';
 import BanSuggestions from './BanSuggestions';
-import { RATING_STYLES } from '../constants';
+import { RATING_STYLES, LANE_ICONS } from '../constants';
 import { fetchHeroRankings } from '../services/heroService';
 
 interface SynergyExplorerScreenProps {
@@ -25,55 +25,63 @@ interface SynergyExplorerScreenProps {
     strategyAnalysisError: string | null;
     synergyRelations: HeroRelation | null;
     synergyError: string | null;
-    perfectCounter: HeroSuggestion | null;
+    // FIX: Changed prop name and type to accept an array of perfect counters.
+    perfectCounters: HeroSuggestion[];
     perfectCounterError: string | null;
 }
 
 
-const PerfectCounterCard: React.FC<{ heroName: string, suggestion: HeroSuggestion | null, isLoading: boolean, error: string | null }> = ({ heroName, suggestion, isLoading, error }) => {
+const PerfectCountersPanel: React.FC<{ heroName: string, suggestions: HeroSuggestion[], isLoading: boolean, error: string | null }> = ({ heroName, suggestions, isLoading, error }) => {
     const renderContent = () => {
         if (isLoading) {
             return (
                 <div className="flex flex-col items-center justify-center p-8 h-full">
                     <div className="w-10 h-10 border-2 border-dashed rounded-full animate-spin border-red-400"></div>
-                    <p className="mt-3 text-sm text-gray-300">Analisando o counter perfeito...</p>
+                    <p className="mt-3 text-sm text-gray-300">Analisando os counters perfeitos...</p>
                 </div>
             );
         }
         if (error) {
             return <p className="text-center text-sm text-yellow-400 p-4">{error}</p>;
         }
-        if (!suggestion) {
+        if (!suggestions || suggestions.length === 0) {
              return (
                 <div className="text-center p-8 text-gray-400 flex flex-col items-center justify-center h-full">
-                    <p className="font-semibold">Counter Perfeito</p>
-                    <p className="text-xs text-gray-500 mt-1">A análise da IA revelará o melhor herói para counterar {heroName || 'seu herói'}.</p>
+                    <p className="font-semibold">Counters Perfeitos por Lane</p>
+                    <p className="text-xs text-gray-500 mt-1">A análise da IA revelará os melhores heróis para counterar {heroName || 'seu herói'} em cada rota.</p>
                 </div>
             );
         }
 
-        const styles = RATING_STYLES[suggestion.classificacao] || { text: 'text-gray-300', border: 'border-gray-400' };
-
         return (
-            <div className={`p-4 bg-black bg-opacity-30 rounded-2xl animated-entry h-full flex flex-col`}>
-                <div className="flex flex-col sm:flex-row items-center gap-4 mb-3 text-center sm:text-left">
-                    <img src={suggestion.imageUrl} alt={suggestion.nome} className={`w-28 h-28 rounded-full border-4 ${styles.border} flex-shrink-0 shadow-lg`} style={{boxShadow: '0 0 20px rgba(239, 68, 68, 0.4)'}}/>
-                    <div className="flex-grow">
-                        <p className="font-black text-3xl">{suggestion.nome}</p>
-                        <div>
-                            <span className={`font-bold text-lg ${styles.text}`}>{suggestion.classificacao}</span>
-                            <span className="text-xs text-gray-400 font-mono ml-2">{suggestion.estatistica}</span>
+             <div className="space-y-3 p-1">
+                {suggestions.map((suggestion) => {
+                    const styles = RATING_STYLES['PERFEITO'];
+                    return (
+                        <div key={suggestion.nome} className="p-3 bg-black/30 rounded-xl animated-entry border-l-4 border-red-500">
+                             <div className="flex items-center gap-4">
+                                <div className="flex-shrink-0 text-center">
+                                    <img src={suggestion.imageUrl} alt={suggestion.nome} className={`w-16 h-16 rounded-full border-4 ${styles.border}`} />
+                                    <div className="flex items-center justify-center gap-1 mt-1 bg-black/40 px-2 py-0.5 rounded-full">
+                                        <img src={LANE_ICONS[suggestion.lane!]} alt={suggestion.lane} className="w-4 h-4" />
+                                        <span className="text-[10px] font-bold text-slate-300">{suggestion.lane}</span>
+                                    </div>
+                                </div>
+                                <div className="flex-grow">
+                                    <h4 className="font-bold text-lg text-white">{suggestion.nome}</h4>
+                                    <p className="text-xs text-gray-300 mt-1">{suggestion.motivo}</p>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </div>
-                <p className="text-sm text-gray-300 p-3 bg-black/20 rounded-lg flex-grow">{suggestion.motivo}</p>
+                    );
+                })}
             </div>
         );
     };
 
     return (
         <div className="glassmorphism p-4 rounded-2xl border-2 panel-glow-red h-full">
-            <h2 className="text-xl font-black text-center mb-2 tracking-wider text-red-300">COUNTER PERFEITO (vs. {heroName})</h2>
+            <h2 className="text-xl font-black text-center mb-2 tracking-wider text-red-300">COUNTERS PERFEITOS (vs. {heroName})</h2>
             {renderContent()}
         </div>
     );
@@ -112,7 +120,7 @@ const SynergyExplorerScreen: React.FC<SynergyExplorerScreenProps> = ({
     strategyAnalysisError,
     synergyRelations,
     synergyError,
-    perfectCounter,
+    perfectCounters,
     perfectCounterError
 }) => {
     const selectedHero = selectedHeroId ? heroes[selectedHeroId] : null;
@@ -176,7 +184,7 @@ const SynergyExplorerScreen: React.FC<SynergyExplorerScreenProps> = ({
                  <ol className="list-decimal list-inside space-y-1 text-xs sm:text-sm text-gray-300">
                     <li>Clique abaixo para <strong className="text-violet-300">selecionar um herói</strong> para uma análise aprofundada.</li>
                     <li>Após selecionar, veja um resumo do meta do herói e clique em <strong className="text-violet-500">"Analisar Herói"</strong>.</li>
-                    <li>A IA irá gerar a build, táticas, sinergias e o counter perfeito para seu personagem.</li>
+                    <li>A IA irá gerar a build, táticas, sinergias e os counters perfeitos para cada lane contra seu personagem.</li>
                 </ol>
             </CollapsibleTutorial>
 
@@ -269,9 +277,9 @@ const SynergyExplorerScreen: React.FC<SynergyExplorerScreenProps> = ({
                             </div>
                         </div>
                         <div className="lg:col-span-2">
-                            <PerfectCounterCard 
+                            <PerfectCountersPanel 
                                 heroName={selectedHero?.name || ''}
-                                suggestion={perfectCounter}
+                                suggestions={perfectCounters}
                                 isLoading={isAnalysisLoading}
                                 error={perfectCounterError}
                             />

@@ -36,6 +36,7 @@ export interface HeroSuggestion {
   classificacao: 'ANULA' | 'VANTAGEM' | 'PERFEITO';
   estatistica: string;
   spells: SpellSuggestion[];
+  lane?: Lane; // Adicionado para counters por lane
 }
 
 export interface GameItemAbility {

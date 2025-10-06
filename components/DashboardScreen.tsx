@@ -62,7 +62,7 @@ const CounterOfTheDay: React.FC<{ heroes: Record<string, Hero> }> = ({ heroes })
     const challenge = useMemo(() => getChallengeForToday(), []);
     const { heroToCounter, options, correctCounter, explanation } = challenge;
     
-    // FIX: Explicitly type the 'h' parameter as 'Hero' to fix TypeScript inference.
+    // FIX: Explicitly typed the 'h' parameter to avoid it being inferred as 'unknown'.
     const heroToCounterData = Object.values(heroes).find((h: Hero) => h.name === heroToCounter.name);
 
 
