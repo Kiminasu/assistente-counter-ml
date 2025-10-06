@@ -129,6 +129,11 @@
             text-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
         }
 
+        /* Make placeholder invisible on focus for a cleaner look */
+        input:focus::placeholder {
+            color: transparent;
+        }
+
         /* Custom scrollbar for better aesthetics */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: var(--bg-medium); }
