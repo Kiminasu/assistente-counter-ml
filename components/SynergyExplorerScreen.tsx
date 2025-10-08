@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-// FIX: Use the combined HeroStrategicAnalysis type for better data flow and to resolve type errors.
+// FIX: Corrected import from 'HeroStrategyAnalysis' to 'HeroStrategicAnalysis' to match the exported type.
 import { BanSuggestion, Hero, HeroStrategicAnalysis, RankCategory, HeroSuggestion, HeroRelation } from '../types';
 import CollapsibleTutorial from './CollapsibleTutorial';
 import HeroSlot from './HeroSlot';
@@ -28,21 +28,17 @@ interface SynergyExplorerScreenProps {
     synergyError: string | null;
 }
 
-const StatBar: React.FC<{ label: string, value: number, color: string }> = ({ label, value, color }) => {
-    const percentage = Math.min(value * 100, 100);
+const StatCard: React.FC<{ label: string, value: number, classification: { label: string, color: string } }> = ({ label, value, classification }) => {
     return (
-        <div>
-            <div className="flex justify-between items-center text-sm mb-1">
-                <span className="font-semibold text-slate-300">{label}</span>
-                <span className="font-bold" style={{ color }}>{percentage.toFixed(2)}%</span>
-            </div>
-            <div className="w-full bg-black/30 rounded-full h-2.5">
-                <div className="h-2.5 rounded-full" style={{ width: `${percentage}%`, backgroundColor: color }}></div>
-            </div>
+        <div className="flex flex-col items-center justify-center bg-black/30 p-2 rounded-lg text-center h-full">
+            <p className="text-xs text-slate-400 uppercase tracking-wider">{label}</p>
+            <p className="text-xl font-bold text-white my-1">{(value * 100).toFixed(2)}%</p>
+            <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${classification.color}`}>
+                {classification.label}
+            </span>
         </div>
     );
 };
-
 
 const SynergyExplorerScreen: React.FC<SynergyExplorerScreenProps> = ({ 
     selectedHeroId, 
@@ -83,6 +79,7 @@ const SynergyExplorerScreen: React.FC<SynergyExplorerScreenProps> = ({
             };
 
             try {
+                // Fetch a larger list to increase the chance of finding the hero
                 const rankingsData: ApiHeroRankData[] = await fetchHeroRankings(7, 'glory', 'win_rate');
                 const heroStatsData = rankingsData.find(data => data.main_heroid === hero.apiId);
                 
@@ -95,6 +92,7 @@ const SynergyExplorerScreen: React.FC<SynergyExplorerScreenProps> = ({
                     };
                     setSelectedHeroStats(mappedStat);
                 } else {
+                     // Set stats to 0 if not found, to avoid empty state
                     setSelectedHeroStats({ hero, winRate: 0, pickRate: 0, banRate: 0 }); 
                 }
             } catch (error) {
@@ -119,6 +117,30 @@ const SynergyExplorerScreen: React.FC<SynergyExplorerScreenProps> = ({
     
     // FIX: Derive tactical counters from the main strategyAnalysis object.
     const tacticalCounters = strategyAnalysis?.tacticalCounters ?? [];
+
+    const classifyWinRate = (rate: number) => {
+        if (rate > 0.54) return { label: 'EXCELENTE', color: 'bg-green-500/30 text-green-300' };
+        if (rate > 0.51) return { label: 'ALTA', color: 'bg-teal-500/30 text-teal-300' };
+        if (rate > 0.49) return { label: 'MÉDIA', color: 'bg-yellow-500/30 text-yellow-300' };
+        if (rate > 0) return { label: 'BAIXA', color: 'bg-red-500/30 text-red-300' };
+        return { label: 'N/A', color: 'bg-gray-500/30 text-gray-300' };
+    };
+
+    const classifyPickRate = (rate: number) => {
+        if (rate > 0.03) return { label: 'ONIPRESENTE', color: 'bg-sky-400/30 text-sky-300' };
+        if (rate > 0.015) return { label: 'POPULAR', color: 'bg-blue-400/30 text-blue-300' };
+        if (rate > 0.005) return { label: 'SITUACIONAL', color: 'bg-indigo-400/30 text-indigo-300' };
+        if (rate > 0) return { label: 'NICHO', color: 'bg-gray-400/30 text-gray-300' };
+        return { label: 'N/A', color: 'bg-gray-500/30 text-gray-300' };
+    };
+
+    const classifyBanRate = (rate: number) => {
+        if (rate > 0.6) return { label: 'BAN PERMANENTE', color: 'bg-red-600/40 text-red-300' };
+        if (rate > 0.3) return { label: 'MUITO ALTA', color: 'bg-red-500/30 text-red-400' };
+        if (rate > 0.1) return { label: 'RESPEITADO', color: 'bg-orange-500/30 text-orange-300' };
+        if (rate > 0) return { label: 'OCASIONAL', color: 'bg-yellow-500/30 text-yellow-400' };
+        return { label: 'IGNORADO', color: 'bg-gray-500/30 text-gray-300' };
+    };
 
     return (
         <div className="w-full max-w-7xl mx-auto animated-entry flex flex-col gap-8">
@@ -145,21 +167,21 @@ const SynergyExplorerScreen: React.FC<SynergyExplorerScreenProps> = ({
                     <div className="flex-grow">
                         {selectedHeroId && (
                             isStatsLoading ? (
-                                <div className="flex justify-center items-center h-full min-h-[10rem]">
+                                <div className="flex justify-center items-center h-full min-h-[6rem]">
                                     <div className="w-8 h-8 border-2 border-dashed rounded-full animate-spin border-violet-400"></div>
                                 </div>
                             ) : selectedHeroStats ? (
                                 <div className="animated-entry">
                                     <h3 className="text-md font-bold text-center mb-2 text-amber-300">VISÃO RÁPIDA DO META</h3>
-                                    <div className="space-y-2 bg-black/20 p-3 rounded-lg">
-                                        <StatBar label="Taxa de Vitória" value={selectedHeroStats.winRate} color="#4ade80" />
-                                        <StatBar label="Taxa de Escolha" value={selectedHeroStats.pickRate} color="#60a5fa" />
-                                        <StatBar label="Taxa de Ban" value={selectedHeroStats.banRate} color="#f87171" />
+                                    <div className="grid grid-cols-3 gap-2">
+                                        <StatCard label="Vitória" value={selectedHeroStats.winRate} classification={classifyWinRate(selectedHeroStats.winRate)} />
+                                        <StatCard label="Escolha" value={selectedHeroStats.pickRate} classification={classifyPickRate(selectedHeroStats.pickRate)} />
+                                        <StatCard label="Ban" value={selectedHeroStats.banRate} classification={classifyBanRate(selectedHeroStats.banRate)} />
                                     </div>
                                     <p className="text-center text-[10px] text-slate-500 mt-1">Elo: Glória+ (7 dias)</p>
                                 </div>
                             ) : (
-                                <div className="flex items-center justify-center h-full text-slate-500 text-sm min-h-[10rem]">
+                                <div className="flex items-center justify-center h-full text-slate-500 text-sm min-h-[6rem]">
                                     Estatísticas do meta não encontradas.
                                 </div>
                             )
