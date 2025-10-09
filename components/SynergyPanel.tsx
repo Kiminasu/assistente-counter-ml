@@ -48,7 +48,7 @@ const TacticalCounterSection: React.FC<{ title: string; colorClass: string; coun
             <div className="flex flex-wrap justify-center gap-3">
                 {counters.map(counter => {
                     // FIX: Explicitly cast Object.values to Hero[] to fix type inference issues.
-                    const hero = Object.values(heroes).find(h => h.name === counter.heroName);
+                    const hero = (Object.values(heroes) as Hero[]).find(h => h.name === counter.heroName);
                     if (!hero) return null;
                     return (
                         <div key={hero.id} className="group relative flex flex-col items-center text-center">

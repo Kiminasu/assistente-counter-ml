@@ -1,18 +1,6 @@
 import React, { useState } from 'react';
-import { loadStripe } from '@stripe/stripe-js';
 import { supabase } from '../supabaseClient';
 import { UserProfile } from '../App';
-
-// --- AÇÃO NECESSÁRIA ---
-// 1. Substitua 'SUA_CHAVE_PUBLICAVEL_STRIPE' pela sua chave publicável do Stripe (pk_...).
-const STRIPE_PUBLISHABLE_KEY = 'pk_live_51SFDnICv54ykJPSvfn6INkIag3d73dOBloNMMBnLZSq0MR6eFx218onHTU7iWL7gG1zhEg9aXhNvqSZhtw0R9e7h007iaXzpww';
-
-// 2. Substitua os IDs de preço abaixo pelos IDs corretos do seu painel Stripe.
-const ID_DO_PRECO_LENDARIO = 'price_1SG1SNCv54ykJPSvETCFdafp'; // Substitua pelo ID do preço do plano Lendário
-const ID_DO_PRECO_MITICO = 'price_1SG1SNCv54ykJPSvbOT7NHSO';   // Substitua pelo ID do preço do plano Mítico
-const ID_DO_PRECO_GLORIA_IMORTAL = 'price_1SG1SNCv54ykJPSvTYXs3xE0'; // Substitua pelo ID do preço do plano Glória Imortal
-
-const stripePromise = loadStripe(STRIPE_PUBLISHABLE_KEY);
 
 const FeatureIcon: React.FC<{ icon: 'lightning' | 'book' | 'chart' | 'chess' | 'star' | 'group' | 'chat' }> = ({ icon }) => {
     const icons = {
@@ -36,59 +24,12 @@ const PlanCard: React.FC<{
     title: string;
     subtitle: string;
     price?: string;
-    priceId?: string;
     period?: string;
     features: { text: string; included: boolean; icon: 'lightning' | 'book' | 'chart' | 'chess' | 'star' | 'group' | 'chat' }[];
     isRecommended?: boolean;
     isCurrent?: boolean;
-}> = ({ title, subtitle, price, priceId, period, features, isRecommended, isCurrent }) => {
-    const [isLoading, setIsLoading] = useState(false);
-
-    const handleSubscribe = async () => {
-        if (!priceId || priceId.includes('ID_DO_PRECO')) {
-            alert('Configuração de pagamento incompleta. Por favor, adicione os IDs de preço do Stripe no código-fonte.');
-            return;
-        }
-        if (!supabase) {
-            alert('Cliente Supabase não inicializado.');
-            return;
-        }
-        setIsLoading(true);
-
-        try {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session) {
-                throw new Error('Você precisa estar logado para assinar.');
-            }
-
-            const response = await fetch('/api/create-checkout-session', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${session.access_token}`
-                },
-                body: JSON.stringify({ priceId: priceId, returnUrl: window.location.href })
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                const stripe = await stripePromise;
-                if (stripe) {
-                    // FIX: Cast stripe to any to bypass type definition error for redirectToCheckout.
-                    await (stripe as any).redirectToCheckout({ sessionId: data.sessionId });
-                }
-            } else {
-                throw new Error(data.error || 'Falha ao criar a sessão de checkout.');
-            }
-        } catch (error) {
-            alert((error as Error).message);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-
+}> = ({ title, subtitle, price, period, features, isRecommended, isCurrent }) => {
+    
     const borderColor = isRecommended ? 'border-amber-400' : isCurrent ? 'border-gray-600' : 'border-violet-500/50';
     const glowShadow = isRecommended ? 'shadow-[0_0_25px_rgba(251,191,36,0.4)]' : isCurrent ? '' : 'shadow-[0_0_25px_rgba(167,139,250,0.2)]';
     const buttonClass = isRecommended 
@@ -133,8 +74,8 @@ const PlanCard: React.FC<{
                     Seu Plano Atual
                 </button>
             ) : price ? (
-                <button onClick={handleSubscribe} disabled={isLoading} className={`w-full font-bold py-3 rounded-xl text-lg transition-all duration-300 transform hover:scale-105 shadow-lg ${buttonClass} disabled:opacity-50 disabled:cursor-wait`}>
-                    {isLoading ? 'Aguarde...' : 'Assinar Agora'}
+                <button disabled title="O sistema de pagamento está sendo atualizado. Em breve: Mercado Pago!" className={`w-full font-bold py-3 rounded-xl text-lg transition-all duration-300 transform shadow-lg ${buttonClass} opacity-50 cursor-not-allowed`}>
+                    Em Breve
                 </button>
             ) : null}
         </div>
@@ -165,7 +106,6 @@ const PremiumScreen: React.FC<PremiumScreenProps> = ({ userProfile }) => {
             title: 'Lendário',
             subtitle: 'Jogador Dedicado',
             price: '9,90',
-            priceId: ID_DO_PRECO_LENDARIO,
             period: 'mês',
             isCurrent: userProfile?.subscription_status === 'premium', // Simplificado, ideal seria checar o plano exato
             features: [
@@ -181,7 +121,6 @@ const PremiumScreen: React.FC<PremiumScreenProps> = ({ userProfile }) => {
             title: 'Mítico',
             subtitle: 'Estrategista de Equipe',
             price: '19,90',
-            priceId: ID_DO_PRECO_MITICO,
             period: 'mês',
             isRecommended: true,
             isCurrent: userProfile?.subscription_status === 'premium',
@@ -198,7 +137,6 @@ const PremiumScreen: React.FC<PremiumScreenProps> = ({ userProfile }) => {
             title: 'Glória Imortal',
             subtitle: 'Técnico / Profissional',
             price: '59,90',
-            priceId: ID_DO_PRECO_GLORIA_IMORTAL,
             period: 'mês',
             features: [
                 { text: 'Tudo do plano Mítico', included: true, icon: 'star' as const },
@@ -228,7 +166,7 @@ const PremiumScreen: React.FC<PremiumScreenProps> = ({ userProfile }) => {
 
             <div className="text-center mt-12">
                 <div className="text-slate-400 text-sm">
-                    <p>O pagamento é processado de forma segura pelo Stripe. Você pode cancelar sua assinatura a qualquer momento.</p>
+                    <p>O sistema de pagamento está sendo atualizado. Em breve: integração com Mercado Pago!</p>
                     <p>Ao assinar, você apoia o desenvolvimento contínuo e a adição de novas funcionalidades à plataforma.</p>
                 </div>
             </div>

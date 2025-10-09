@@ -4,6 +4,8 @@
 
 
 
+
+
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Session } from '@supabase/supabase-js';
 // FIX: Import HeroStrategicAnalysis to handle the complete analysis object.
@@ -503,7 +505,8 @@ const App: React.FC = () => {
             setCounterBanSuggestions(processAIBanSuggestions(aiCounters));
             
             if (aiPerfectCounter) {
-                const heroData = Object.values(heroes).find((h: Hero) => h.name === aiPerfectCounter.nome);
+                // FIX: Explicitly cast Object.values(heroes) to prevent 'unknown' type error on heroData.
+                const heroData = (Object.values(heroes) as Hero[]).find(h => h.name === aiPerfectCounter.nome);
                 const validSpellNames = Object.keys(SPELL_ICONS);
                 const correctedSpells = (aiPerfectCounter.spells || []).map(spell => ({ ...spell, nome: findClosestString(spell.nome, validSpellNames) }));
         
