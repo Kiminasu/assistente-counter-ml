@@ -1,5 +1,6 @@
 
 
+
 export interface Hero {
   id: string;
   apiId: number;
@@ -125,6 +126,12 @@ export interface TeamCompositionStats {
   control: number;
 }
 
+export interface AITacticalCounter {
+  heroName: string;
+  reason: string;
+  counterType: 'HARD' | 'SOFT';
+}
+
 export interface DraftAnalysisResult {
   advantageScore: number;
   advantageReason: string;
@@ -134,13 +141,27 @@ export interface DraftAnalysisResult {
   teamWeaknesses: string[];
   nextPickSuggestion: NextPickSuggestion | null;
   strategicItems: StrategicItemSuggestion[];
+  banSuggestions: AITacticalCounter[];
 }
 
-export interface HeroStrategyAnalysis {
+// FIX: Renamed HeroStrategyAnalysis to HeroStrategy to match its actual structure.
+export interface HeroStrategy {
   coreItems: ItemSuggestion[];
   situationalItems: ItemSuggestion[];
   playstyle: string;
   powerSpikes: string;
+}
+
+// FIX: Added the correct HeroStrategicAnalysis interface.
+export interface HeroStrategicAnalysis {
+    strategy: HeroStrategy;
+    tacticalCounters: AITacticalCounter[];
+    perfectCounter?: {
+        nome: string;
+        motivo: string;
+        avisos: string[];
+        spells: SpellSuggestion[];
+    };
 }
 
 export interface HeroSkill {

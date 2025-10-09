@@ -1,6 +1,9 @@
 
 
 
+
+
+
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Session } from '@supabase/supabase-js';
 // FIX: Import HeroStrategicAnalysis to handle the complete analysis object.
@@ -103,6 +106,10 @@ const App: React.FC = () => {
     const [synergyRelations, setSynergyRelations] = useState<HeroRelation | null>(null);
     const [synergyError, setSynergyError] = useState<string | null>(null);
     const [isSynergyAnalysisLoading, setIsSynergyAnalysisLoading] = useState(false);
+    // FIX: Add state for perfect counter feature.
+    const [perfectCounter, setPerfectCounter] = useState<HeroSuggestion | null>(null);
+    const [perfectCounterError, setPerfectCounterError] = useState<string | null>(null);
+
 
     const [activeLane, setActiveLane] = useState<LaneOrNone>('NENHUMA'); 
 
@@ -420,6 +427,8 @@ const App: React.FC = () => {
             setSynergyError(null);
             setIsSynergyAnalysisLoading(false);
             setCounterBanSuggestions([]);
+            setPerfectCounter(null);
+            setPerfectCounterError(null);
         }
     }, [synergyHeroPick]);
     
@@ -458,6 +467,8 @@ const App: React.FC = () => {
         setSynergyRelations(null);
         setSynergyError(null);
         setCounterBanSuggestions([]);
+        setPerfectCounter(null);
+        setPerfectCounterError(null);
         
         // Fetch hero details (only for the selected hero)
         const getDetails = async (hero: Hero): Promise<HeroDetails> => {
@@ -478,18 +489,35 @@ const App: React.FC = () => {
             ]);
     
             // FIX: Process and set the entire strategic analysis object.
-            const { strategy, tacticalCounters: aiCounters } = analysisResult;
+            const { strategy, tacticalCounters: aiCounters, perfectCounter: aiPerfectCounter } = analysisResult;
             const validItemNames = GAME_ITEMS.map(item => item.nome);
             const correctedCoreItems = strategy.coreItems.map(item => ({ ...item, nome: findClosestString(item.nome, validItemNames) }));
             const correctedSituationalItems = strategy.situationalItems.map(item => ({ ...item, nome: findClosestString(item.nome, validItemNames) }));
             
             setHeroStrategicAnalysis({
                 strategy: { ...strategy, coreItems: correctedCoreItems, situationalItems: correctedSituationalItems },
-                tacticalCounters: aiCounters
+                tacticalCounters: aiCounters,
+                perfectCounter: aiPerfectCounter
             });
             
             setCounterBanSuggestions(processAIBanSuggestions(aiCounters));
-    
+            
+            if (aiPerfectCounter) {
+                const heroData = Object.values(heroes).find((h: Hero) => h.name === aiPerfectCounter.nome);
+                const validSpellNames = Object.keys(SPELL_ICONS);
+                const correctedSpells = (aiPerfectCounter.spells || []).map(spell => ({ ...spell, nome: findClosestString(spell.nome, validSpellNames) }));
+        
+                setPerfectCounter({
+                    nome: aiPerfectCounter.nome,
+                    imageUrl: heroData?.imageUrl || '',
+                    motivo: aiPerfectCounter.motivo,
+                    avisos: aiPerfectCounter.avisos || [],
+                    classificacao: 'PERFEITO',
+                    estatistica: 'Análise Tática da IA',
+                    spells: correctedSpells,
+                });
+            }
+
             // Process statistical synergy result
             setSynergyRelations(relationsData);
 
@@ -499,6 +527,7 @@ const App: React.FC = () => {
             // FIX: Set a single error state.
             setStrategicAnalysisError(errorMessage);
             setSynergyError(errorMessage);
+            setPerfectCounterError(errorMessage);
         } finally {
             setIsSynergyAnalysisLoading(false);
         }
@@ -818,9 +847,10 @@ const App: React.FC = () => {
                 relations={synergyRelations1v1}
                 heroApiIdMap={heroApiIdMap}
                 tacticalCounters={[]} // Not used in 1v1 mode
+                heroes={heroes}
             />
         }
-    ], [is1v1AnalysisLoading, matchupData, matchupError, isSynergyLoading1v1, synergyError1v1, synergyRelations1v1, heroApiIdMap]);
+    ], [is1v1AnalysisLoading, matchupData, matchupError, isSynergyLoading1v1, synergyError1v1, synergyRelations1v1, heroApiIdMap, heroes]);
 
     if (isLoadingApp) {
         return <LoadingOverlay message={'CARREGANDO DADOS...'} />;
@@ -999,13 +1029,15 @@ const App: React.FC = () => {
                 strategyAnalysisError={strategicAnalysisError}
                 synergyRelations={synergyRelations}
                 synergyError={synergyError}
+                perfectCounter={perfectCounter}
+                perfectCounterError={perfectCounterError}
             />;
         }
         if (gameMode === 'heroes') {
             return <HeroDatabaseScreen heroes={heroes} heroLanes={heroLanes} />;
         }
         if (gameMode === 'premium') {
-            return <PremiumScreen />;
+            return <PremiumScreen userProfile={userProfile} />;
         }
         return null;
     };

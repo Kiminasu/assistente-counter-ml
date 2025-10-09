@@ -1,5 +1,6 @@
 
 
+
 import { UserProfile } from "./App";
 
 export type GameMode = 'dashboard' | '1v1' | '5v5' | 'ranking' | 'item' | 'synergy' | 'heroes' | 'premium';
@@ -155,9 +156,16 @@ export interface HeroStrategy {
   powerSpikes: string;
 }
 
+// FIX: Added 'perfectCounter' to the HeroStrategicAnalysis interface to support the new AI feature.
 export interface HeroStrategicAnalysis {
     strategy: HeroStrategy;
     tacticalCounters: AITacticalCounter[];
+    perfectCounter?: {
+        nome: string;
+        motivo: string;
+        avisos: string[];
+        spells: SpellSuggestion[];
+    };
 }
 
 

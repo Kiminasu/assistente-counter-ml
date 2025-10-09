@@ -1,5 +1,6 @@
 
 
+
 export interface Hero {
   id: string;
   apiId: number;
@@ -150,9 +151,16 @@ export interface HeroStrategy {
   powerSpikes: string;
 }
 
+// FIX: Added 'perfectCounter' to the HeroStrategicAnalysis interface to support the new AI feature.
 export interface HeroStrategicAnalysis {
     strategy: HeroStrategy;
     tacticalCounters: AITacticalCounter[];
+    perfectCounter?: {
+        nome: string;
+        motivo: string;
+        avisos: string[];
+        spells: SpellSuggestion[];
+    };
 }
 
 

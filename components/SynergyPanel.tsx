@@ -8,6 +8,7 @@ interface SynergyPanelProps {
     relations: HeroRelation | null;
     heroApiIdMap: Record<number, Hero>;
     tacticalCounters: AITacticalCounter[];
+    heroes: Record<string, Hero>;
 }
 
 const HeroListItem: React.FC<{ hero: Hero | undefined }> = ({ hero }) => {
@@ -47,7 +48,7 @@ const TacticalCounterSection: React.FC<{ title: string; colorClass: string; coun
             <div className="flex flex-wrap justify-center gap-3">
                 {counters.map(counter => {
                     // FIX: Explicitly cast Object.values to Hero[] to fix type inference issues.
-                    const hero = (Object.values(heroes) as Hero[]).find(h => h.name === counter.heroName);
+                    const hero = Object.values(heroes).find(h => h.name === counter.heroName);
                     if (!hero) return null;
                     return (
                         <div key={hero.id} className="group relative flex flex-col items-center text-center">
@@ -71,7 +72,7 @@ const TacticalCounterSection: React.FC<{ title: string; colorClass: string; coun
 };
 
 
-const SynergyPanel: React.FC<SynergyPanelProps> = ({ isLoading, error, relations, heroApiIdMap, tacticalCounters }) => {
+const SynergyPanel: React.FC<SynergyPanelProps> = ({ isLoading, error, relations, heroApiIdMap, tacticalCounters, heroes }) => {
 
     const renderContent = () => {        
         if (isLoading) {
@@ -122,7 +123,7 @@ const SynergyPanel: React.FC<SynergyPanelProps> = ({ isLoading, error, relations
                 <div className="space-y-6">
                     <SynergySection title="Bons Aliados" colorClass="text-blue-300" heroIds={relations?.assist?.target_hero_id || []} heroApiIdMap={heroApiIdMap} />
                     <SynergySection title="Forte Contra" colorClass="text-green-300" heroIds={relations?.strong?.target_hero_id || []} heroApiIdMap={heroApiIdMap} />
-                    <TacticalCounterSection title="Fraco Contra (Análise Tática)" colorClass="text-red-300" counters={tacticalCounters} heroes={heroApiIdMap as unknown as Record<string, Hero>} />
+                    <TacticalCounterSection title="Fraco Contra (Análise Tática)" colorClass="text-red-300" counters={tacticalCounters} heroes={heroes} />
                 </div>
                 
                 {!hasContent && !isLoading && (
