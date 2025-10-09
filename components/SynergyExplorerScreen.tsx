@@ -1,10 +1,5 @@
-
-
-
-
-
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-// FIX: Corrected import from 'HeroStrategyAnalysis' to 'HeroStrategicAnalysis' to match the exported type.
+// FIX: Corrected typo from HeroStrategyAnalysis to HeroStrategicAnalysis.
 import { BanSuggestion, Hero, HeroStrategicAnalysis, HeroRankInfo, RankCategory, HeroDetails, HeroRelation, HeroSuggestion, ItemSuggestion, Role } from '../types';
 import CollapsibleTutorial from './CollapsibleTutorial';
 import HeroSlot from './HeroSlot';
@@ -28,6 +23,7 @@ interface SynergyExplorerScreenProps {
     onMetaRankChange: (rank: RankCategory) => void;
     onAnalyze: () => void;
     isAnalysisLoading: boolean;
+    // FIX: Corrected typo from HeroStrategyAnalysis to HeroStrategicAnalysis.
     strategyAnalysis: HeroStrategicAnalysis | null;
     strategyAnalysisError: string | null;
     synergyRelations: HeroRelation | null;
@@ -106,7 +102,6 @@ const SynergyExplorerScreen: React.FC<SynergyExplorerScreenProps> = ({
     const [popularHeroesError, setPopularHeroesError] = useState<string | null>(null);
 
     const heroNameToImageMap = useMemo(() => {
-        // FIX: Explicitly type the 'hero' parameter to avoid it being inferred as 'unknown'.
         return Object.values(heroes).reduce((acc, hero: Hero) => {
             acc[hero.name] = hero.imageUrl;
             return acc;
@@ -179,7 +174,6 @@ const SynergyExplorerScreen: React.FC<SynergyExplorerScreenProps> = ({
         }
     }, [isAnalysisLoading]);
     
-    // FIX: Derive tactical counters from the main strategyAnalysis object.
     const tacticalCounters = strategyAnalysis?.tacticalCounters ?? [];
 
     const renderRisingHeroes = () => {

@@ -21,14 +21,18 @@ const FeatureIcon: React.FC<{ icon: 'lightning' | 'book' | 'chart' | 'chess' | '
 };
 
 const PlanCard: React.FC<{
+    planId?: string;
     title: string;
     subtitle: string;
-    price?: string;
+    price?: number;
     period?: string;
     features: { text: string; included: boolean; icon: 'lightning' | 'book' | 'chart' | 'chess' | 'star' | 'group' | 'chat' }[];
     isRecommended?: boolean;
     isCurrent?: boolean;
-}> = ({ title, subtitle, price, period, features, isRecommended, isCurrent }) => {
+    expiresAt?: string | null;
+    onClick?: (planId: string, price: number) => void;
+    isLoading?: boolean;
+}> = ({ title, subtitle, price, period, features, isRecommended, isCurrent, expiresAt, planId, onClick, isLoading }) => {
     
     const borderColor = isRecommended ? 'border-amber-400' : isCurrent ? 'border-gray-600' : 'border-violet-500/50';
     const glowShadow = isRecommended ? 'shadow-[0_0_25px_rgba(251,191,36,0.4)]' : isCurrent ? '' : 'shadow-[0_0_25px_rgba(167,139,250,0.2)]';
@@ -48,10 +52,10 @@ const PlanCard: React.FC<{
                  <h3 className="text-2xl font-bold">{title}</h3>
                  <p className="text-sm text-slate-400">{subtitle}</p>
             </div>
-            {price ? (
+            {price !== undefined ? (
                 <div className="text-center my-4">
                     <span className="text-xs">R$</span>
-                    <span className="text-4xl font-black text-white">{price}</span>
+                    <span className="text-4xl font-black text-white">{price.toFixed(2).replace('.', ',')}</span>
                     <span className="text-slate-400">/{period}</span>
                 </div>
             ) : (
@@ -70,12 +74,23 @@ const PlanCard: React.FC<{
                 ))}
             </ul>
             {isCurrent ? (
-                <button disabled className="w-full bg-slate-700 text-slate-400 font-bold py-3 rounded-xl cursor-not-allowed">
-                    Seu Plano Atual
-                </button>
-            ) : price ? (
-                <button disabled title="O sistema de pagamento está sendo atualizado. Em breve: Mercado Pago!" className={`w-full font-bold py-3 rounded-xl text-lg transition-all duration-300 transform shadow-lg ${buttonClass} opacity-50 cursor-not-allowed`}>
-                    Em Breve
+                <div className="text-center">
+                    <button disabled className="w-full bg-slate-700 text-slate-400 font-bold py-3 rounded-xl cursor-not-allowed">
+                        Seu Plano Atual
+                    </button>
+                    {expiresAt && (
+                        <p className="text-xs text-amber-300 mt-2">
+                            Seu acesso expira em: {new Date(expiresAt).toLocaleDateString('pt-BR')}
+                        </p>
+                    )}
+                </div>
+            ) : price !== undefined && planId && onClick ? (
+                <button
+                    onClick={() => onClick(planId, price)}
+                    disabled={isLoading}
+                    className={`w-full font-bold py-3 rounded-xl text-lg transition-all duration-300 transform shadow-lg ${buttonClass} disabled:opacity-50 disabled:cursor-wait`}
+                >
+                    {isLoading ? 'Aguarde...' : 'Assinar Agora'}
                 </button>
             ) : null}
         </div>
@@ -87,12 +102,57 @@ interface PremiumScreenProps {
 }
 
 const PremiumScreen: React.FC<PremiumScreenProps> = ({ userProfile }) => {
+    const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
+
+    const isEffectivelyPremium = userProfile?.subscription_status === 'premium' && userProfile.subscription_expires_at && new Date(userProfile.subscription_expires_at) > new Date();
+
+    const handleSubscribeClick = async (planId: string, price: number) => {
+        setLoadingPlan(planId);
+        setError(null);
+
+        if (!supabase) {
+            setError("Cliente Supabase não configurado.");
+            setLoadingPlan(null);
+            return;
+        }
+
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+            setError('Você precisa estar logado para assinar.');
+            setLoadingPlan(null);
+            return;
+        }
+        
+        try {
+            const response = await fetch('/api/create-mercadopago-preference', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`,
+                },
+                body: JSON.stringify({ planId, price }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Falha ao criar a preferência de pagamento.');
+            }
+
+            const { init_point } = await response.json();
+            window.location.href = init_point;
+
+        } catch (err: any) {
+            setError(err.message);
+            setLoadingPlan(null);
+        }
+    };
 
     const plans = [
         {
             title: 'Gratuito',
             subtitle: 'Para Jogadores Casuais',
-            isCurrent: userProfile?.subscription_status === 'free',
+            isCurrent: !isEffectivelyPremium,
             features: [
                 { text: '5 Análises de IA por dia', included: true, icon: 'lightning' as const },
                 { text: 'Análise de Herói e 1vs1', included: true, icon: 'star' as const },
@@ -103,11 +163,11 @@ const PremiumScreen: React.FC<PremiumScreenProps> = ({ userProfile }) => {
             ],
         },
         {
+            planId: 'monthly_legendary',
             title: 'Lendário',
             subtitle: 'Jogador Dedicado',
-            price: '9,90',
+            price: 9.90,
             period: 'mês',
-            isCurrent: userProfile?.subscription_status === 'premium', // Simplificado, ideal seria checar o plano exato
             features: [
                 { text: 'Análises de IA Ilimitadas', included: true, icon: 'lightning' as const },
                 { text: 'Histórico de Análises (em breve)', included: true, icon: 'star' as const },
@@ -118,12 +178,14 @@ const PremiumScreen: React.FC<PremiumScreenProps> = ({ userProfile }) => {
             ],
         },
         {
+            planId: 'monthly_mythic',
             title: 'Mítico',
             subtitle: 'Estrategista de Equipe',
-            price: '19,90',
+            price: 19.90,
             period: 'mês',
             isRecommended: true,
-            isCurrent: userProfile?.subscription_status === 'premium',
+            isCurrent: isEffectivelyPremium,
+            expiresAt: userProfile?.subscription_expires_at,
             features: [
                 { text: 'Tudo do plano Lendário', included: true, icon: 'star' as const },
                 { text: 'Acesso Completo ao Analisador de Draft 5vs5', included: true, icon: 'chess' as const },
@@ -134,9 +196,10 @@ const PremiumScreen: React.FC<PremiumScreenProps> = ({ userProfile }) => {
             ],
         },
         {
+            planId: 'monthly_glory',
             title: 'Glória Imortal',
             subtitle: 'Técnico / Profissional',
-            price: '59,90',
+            price: 59.90,
             period: 'mês',
             features: [
                 { text: 'Tudo do plano Mítico', included: true, icon: 'star' as const },
@@ -158,15 +221,23 @@ const PremiumScreen: React.FC<PremiumScreenProps> = ({ userProfile }) => {
                 <p className="text-lg text-slate-300 mt-4 max-w-2xl mx-auto">
                     Desbloqueie todo o potencial da Mítica Estratégia e domine o campo de batalha com acesso ilimitado às nossas ferramentas de IA mais poderosas.
                 </p>
+                {error && <p className="bg-red-500/30 text-red-300 text-center p-3 rounded-lg mt-4 text-sm max-w-md mx-auto">{error}</p>}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8">
-                {plans.map(plan => <PlanCard key={plan.title} {...plan} />)}
+                {plans.map(plan => (
+                    <PlanCard
+                        key={plan.title}
+                        {...plan}
+                        onClick={handleSubscribeClick}
+                        isLoading={loadingPlan === plan.planId}
+                    />
+                ))}
             </div>
 
             <div className="text-center mt-12">
                 <div className="text-slate-400 text-sm">
-                    <p>O sistema de pagamento está sendo atualizado. Em breve: integração com Mercado Pago!</p>
+                    <p>Pagamentos processados com segurança pelo Mercado Pago.</p>
                     <p>Ao assinar, você apoia o desenvolvimento contínuo e a adição de novas funcionalidades à plataforma.</p>
                 </div>
             </div>

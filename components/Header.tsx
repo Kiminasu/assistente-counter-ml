@@ -12,10 +12,11 @@ interface HeaderProps {
     onEditProfile: () => void;
     onUpgradeClick: () => void;
     analysisLimit: number;
+    effectiveSubscriptionStatus: 'free' | 'premium';
 }
 
-const UserPanel: React.FC<Pick<HeaderProps, 'userProfile' | 'onLogout' | 'onEditProfile' | 'onUpgradeClick' | 'analysisLimit'>> = 
-({ userProfile, onLogout, onEditProfile, onUpgradeClick, analysisLimit }) => {
+const UserPanel: React.FC<Pick<HeaderProps, 'userProfile' | 'onLogout' | 'onEditProfile' | 'onUpgradeClick' | 'analysisLimit' | 'effectiveSubscriptionStatus'>> = 
+({ userProfile, onLogout, onEditProfile, onUpgradeClick, analysisLimit, effectiveSubscriptionStatus }) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
 
@@ -46,7 +47,7 @@ const UserPanel: React.FC<Pick<HeaderProps, 'userProfile' | 'onLogout' | 'onEdit
     return (
         <div ref={menuRef} className="absolute top-4 right-0 text-right z-20">
             <div className="flex items-center gap-3">
-                {userProfile.subscription_status === 'premium' ? (
+                {effectiveSubscriptionStatus === 'premium' ? (
                     <div className="flex items-center gap-3 bg-amber-900/30 backdrop-blur-sm p-1.5 rounded-full border border-amber-600/50">
                         <div className="flex items-center gap-2 px-3">
                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-amber-400" viewBox="0 0 20 20" fill="currentColor">
@@ -98,7 +99,7 @@ const UserPanel: React.FC<Pick<HeaderProps, 'userProfile' | 'onLogout' | 'onEdit
 };
 
 
-const Header: React.FC<HeaderProps> = ({ activeMode, onSetMode, session, userProfile, onLogout, onEditProfile, onUpgradeClick, analysisLimit }) => {
+const Header: React.FC<HeaderProps> = ({ activeMode, onSetMode, session, userProfile, onLogout, onEditProfile, onUpgradeClick, analysisLimit, effectiveSubscriptionStatus }) => {
     const descriptions: Record<GameMode, string> = {
         'dashboard': 'Seu centro de comando estratégico com insights do meta, desafios diários e acesso rápido às principais ferramentas.',
         'synergy': 'Selecione um herói para ver sugestões de ban, sinergias e uma análise estratégica completa da IA com build e estilo de jogo.',
@@ -144,6 +145,7 @@ const Header: React.FC<HeaderProps> = ({ activeMode, onSetMode, session, userPro
                     onEditProfile={onEditProfile}
                     onUpgradeClick={onUpgradeClick}
                     analysisLimit={analysisLimit}
+                    effectiveSubscriptionStatus={effectiveSubscriptionStatus}
                 />
             )}
 
@@ -172,7 +174,7 @@ const Header: React.FC<HeaderProps> = ({ activeMode, onSetMode, session, userPro
                                         }`}
                                     >
                                         {mode.label}
-                                        {isPremiumFeature && (
+                                        {isPremiumFeature && effectiveSubscriptionStatus !== 'premium' && (
                                              <span className="absolute -top-1.5 -right-1.5 bg-gradient-to-br from-amber-400 to-yellow-500 text-black text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow-lg animate-soft-blink">
                                                 PREMIUM
                                             </span>

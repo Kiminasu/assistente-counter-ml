@@ -175,10 +175,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const { data: { user }, error: userError } = await supabase.auth.getUser(token);
         if (userError || !user) return res.status(401).json({ error: 'Token inválido ou expirado.' });
 
-        const { data: profile, error: profileError } = await supabase.from('profiles').select('subscription_status, analysis_count, last_analysis_at').eq('id', user.id).single();
+        const { data: profile, error: profileError } = await supabase.from('profiles').select('subscription_status, analysis_count, last_analysis_at, subscription_expires_at').eq('id', user.id).single();
         if (profileError) throw new Error('Perfil de usuário não encontrado.');
 
-        if (profile.subscription_status !== 'premium') {
+        const isEffectivelyPremium = profile.subscription_status === 'premium' && profile.subscription_expires_at && new Date(profile.subscription_expires_at) > new Date();
+
+        if (!isEffectivelyPremium) {
             const today = new Date().toISOString().split('T')[0];
             const lastAnalysisDate = profile.last_analysis_at ? new Date(profile.last_analysis_at).toISOString().split('T')[0] : null;
             if (lastAnalysisDate === today && profile.analysis_count >= DAILY_LIMIT) {

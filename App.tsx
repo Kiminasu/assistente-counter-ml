@@ -1,11 +1,3 @@
-
-
-
-
-
-
-
-
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Session } from '@supabase/supabase-js';
 // FIX: Import HeroStrategicAnalysis to handle the complete analysis object.
@@ -49,6 +41,7 @@ export interface UserProfile {
     subscription_status: 'free' | 'premium';
     analysis_count: number;
     last_analysis_at: string | null;
+    subscription_expires_at: string | null;
 }
 const DAILY_ANALYSIS_LIMIT = 5;
 
@@ -89,6 +82,8 @@ const App: React.FC = () => {
     const [heroLoadingError, setHeroLoadingError] = useState<string | null>(null);
 
     const [gameMode, setGameMode] = useState<GameMode>('dashboard');
+    const [paymentStatusMessage, setPaymentStatusMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+
 
     // State for 1v1 mode
     const [matchupAllyPick, setMatchupAllyPick] = useState<string | null>(null);
@@ -145,7 +140,7 @@ const App: React.FC = () => {
         if (!supabase) return;
         const { data, error } = await supabase
             .from('profiles')
-            .select('username, rank, subscription_status, analysis_count, last_analysis_at')
+            .select('username, rank, subscription_status, analysis_count, last_analysis_at, subscription_expires_at')
             .eq('id', user.id)
             .single();
 
@@ -156,6 +151,13 @@ const App: React.FC = () => {
             setUserProfile(data as UserProfile | null);
         }
     }, []);
+
+    const effectiveSubscriptionStatus = useMemo(() => {
+        if (userProfile?.subscription_status === 'premium' && userProfile.subscription_expires_at) {
+            return new Date(userProfile.subscription_expires_at) > new Date() ? 'premium' : 'free';
+        }
+        return 'free';
+    }, [userProfile]);
 
 
     useEffect(() => {
@@ -182,6 +184,28 @@ const App: React.FC = () => {
             return () => subscription.unsubscribe();
         }
     }, [fetchUserProfile]);
+
+     useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const paymentStatus = urlParams.get('payment');
+        if (paymentStatus) {
+            if (paymentStatus === 'success') {
+                setPaymentStatusMessage({ type: 'success', text: 'Pagamento bem-sucedido! Sua conta foi atualizada para Premium.' });
+                // Refetch user profile to get updated subscription status
+                if (session?.user) {
+                    fetchUserProfile(session.user);
+                }
+            } else if (paymentStatus === 'failure') {
+                setPaymentStatusMessage({ type: 'error', text: 'O pagamento falhou. Por favor, tente novamente.' });
+            }
+            // Clean up the URL
+            window.history.replaceState(null, '', window.location.pathname);
+            
+            // Hide message after a few seconds
+            setTimeout(() => setPaymentStatusMessage(null), 7000);
+        }
+    }, [session, fetchUserProfile]);
+
 
     useEffect(() => {
         try {
@@ -436,7 +460,7 @@ const App: React.FC = () => {
     
     const checkAnalysisLimit = useCallback(() => {
         if (!userProfile) return false;
-        if (userProfile.subscription_status === 'premium') return true;
+        if (effectiveSubscriptionStatus === 'premium') return true;
 
         const today = new Date().toISOString().split('T')[0];
         const lastAnalysisDate = userProfile.last_analysis_at ? new Date(userProfile.last_analysis_at).toISOString().split('T')[0] : null;
@@ -446,7 +470,7 @@ const App: React.FC = () => {
             return false;
         }
         return true;
-    }, [userProfile]);
+    }, [userProfile, effectiveSubscriptionStatus]);
 
     const processAIBanSuggestions = (suggestions: AITacticalCounter[]): BanSuggestion[] => {
         return suggestions.map(suggestion => {
@@ -989,6 +1013,7 @@ const App: React.FC = () => {
                     onMetaRankChange={setMetaBanRankCategory}
                     userProfile={userProfile}
                     onUpgradeClick={() => setIsUpgradeModalOpen(true)}
+                    effectiveSubscriptionStatus={effectiveSubscriptionStatus}
                 />
             );
         }
@@ -1048,6 +1073,11 @@ const App: React.FC = () => {
 
     return (
         <div className="flex flex-col min-h-screen p-4 sm:p-6 lg:p-8">
+            {paymentStatusMessage && (
+                <div className={`fixed top-5 right-5 z-[100] p-4 rounded-lg shadow-lg text-white animated-entry ${paymentStatusMessage.type === 'success' ? 'bg-green-600' : 'bg-red-600'}`}>
+                    {paymentStatusMessage.text}
+                </div>
+            )}
             <Header 
                 activeMode={gameMode} 
                 onSetMode={handleSetGameMode}
@@ -1057,6 +1087,7 @@ const App: React.FC = () => {
                 onEditProfile={() => setIsProfileModalOpen(true)}
                 onUpgradeClick={() => setGameMode('premium')}
                 analysisLimit={DAILY_ANALYSIS_LIMIT}
+                effectiveSubscriptionStatus={effectiveSubscriptionStatus}
             />
 
             <main className="w-full max-w-7xl mx-auto flex-grow">

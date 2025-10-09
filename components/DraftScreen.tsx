@@ -24,6 +24,7 @@ interface DraftScreenProps {
     onMetaRankChange: (rank: RankCategory) => void;
     userProfile: UserProfile | null;
     onUpgradeClick: () => void;
+    effectiveSubscriptionStatus: 'free' | 'premium';
 }
 
 const DraftScreen: React.FC<DraftScreenProps> = ({ 
@@ -42,11 +43,12 @@ const DraftScreen: React.FC<DraftScreenProps> = ({
     activeMetaRank,
     onMetaRankChange,
     userProfile,
-    onUpgradeClick
+    onUpgradeClick,
+    effectiveSubscriptionStatus
 }) => {
 
     const handleProtectedSlotClick = (team: Team, index: number) => {
-        if (userProfile?.subscription_status !== 'premium') {
+        if (effectiveSubscriptionStatus !== 'premium') {
             onUpgradeClick();
             return;
         }
