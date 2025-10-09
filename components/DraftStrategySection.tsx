@@ -9,24 +9,31 @@ interface DraftStrategySectionProps {
 }
 
 const DraftStrategySection: React.FC<DraftStrategySectionProps> = ({ analysis, isLoading, error }) => {
+    const hasExistingAnalysis = !!analysis;
     
-    if (isLoading || error || !analysis) {
-        // This section only appears when there is valid data,
-        // as the loading/error states are handled by the main stats panel.
+    // Não renderiza nada se nunca houve uma análise e não está carregando
+    if (!hasExistingAnalysis && !isLoading && !error) {
         return null;
     }
 
-    const { teamStrengths, teamWeaknesses, nextPickSuggestion, strategicItems } = analysis;
-    const hasContent = (teamStrengths?.length || 0) > 0 || (teamWeaknesses?.length || 0) > 0 || nextPickSuggestion || (strategicItems?.length || 0) > 0;
-    
-    if (!hasContent) return null;
+    const renderContent = () => {
+        if (error && !hasExistingAnalysis) {
+            return (
+                <div className="text-center p-4 text-red-400">
+                    <p className="mt-2 text-sm">{error}</p>
+                </div>
+            );
+        }
 
-    return (
-        <div className="glassmorphism p-4 rounded-2xl border-2 panel-glow-purple animated-entry">
-            <h2 className="text-xl font-black text-center mb-4 text-amber-300 tracking-wider">ESTRATÉGIA DE JOGO</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                
-                {/* Strengths */}
+        if (!analysis) {
+            // Mostra um placeholder para manter o espaço, mas só se estiver carregando
+            return isLoading ? <div className="h-24"></div> : null;
+        }
+
+        const { teamStrengths, teamWeaknesses, nextPickSuggestion, strategicItems } = analysis;
+
+        return (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="p-3 bg-black bg-opacity-20 rounded-xl">
                     <h3 className="font-bold text-green-300 mb-2 border-b-2 border-green-300/50 pb-1">Pontos Fortes</h3>
                     <ul className="space-y-2 list-disc list-inside text-sm text-gray-200">
@@ -34,7 +41,6 @@ const DraftStrategySection: React.FC<DraftStrategySectionProps> = ({ analysis, i
                     </ul>
                 </div>
 
-                {/* Weaknesses */}
                 <div className="p-3 bg-black bg-opacity-20 rounded-xl">
                     <h3 className="font-bold text-red-300 mb-2 border-b-2 border-red-300/50 pb-1">Pontos Fracos</h3>
                     <ul className="space-y-2 list-disc list-inside text-sm text-gray-200">
@@ -42,9 +48,8 @@ const DraftStrategySection: React.FC<DraftStrategySectionProps> = ({ analysis, i
                     </ul>
                 </div>
 
-                {/* Next Pick Suggestion */}
                 {nextPickSuggestion && (
-                    <div className="p-3 bg-black bg-opacity-20 rounded-xl lg:col-span-1 md:col-span-2">
+                    <div className="p-3 bg-black bg-opacity-20 rounded-xl md:col-span-2">
                         <h3 className="font-bold text-violet-300 mb-2 border-b-2 border-violet-300/50 pb-1">Sugestão de Pick</h3>
                         <div className="p-2 bg-gray-900/50 rounded-xl">
                             <div className="flex items-center gap-3">
@@ -59,8 +64,7 @@ const DraftStrategySection: React.FC<DraftStrategySectionProps> = ({ analysis, i
                     </div>
                 )}
                 
-                {/* Strategic Items */}
-                <div className={`p-3 bg-black bg-opacity-20 rounded-xl ${!nextPickSuggestion ? 'lg:col-span-2 md:col-span-2' : ''}`}>
+                <div className="p-3 bg-black bg-opacity-20 rounded-xl md:col-span-2">
                     <h3 className="font-bold text-yellow-300 mb-2 border-b-2 border-yellow-300/50 pb-1">Itens Estratégicos</h3>
                     <div className="space-y-2">
                         {(strategicItems ?? []).map((item, i) => (
@@ -75,6 +79,20 @@ const DraftStrategySection: React.FC<DraftStrategySectionProps> = ({ analysis, i
                    </div>
                 </div>
 
+            </div>
+        );
+    }
+    
+    return (
+        <div className="relative glassmorphism p-4 rounded-2xl border-2 panel-glow-purple animated-entry">
+            {isLoading && (
+                <div className="absolute inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center rounded-2xl z-10">
+                    <div className="w-8 h-8 border-2 border-dashed rounded-full animate-spin border-purple-400"></div>
+                </div>
+            )}
+            <div className={`transition-opacity duration-300 ${isLoading && hasExistingAnalysis ? 'opacity-20' : 'opacity-100'}`}>
+                <h2 className="text-xl font-black text-center mb-4 text-amber-300 tracking-wider">ESTRATÉGIA DE JOGO</h2>
+                {renderContent()}
             </div>
         </div>
     );

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 // FIX: Corrected typo from HeroStrategyAnalysis to HeroStrategicAnalysis.
 import { BanSuggestion, Hero, HeroStrategicAnalysis, HeroRankInfo, RankCategory, HeroDetails, HeroRelation, HeroSuggestion, ItemSuggestion, Role } from '../types';
@@ -6,8 +7,9 @@ import HeroSlot from './HeroSlot';
 import SynergyPanel from './SynergyPanel';
 import HeroStrategyPanel from './HeroStrategyPanel';
 import BanSuggestions from './BanSuggestions';
+import { fetchHeroRankings } from '../services/heroService';
+import { META_SYNERGIES } from './data/synergyData';
 import { RATING_STYLES } from '../constants';
-import { HERO_TRANSLATIONS } from './data/heroTranslations';
 
 interface SynergyExplorerScreenProps {
     selectedHeroId: string | null;
@@ -92,11 +94,79 @@ const SynergyExplorerScreen: React.FC<SynergyExplorerScreenProps> = ({
     const selectedHero = selectedHeroId ? heroes[selectedHeroId] : null;
     const analysisSectionRef = useRef<HTMLDivElement>(null);
 
-     const heroSummary = useMemo(() => {
-        if (!selectedHero) return 'Resumo do herói não disponível.';
-        const details = HERO_TRANSLATIONS[selectedHero.name];
-        return details ? details.summary : 'Resumo do herói não disponível.';
-    }, [selectedHero]);
+    const [risingHeroes, setRisingHeroes] = useState<HeroRankInfo[]>([]);
+    const [isRisingHeroesLoading, setIsRisingHeroesLoading] = useState(true);
+    const [risingHeroesError, setRisingHeroesError] = useState<string | null>(null);
+
+    const [popularHeroes, setPopularHeroes] = useState<HeroRankInfo[]>([]);
+    const [isPopularHeroesLoading, setIsPopularHeroesLoading] = useState(true);
+    const [popularHeroesError, setPopularHeroesError] = useState<string | null>(null);
+
+    const heroNameToImageMap = useMemo(() => {
+        // FIX: Explicitly type the 'hero' parameter to avoid it being inferred as 'unknown'.
+        return Object.values(heroes).reduce((acc, hero: Hero) => {
+            acc[hero.name] = hero.imageUrl;
+            return acc;
+        }, {} as Record<string, string>);
+    }, [heroes]);
+
+    useEffect(() => {
+        if (Object.keys(heroes).length === 0 || Object.keys(heroApiIdMap).length === 0) return;
+
+        const fetchMetaHeroes = async () => {
+            setIsRisingHeroesLoading(true);
+            setIsPopularHeroesLoading(true);
+            setRisingHeroesError(null);
+            setPopularHeroesError(null);
+            try {
+                const [winRateData, pickRateData] = await Promise.all([
+                    fetchHeroRankings(7, 'glory', 'win_rate'),
+                    fetchHeroRankings(7, 'glory', 'pick_rate')
+                ]);
+
+                // Processar heróis em ascensão (taxa de vitória)
+                const mappedRisingHeroes: HeroRankInfo[] = winRateData
+                    .map(data => {
+                        const hero = heroApiIdMap[data.main_heroid];
+                        if (!hero) return null;
+                        return {
+                            hero,
+                            winRate: data.main_hero_win_rate,
+                            pickRate: data.main_hero_appearance_rate,
+                            banRate: data.main_hero_ban_rate
+                        };
+                    })
+                    .filter((r): r is HeroRankInfo => r !== null)
+                    .slice(0, 5);
+                setRisingHeroes(mappedRisingHeroes);
+                
+                // Processar heróis populares (taxa de escolha)
+                const mappedPopularHeroes: HeroRankInfo[] = pickRateData
+                    .map(data => {
+                        const hero = heroApiIdMap[data.main_heroid];
+                        if (!hero) return null;
+                        return {
+                            hero,
+                            winRate: data.main_hero_win_rate,
+                            pickRate: data.main_hero_appearance_rate,
+                            banRate: data.main_hero_ban_rate
+                        };
+                    })
+                    .filter((r): r is HeroRankInfo => r !== null)
+                    .slice(0, 5);
+                setPopularHeroes(mappedPopularHeroes);
+
+            } catch (error) {
+                setRisingHeroesError("Não foi possível carregar os heróis em ascensão.");
+                setPopularHeroesError("Não foi possível carregar os heróis mais escolhidos.");
+            } finally {
+                setIsRisingHeroesLoading(false);
+                setIsPopularHeroesLoading(false);
+            }
+        };
+        
+        fetchMetaHeroes();
+    }, [heroes, heroApiIdMap]);
 
     useEffect(() => {
         if (isAnalysisLoading) {
@@ -105,65 +175,112 @@ const SynergyExplorerScreen: React.FC<SynergyExplorerScreenProps> = ({
             }, 100);
         }
     }, [isAnalysisLoading]);
-    
-    const tacticalCounters = strategyAnalysis?.tacticalCounters ?? [];
+
+    const renderRisingHeroes = () => {
+        if (isRisingHeroesLoading) {
+            return (
+                <div className="flex items-center justify-center h-full">
+                    <div className="w-8 h-8 border-2 border-dashed rounded-full animate-spin border-violet-400"></div>
+                </div>
+            );
+        }
+        if (risingHeroesError) {
+            return <p className="text-center text-xs text-yellow-400">{risingHeroesError}</p>;
+        }
+        return (
+            <div className="grid grid-cols-5 gap-3">
+                {risingHeroes.map(info => (
+                    <div key={info.hero.id} className="group relative flex flex-col items-center text-center">
+                        <img src={info.hero.imageUrl} alt={info.hero.name} className="w-14 h-14 rounded-full border-2 border-amber-400 transform transition-transform group-hover:scale-110" />
+                        <span className="text-xs mt-1 font-semibold">{info.hero.name}</span>
+                        <div className="absolute bottom-full mb-2 w-36 p-2 bg-black text-white text-xs rounded-xl shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-20">
+                            Taxa de Vitória: <span className="font-bold text-green-400">{(info.winRate * 100).toFixed(1)}%</span> (Glória, 7 dias)
+                            <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-black"></div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        );
+    };
+
+    const renderPopularHeroes = () => {
+        if (isPopularHeroesLoading) {
+            return (
+                <div className="flex items-center justify-center h-full">
+                    <div className="w-8 h-8 border-2 border-dashed rounded-full animate-spin border-blue-400"></div>
+                </div>
+            );
+        }
+        if (popularHeroesError) {
+            return <p className="text-center text-xs text-yellow-400">{popularHeroesError}</p>;
+        }
+        return (
+            <div className="grid grid-cols-5 gap-3">
+                {popularHeroes.map(info => (
+                    <div key={info.hero.id} className="group relative flex flex-col items-center text-center">
+                        <img src={info.hero.imageUrl} alt={info.hero.name} className="w-14 h-14 rounded-full border-2 border-blue-400 transform transition-transform group-hover:scale-110" />
+                        <span className="text-xs mt-1 font-semibold">{info.hero.name}</span>
+                        <div className="absolute bottom-full mb-2 w-40 p-2 bg-black text-white text-xs rounded-xl shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-20">
+                            Taxa de Escolha: <span className="font-bold text-blue-300">{(info.pickRate * 100).toFixed(1)}%</span> (Glória, 7 dias)
+                            <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-black"></div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        );
+    };
+
+    const renderMetaSynergies = () => (
+        <div className="space-y-3">
+            {META_SYNERGIES.map((synergy, index) => (
+                <div key={index} className="p-3 bg-black bg-opacity-30 rounded-xl flex flex-col transform transition-transform hover:scale-105 hover:bg-black/50">
+                    <div className="flex justify-center items-center gap-2">
+                        <img src={heroNameToImageMap[synergy.heroNames[0]]} alt={synergy.heroNames[0]} className="w-12 h-12 rounded-full border-2 border-gray-500" />
+                        <span className="text-2xl font-bold text-amber-300">+</span>
+                        <img src={heroNameToImageMap[synergy.heroNames[1]]} alt={synergy.heroNames[1]} className="w-12 h-12 rounded-full border-2 border-gray-500" />
+                    </div>
+                    <p className="text-xs text-center text-gray-300 mt-2">{synergy.description}</p>
+                </div>
+            ))}
+        </div>
+    );
 
     return (
         <div className="w-full max-w-5xl mx-auto animated-entry flex flex-col gap-6">
             <div className="flex flex-col items-center gap-4">
                 <CollapsibleTutorial title="Como Usar o Painel Estratégico">
                      <ol className="list-decimal list-inside space-y-1 text-xs sm:text-sm text-gray-300">
+                        <li>Explore os painéis de <strong className="text-amber-300">dados do meta</strong> para insights imediatos.</li>
                         <li>Clique abaixo para selecionar um herói para uma análise aprofundada.</li>
-                        <li>Clique em <strong className="text-violet-500">"Analisar Estratégia"</strong> para a IA gerar a build, as táticas de jogo, sinergias e o counter perfeito contra seu herói.</li>
+                        <li>Clique em <strong className="text-violet-500">"Analisar"</strong> para a IA gerar a build, as táticas de jogo, sinergias e o counter perfeito contra seu herói.</li>
                     </ol>
                 </CollapsibleTutorial>
                 
-                {selectedHero ? (
-                    <div className="w-full glassmorphism p-6 rounded-2xl border-2 panel-glow-purple flex flex-col md:flex-row items-center gap-6 animated-entry">
-                        <div className="flex-shrink-0 flex flex-col items-center text-center w-40">
-                            <img src={selectedHero.imageUrl} alt={selectedHero.name} className="w-28 h-28 rounded-full border-4 border-violet-400 mb-2 shadow-lg shadow-violet-500/30"/>
-                            <h2 className="text-2xl font-bold text-white">{selectedHero.name}</h2>
-                            <p className="text-sm font-semibold text-violet-300">{selectedHero.roles.join(' / ')}</p>
-                            <button onClick={onClearHero} className="mt-2 text-xs text-red-400 hover:underline">
-                                Trocar Herói
-                            </button>
-                        </div>
-                        <div className="flex-grow flex flex-col justify-between self-stretch">
-                            <div>
-                                <h3 className="text-lg font-bold text-amber-300 mb-2">Resumo Estratégico</h3>
-                                <p className="text-sm text-slate-300 max-h-32 overflow-y-auto invisible-scrollbar pr-2">
-                                    {heroSummary}
-                                </p>
-                            </div>
-                            <button
-                                onClick={onAnalyze}
-                                disabled={!selectedHeroId || isAnalysisLoading}
-                                className="mt-4 w-full bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white font-bold py-3 px-4 rounded-xl text-lg hover:from-violet-400 hover:to-fuchsia-400 transition-all duration-300 disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed flex items-center justify-center shadow-lg shadow-violet-500/40 disabled:shadow-none transform hover:scale-105"
-                            >
-                                {isAnalysisLoading ? (
-                                    <>
-                                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
-                                            <circle className="opacity-25" cx="10" cy="10" r="8" stroke="currentColor" strokeWidth="4"></circle>
-                                            <path className="opacity-75" fill="currentColor" d="M4 10a6 6 0 016-6v2a4 4 0 00-4 4H4z"></path>
-                                        </svg>
-                                        Analisando...
-                                    </>
-                                ) : 'Analisar Estratégia'}
-                            </button>
-                        </div>
-                    </div>
-                ) : (
-                    <div 
-                        className="w-full glassmorphism p-8 rounded-2xl border-2 border-dashed border-slate-600 flex flex-col items-center justify-center text-center transition-all hover:border-violet-500 hover:bg-slate-900/50 cursor-pointer" 
+                <div className="w-full max-w-xs glassmorphism p-3 rounded-2xl border-2 panel-glow-purple flex flex-col gap-3">
+                    <h2 className="text-xl font-black text-center text-amber-300 tracking-wider">SELECIONE O HERÓI</h2>
+                     <HeroSlot 
+                        type="synergy" 
+                        heroId={selectedHeroId} 
+                        heroes={heroes} 
                         onClick={onHeroSelectClick}
+                        onClear={onClearHero}
+                    />
+                    <button
+                        onClick={onAnalyze}
+                        disabled={!selectedHeroId || isAnalysisLoading}
+                        className="w-full bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white font-bold py-2 px-4 rounded-xl text-md hover:from-violet-400 hover:to-fuchsia-400 transition-all duration-300 disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed flex items-center justify-center shadow-lg shadow-violet-500/40 disabled:shadow-none transform hover:scale-105"
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-slate-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                        <h2 className="text-2xl font-bold text-white">Selecione um Herói</h2>
-                        <p className="text-slate-400 mt-1 max-w-sm">Clique aqui para escolher um herói e iniciar a análise estratégica completa da IA.</p>
-                    </div>
-                )}
+                         {isAnalysisLoading ? (
+                            <>
+                                <svg className="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                                    <circle className="opacity-25" cx="10" cy="10" r="8" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 10a6 6 0 016-6v2a4 4 0 00-4 4H4z"></path>
+                                </svg>
+                                Analisando...
+                            </>
+                         ) : 'Analisar'}
+                    </button>
+                </div>
             </div>
             
             <BanSuggestions
@@ -184,7 +301,7 @@ const SynergyExplorerScreen: React.FC<SynergyExplorerScreenProps> = ({
                             error={synergyError}
                             relations={synergyRelations}
                             heroApiIdMap={heroApiIdMap}
-                            tacticalCounters={tacticalCounters}
+                            tacticalCounters={[]}
                             heroes={heroes}
                         />
                     </div>
@@ -210,6 +327,29 @@ const SynergyExplorerScreen: React.FC<SynergyExplorerScreenProps> = ({
                     </div>
                 </div>
             )}
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
+                <div className="flex flex-col gap-6">
+                    <div className="glassmorphism p-4 rounded-2xl border-2 panel-glow-primary flex flex-col flex-1">
+                        <SectionHeader>Heróis em Ascensão</SectionHeader>
+                        <div className="flex-grow flex items-center justify-center">
+                            {renderRisingHeroes()}
+                        </div>
+                    </div>
+                     <div className="glassmorphism p-4 rounded-2xl border-2 panel-glow-primary flex flex-col flex-1">
+                        <SectionHeader>Heróis Mais Escolhidos</SectionHeader>
+                        <div className="flex-grow flex items-center justify-center">
+                            {renderPopularHeroes()}
+                        </div>
+                    </div>
+                </div>
+                <div className="glassmorphism p-4 rounded-2xl border-2 panel-glow-primary flex flex-col h-full">
+                    <SectionHeader>Sinergias Chave do Meta</SectionHeader>
+                    <div className="flex-grow flex items-center justify-center">
+                        {renderMetaSynergies()}
+                    </div>
+                </div>
+            </div>
         </div>
     );
 };

@@ -27,21 +27,16 @@ const StatRow: React.FC<{ label: string; allyScore: number; enemyScore: number; 
 
 
 const DraftStatsPanel: React.FC<DraftStatsPanelProps> = ({ analysis, isLoading, error }) => {
-    const renderContent = () => {
-        if (isLoading) {
-            return (
-                <div className="flex flex-col items-center justify-center h-full text-center">
-                    <div className="w-12 h-12 border-4 border-dashed rounded-full animate-spin border-violet-400"></div>
-                    <p className="mt-4 text-lg">Analisando o draft...</p>
-                </div>
-            );
-        }
+    const hasExistingAnalysis = !!analysis;
 
+    const renderContent = () => {
         if (error) {
             return (
-                <div className="text-center p-4 text-red-400">
-                    <h3 className="text-xl font-bold">Ocorreu um Erro</h3>
-                    <p className="mt-2 text-sm">{error}</p>
+                <div className="text-center p-4 text-red-400 flex items-center justify-center h-full">
+                    <div>
+                        <h3 className="text-xl font-bold">Ocorreu um Erro</h3>
+                        <p className="mt-2 text-sm">{error}</p>
+                    </div>
                 </div>
             );
         }
@@ -97,8 +92,18 @@ const DraftStatsPanel: React.FC<DraftStatsPanelProps> = ({ analysis, isLoading, 
     }
     
     return (
-         <div className="glassmorphism p-2 rounded-2xl flex-grow flex flex-col border-2 panel-glow-primary min-h-[24rem]">
-            {renderContent()}
+         <div className="relative glassmorphism p-2 rounded-2xl flex-grow flex flex-col border-2 panel-glow-primary min-h-[24rem]">
+            {isLoading && (
+                <div className="absolute inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center rounded-2xl z-10 animated-entry">
+                    <div className="flex flex-col items-center">
+                        <div className="w-10 h-10 border-2 border-dashed rounded-full animate-spin border-violet-400"></div>
+                        <p className="mt-3 text-sm text-gray-300">{hasExistingAnalysis ? 'Atualizando análise...' : 'Analisando o draft...'}</p>
+                    </div>
+                </div>
+            )}
+            <div className={`transition-opacity duration-300 ${isLoading && hasExistingAnalysis ? 'opacity-20' : 'opacity-100'}`}>
+                {renderContent()}
+            </div>
         </div>
     );
 };

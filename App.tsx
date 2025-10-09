@@ -714,9 +714,7 @@ const App: React.FC = () => {
         }
 
         setIsDraftAnalysisLoading(true);
-        setDraftAnalysis(null);
         setDraftAnalysisError(null);
-        setCounterBanSuggestions([]);
 
         try {
             const allPickedHeroes = [...pickedAllyHeroes, ...pickedEnemyHeroes];
@@ -784,7 +782,7 @@ const App: React.FC = () => {
 
     useEffect(() => {
         if (gameMode !== '5v5' || Object.keys(heroes).length === 0) return;
-        const debounceTimeout = setTimeout(runDraftAnalysis, 1000);
+        const debounceTimeout = setTimeout(runDraftAnalysis, 500);
         return () => clearTimeout(debounceTimeout);
     }, [draftAllyPicks, draftEnemyPicks, gameMode, heroes, runDraftAnalysis]);
 
