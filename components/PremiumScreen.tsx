@@ -26,26 +26,44 @@ const PlanCard: React.FC<{
     subtitle: string;
     price?: number;
     period?: string;
-    features: { text: string; included: boolean; icon: 'lightning' | 'book' | 'chart' | 'chess' | 'star' | 'group' | 'chat' }[];
+    features: { text: string; included: boolean; icon: 'lightning' | 'book' | 'chart' | 'chess' | 'star' | 'group' | 'chat'; description?: string }[];
     isRecommended?: boolean;
+    isTeamRecommended?: boolean;
     isCurrent?: boolean;
     expiresAt?: string | null;
     onClick?: (planId: string, price: number) => void;
     isLoading?: boolean;
-}> = ({ title, subtitle, price, period, features, isRecommended, isCurrent, expiresAt, planId, onClick, isLoading }) => {
+    scaleClass?: string;
+}> = ({ title, subtitle, price, period, features, isRecommended, isTeamRecommended, isCurrent, expiresAt, planId, onClick, isLoading, scaleClass = 'hover:scale-[1.02]' }) => {
     
-    const borderColor = isRecommended ? 'border-amber-400' : isCurrent ? 'border-gray-600' : 'border-violet-500/50';
-    const glowShadow = isRecommended ? 'shadow-[0_0_25px_rgba(251,191,36,0.4)]' : isCurrent ? '' : 'shadow-[0_0_25px_rgba(167,139,250,0.2)]';
-    const buttonClass = isRecommended 
-        ? 'bg-amber-400 hover:bg-amber-300 text-black' 
-        : 'bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white hover:from-violet-600 hover:to-fuchsia-600';
-    const cardScale = isRecommended ? 'scale-105' : 'hover:scale-105';
+    const borderColor = isCurrent ? 'border-cyan-400' : isTeamRecommended ? 'border-purple-400' : isRecommended ? 'border-amber-400' : 'border-violet-500/50';
+    const glowShadow = isCurrent ? 'shadow-[0_0_25px_rgba(34,211,238,0.4)]' : isTeamRecommended ? 'shadow-[0_0_25px_rgba(192,132,252,0.4)]' : isRecommended ? 'shadow-[0_0_25px_rgba(251,191,36,0.4)]' : 'shadow-[0_0_25px_rgba(139,92,246,0.2)]';
+    
+    let buttonClass = 'bg-slate-700';
+    if(isTeamRecommended) {
+        buttonClass = 'bg-purple-500 hover:bg-purple-400 text-white';
+    } else if (isRecommended) {
+        buttonClass = 'bg-amber-400 hover:bg-amber-300 text-black';
+    } else {
+        buttonClass = 'bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white hover:from-violet-600 hover:to-fuchsia-600';
+    }
+
 
     return (
-        <div className={`relative bg-[#1a1c29] p-6 rounded-2xl border-2 flex flex-col ${borderColor} ${glowShadow} transform transition-transform duration-300 ${cardScale}`}>
-            {isRecommended && (
+        <div className={`relative bg-[#1c1a2e] p-6 rounded-2xl border-2 flex flex-col ${borderColor} ${glowShadow} transform transition-all duration-300 ${scaleClass}`}>
+            {isRecommended && !isCurrent && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-400 text-black text-xs font-bold px-3 py-1 rounded-full shadow-lg">
                     MAIS POPULAR
+                </div>
+            )}
+            {isTeamRecommended && !isCurrent && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-purple-400 text-black text-xs font-bold px-3 py-1 rounded-full shadow-lg">
+                    PARA TIMES
+                </div>
+            )}
+            {isCurrent && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-cyan-400 text-black text-xs font-bold px-3 py-1 rounded-full shadow-lg">
+                    PLANO ATUAL
                 </div>
             )}
             <div className="text-center">
@@ -69,30 +87,37 @@ const PlanCard: React.FC<{
                         <div className={`${feature.included ? 'text-green-400' : 'text-red-500'}`}>
                            <FeatureIcon icon={feature.icon} />
                         </div>
-                        <span className={`text-sm ${feature.included ? 'text-slate-200' : 'text-slate-500 line-through'}`}>{feature.text}</span>
+                        <div>
+                            <span className={`text-sm ${feature.included ? 'text-slate-200' : 'text-slate-500 line-through'}`}>{feature.text}</span>
+                            {feature.description && (
+                                <p className="text-xs text-slate-400 mt-1 italic">{feature.description}</p>
+                            )}
+                        </div>
                     </li>
                 ))}
             </ul>
-            {isCurrent ? (
-                <div className="text-center">
-                    <button disabled className="w-full bg-slate-700 text-slate-400 font-bold py-3 rounded-xl cursor-not-allowed">
-                        Seu Plano Atual
+            <div className="mt-auto pt-4">
+                {isCurrent ? (
+                    <div className="text-center">
+                        <button disabled className="w-full bg-slate-700 text-slate-400 font-bold py-3 rounded-xl cursor-not-allowed">
+                            Seu Plano Atual
+                        </button>
+                        {expiresAt && (
+                            <p className="text-xs text-amber-300 mt-2">
+                                Acesso expira em: {new Date(expiresAt).toLocaleDateString('pt-BR')}
+                            </p>
+                        )}
+                    </div>
+                ) : price !== undefined && planId && onClick ? (
+                    <button
+                        onClick={() => onClick(planId, price)}
+                        disabled={isLoading}
+                        className={`w-full font-bold py-3 rounded-xl text-lg transition-all duration-300 transform shadow-lg ${buttonClass} disabled:opacity-50 disabled:cursor-wait`}
+                    >
+                        {isLoading ? 'Aguarde...' : 'Assinar Agora'}
                     </button>
-                    {expiresAt && (
-                        <p className="text-xs text-amber-300 mt-2">
-                            Seu acesso expira em: {new Date(expiresAt).toLocaleDateString('pt-BR')}
-                        </p>
-                    )}
-                </div>
-            ) : price !== undefined && planId && onClick ? (
-                <button
-                    onClick={() => onClick(planId, price)}
-                    disabled={isLoading}
-                    className={`w-full font-bold py-3 rounded-xl text-lg transition-all duration-300 transform shadow-lg ${buttonClass} disabled:opacity-50 disabled:cursor-wait`}
-                >
-                    {isLoading ? 'Aguarde...' : 'Assinar Agora'}
-                </button>
-            ) : null}
+                ) : null}
+            </div>
         </div>
     );
 };
@@ -148,6 +173,7 @@ const PremiumScreen: React.FC<PremiumScreenProps> = ({ userProfile }) => {
         }
     };
 
+    // Estrutura completa dos planos
     const plans = [
         {
             title: 'Gratuito',
@@ -155,26 +181,23 @@ const PremiumScreen: React.FC<PremiumScreenProps> = ({ userProfile }) => {
             isCurrent: !isEffectivelyPremium,
             features: [
                 { text: '5 Análises de IA por dia', included: true, icon: 'lightning' as const },
-                { text: 'Análise de Herói e 1vs1', included: true, icon: 'star' as const },
+                { text: 'Análise 1vs1 e de Herói', included: true, icon: 'star' as const },
                 { text: 'Enciclopédia e Ranking', included: true, icon: 'book' as const },
                 { text: 'Analisador de Draft 5vs5', included: false, icon: 'chess' as const },
-                { text: 'Gerenciamento de Time', included: false, icon: 'group' as const },
-                { text: 'Suporte Prioritário', included: false, icon: 'chat' as const },
             ],
+            scaleClass: 'lg:scale-95 hover:scale-100',
         },
         {
             planId: 'monthly_legendary',
             title: 'Lendário',
-            subtitle: 'Jogador Dedicado',
+            subtitle: 'Estrategista Dedicado',
             price: 9.90,
             period: 'mês',
             features: [
                 { text: 'Análises de IA Ilimitadas', included: true, icon: 'lightning' as const },
-                { text: 'Histórico de Análises (em breve)', included: true, icon: 'star' as const },
-                { text: 'Listas de Builds Personalizadas (em breve)', included: true, icon: 'star' as const },
-                { text: 'Enciclopédia e Ranking completos', included: true, icon: 'book' as const },
+                { text: 'Análise 1vs1 e de Herói', included: true, icon: 'star' as const },
+                { text: 'Enciclopédia e Ranking', included: true, icon: 'book' as const },
                 { text: 'Analisador de Draft 5vs5', included: false, icon: 'chess' as const },
-                { text: 'Acesso Antecipado a Novos Recursos', included: true, icon: 'star' as const },
             ],
         },
         {
@@ -184,31 +207,35 @@ const PremiumScreen: React.FC<PremiumScreenProps> = ({ userProfile }) => {
             price: 19.90,
             period: 'mês',
             isRecommended: true,
-            isCurrent: isEffectivelyPremium,
+            isCurrent: isEffectivelyPremium, // Assumimos que a assinatura premium é a Mítica por padrão
             expiresAt: userProfile?.subscription_expires_at,
             features: [
-                { text: 'Tudo do plano Lendário', included: true, icon: 'star' as const },
-                { text: 'Acesso Completo ao Analisador de Draft 5vs5', included: true, icon: 'chess' as const },
-                { text: 'Salvar e Compartilhar Drafts (em breve)', included: true, icon: 'star' as const },
-                { text: 'Acesso Antecipado a Novas Ferramentas', included: true, icon: 'star' as const },
-                { text: 'Sem Anúncios (futuramente)', included: true, icon: 'star' as const },
                 { text: 'Análises de IA Ilimitadas', included: true, icon: 'lightning' as const },
+                { text: 'Acesso Completo ao Analisador de Draft 5vs5', included: true, icon: 'chess' as const },
+                { text: 'Acesso Antecipado a Novos Recursos', included: true, icon: 'star' as const },
+                { text: 'Enciclopédia e Ranking completos', included: true, icon: 'book' as const },
             ],
+            scaleClass: 'lg:scale-110',
         },
         {
             planId: 'monthly_glory',
             title: 'Glória Imortal',
-            subtitle: 'Técnico / Profissional',
+            subtitle: 'Apoiador Visionário',
             price: 59.90,
             period: 'mês',
+            isTeamRecommended: true,
             features: [
-                { text: 'Tudo do plano Mítico', included: true, icon: 'star' as const },
-                { text: 'Gerenciamento de Time (Até 6 Contas)', included: true, icon: 'group' as const },
-                { text: 'Dashboard do Técnico (em breve)', included: true, icon: 'star' as const },
-                { text: 'Suporte Prioritário Direto', included: true, icon: 'chat' as const },
-                { text: 'Acesso Beta a Novas Ferramentas', included: true, icon: 'star' as const },
-                { text: 'Análises de IA Ilimitadas', included: true, icon: 'lightning' as const },
+                { text: 'Todos os benefícios do plano Mítico', included: true, icon: 'star' as const },
+                { 
+                  text: 'Gerenciamento de Time (em breve)',
+                  included: true, 
+                  icon: 'group' as const,
+                  description: '(Crie e gerencie até 5 contas para os membros do seu time, analise drafts em grupo e receba insights de sinergia.)'
+                },
+                { text: 'Suporte Prioritário por Discord', included: true, icon: 'chat' as const },
+                { text: 'Ajude a financiar novas funcionalidades', included: true, icon: 'lightning' as const },
             ],
+             scaleClass: 'lg:scale-95 hover:scale-100',
         }
     ];
 
@@ -224,7 +251,7 @@ const PremiumScreen: React.FC<PremiumScreenProps> = ({ userProfile }) => {
                 {error && <p className="bg-red-500/30 text-red-300 text-center p-3 rounded-lg mt-4 text-sm max-w-md mx-auto">{error}</p>}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto items-center">
                 {plans.map(plan => (
                     <PlanCard
                         key={plan.title}
@@ -235,10 +262,10 @@ const PremiumScreen: React.FC<PremiumScreenProps> = ({ userProfile }) => {
                 ))}
             </div>
 
-            <div className="text-center mt-12">
-                <div className="text-slate-400 text-sm">
+            <div className="text-center mt-16">
+                <div className="text-slate-400 text-sm max-w-2xl mx-auto">
                     <p>Pagamentos processados com segurança pelo Mercado Pago.</p>
-                    <p>Ao assinar, você apoia o desenvolvimento contínuo e a adição de novas funcionalidades à plataforma.</p>
+                    <p className="mt-2">O plano é uma assinatura mensal com renovação automática, que pode ser cancelada a qualquer momento através da sua conta do Mercado Pago. Ao assinar, você apoia o desenvolvimento contínuo e a adição de novas funcionalidades à plataforma.</p>
                 </div>
             </div>
         </div>
