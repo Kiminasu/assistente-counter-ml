@@ -1,5 +1,5 @@
 import React from 'react';
-// FIX: The type 'HeroStrategyAnalysis' does not exist in '../types'. The correct type for the 'analysis' prop is 'HeroStrategy'.
+// FIX: The type 'HeroStrategicAnalysis' does not exist in '../types'. The correct type for the 'analysis' prop is 'HeroStrategy'.
 import { Hero, HeroStrategy, ItemSuggestion } from '../types';
 import { ITEM_ICONS } from '../constants';
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Session } from '@supabase/supabase-js';
-import { UserProfile } from '../App'; 
+import { UserProfile } from '../types'; 
 import { GameMode } from '../types';
 
 interface HeaderProps {

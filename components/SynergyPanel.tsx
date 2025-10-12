@@ -47,7 +47,6 @@ const TacticalCounterSection: React.FC<{ title: string; colorClass: string; coun
             <h3 className={`text-sm uppercase font-bold mb-3 text-center ${colorClass}`}>{title}</h3>
             <div className="flex flex-wrap justify-center gap-3">
                 {counters.map(counter => {
-                    // FIX: Explicitly cast Object.values to Hero[] to fix type inference issues.
                     const hero = (Object.values(heroes) as Hero[]).find(h => h.name === counter.heroName);
                     if (!hero) return null;
                     return (
@@ -93,7 +92,11 @@ const SynergyPanel: React.FC<SynergyPanelProps> = ({ isLoading, error, relations
             );
         }
         
-        const hasRelations = relations && ((relations.assist?.target_hero_id?.length || 0) > 0 || (relations.strong?.target_hero_id?.length || 0) > 0);
+        const hasRelations = relations && (
+            (relations.assist?.target_hero_id?.length || 0) > 0 || 
+            (relations.strong?.target_hero_id?.length || 0) > 0 ||
+            (relations.weak?.target_hero_id?.length || 0) > 0
+        );
         const hasContent = hasRelations || tacticalCounters.length > 0;
 
         if (!hasContent) {
@@ -115,15 +118,21 @@ const SynergyPanel: React.FC<SynergyPanelProps> = ({ isLoading, error, relations
                         <ul className="list-disc list-inside space-y-2 text-xs text-gray-300">
                             <li><strong className="text-blue-300">Bons Aliados:</strong> Heróis que têm boa sinergia com seu personagem (baseado em dados estatísticos).</li>
                             <li><strong className="text-green-300">Forte Contra:</strong> Heróis que seu personagem countera com eficácia (baseado em dados estatísticos).</li>
-                            <li><strong className="text-red-300">Fraco Contra:</strong> Heróis que são eficazes contra seu personagem (análise tática da IA).</li>
+                            <li><strong className="text-red-300">Fraco Contra:</strong> Heróis que são eficazes contra seu personagem (análise estatística e tática da IA).</li>
                         </ul>
                     </CollapsibleTutorial>
                 </div>
                 
                 <div className="space-y-6">
-                    <SynergySection title="Bons Aliados" colorClass="text-blue-300" heroIds={relations?.assist?.target_hero_id || []} heroApiIdMap={heroApiIdMap} />
-                    <SynergySection title="Forte Contra" colorClass="text-green-300" heroIds={relations?.strong?.target_hero_id || []} heroApiIdMap={heroApiIdMap} />
-                    <TacticalCounterSection title="Fraco Contra (Análise Tática)" colorClass="text-red-300" counters={tacticalCounters} heroes={heroes} />
+                    <SynergySection title="Bons Aliados (Estatístico)" colorClass="text-blue-300" heroIds={relations?.assist?.target_hero_id || []} heroApiIdMap={heroApiIdMap} />
+                    <SynergySection title="Forte Contra (Estatístico)" colorClass="text-green-300" heroIds={relations?.strong?.target_hero_id || []} heroApiIdMap={heroApiIdMap} />
+                    
+                    {/* Combina dados estatísticos e da IA para a seção "Fraco Contra" */}
+                    {tacticalCounters.length > 0 ? (
+                        <TacticalCounterSection title="Fraco Contra (Análise Tática)" colorClass="text-red-300" counters={tacticalCounters} heroes={heroes} />
+                    ) : (
+                        <SynergySection title="Fraco Contra (Estatístico)" colorClass="text-red-300" heroIds={relations?.weak?.target_hero_id || []} heroApiIdMap={heroApiIdMap} />
+                    )}
                 </div>
                 
                 {!hasContent && !isLoading && (

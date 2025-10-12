@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Hero, HeroRankInfo, RankCategory, RANKS, GameMode } from '../types';
+import { Hero, HeroRankInfo, RankCategory, RANKS, GameMode, UserProfile } from '../types';
 import { fetchHeroRankings } from '../services/heroService';
-import { UserProfile } from '../App';
 import { ITEM_ICONS } from '../constants';
 
 const RANK_LABELS: Record<RankCategory, string> = {
@@ -228,7 +227,7 @@ const CrucialMetaItems: React.FC = () => {
 };
 
 
-const Tools: React.FC<{ onSetMode: (mode: GameMode) => void }> = ({ onSetMode }) => {
+const Tools: React.FC<{ onSetMode: (mode: GameMode) => void; effectiveSubscriptionStatus: 'free' | 'premium' }> = ({ onSetMode, effectiveSubscriptionStatus }) => {
     const tools: { label: string, mode: GameMode, icon: React.ReactNode, isPremium?: boolean }[] = [
         { label: "Análise de Herói", mode: 'synergy', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" /></svg> },
         { label: "Análise 1vs1", mode: '1v1', icon: <span className="font-black text-xl tracking-tighter">1vs1</span> },
@@ -244,7 +243,7 @@ const Tools: React.FC<{ onSetMode: (mode: GameMode) => void }> = ({ onSetMode })
             <div className="grid grid-cols-3 md:grid-cols-6 lg:grid-cols-3 gap-3">
                 {tools.map(tool => (
                     <button key={tool.mode} onClick={() => onSetMode(tool.mode)} className="relative flex flex-col items-center justify-center gap-1 p-2 bg-slate-800/50 rounded-lg border border-slate-700 hover:bg-violet-600/50 hover:border-violet-500 transition-all duration-300 transform hover:-translate-y-1 h-24">
-                        {tool.isPremium && <span className="absolute -top-1.5 -right-1.5 bg-gradient-to-br from-amber-400 to-yellow-500 text-black text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow-lg animate-soft-blink">PREMIUM</span>}
+                        {tool.isPremium && effectiveSubscriptionStatus !== 'premium' && <span className="absolute -top-1.5 -right-1.5 bg-gradient-to-br from-amber-400 to-yellow-500 text-black text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow-lg animate-soft-blink">PREMIUM</span>}
                         <div className="h-8 flex items-center justify-center text-slate-300">{tool.icon}</div>
                         <span className="text-xs font-semibold text-center leading-tight">{tool.label}</span>
                     </button>
@@ -260,9 +259,10 @@ interface DashboardScreenProps {
     onNavigateToHeroAnalysis: (heroId: string) => void;
     onSetMode: (mode: GameMode) => void;
     userProfile: UserProfile | null;
+    effectiveSubscriptionStatus: 'free' | 'premium';
 }
 
-const DashboardScreen: React.FC<DashboardScreenProps> = ({ heroes, heroApiIdMap, onNavigateToHeroAnalysis, onSetMode, userProfile }) => {
+const DashboardScreen: React.FC<DashboardScreenProps> = ({ heroes, heroApiIdMap, onNavigateToHeroAnalysis, onSetMode, userProfile, effectiveSubscriptionStatus }) => {
     return (
         <div className="flex flex-col gap-8 animated-entry">
              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -274,7 +274,7 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ heroes, heroApiIdMap,
                 {/* Coluna Lateral (ocupa 1/3 no desktop) */}
                 <div className="flex flex-col gap-8">
                     <CounterOfTheDay heroes={heroes} />
-                    <Tools onSetMode={onSetMode} />
+                    <Tools onSetMode={onSetMode} effectiveSubscriptionStatus={effectiveSubscriptionStatus} />
                 </div>
             </div>
         </div>

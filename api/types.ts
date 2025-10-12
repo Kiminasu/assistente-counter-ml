@@ -1,6 +1,7 @@
 
 
 
+
 export interface Hero {
   id: string;
   apiId: number;
@@ -144,7 +145,6 @@ export interface DraftAnalysisResult {
   banSuggestions: AITacticalCounter[];
 }
 
-// FIX: Renamed HeroStrategyAnalysis to HeroStrategy to match its actual structure.
 export interface HeroStrategy {
   coreItems: ItemSuggestion[];
   situationalItems: ItemSuggestion[];

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Session } from '@supabase/supabase-js';
 // FIX: Import HeroStrategicAnalysis to handle the complete analysis object.
-import { Hero, Lane, AnalysisResult, LANES, ROLES, Role, HeroSuggestion, BanSuggestion, MatchupData, ItemSuggestion, RankCategory, RankDays, SortField, HeroRankInfo, Team, DraftAnalysisResult, NextPickSuggestion, StrategicItemSuggestion, LaneOrNone, HeroDetails, HeroRelation, HeroStrategy, UserSignupRank, GameMode, AITacticalCounter, HeroStrategicAnalysis } from './types';
+import { Hero, Lane, AnalysisResult, LANES, ROLES, Role, HeroSuggestion, BanSuggestion, MatchupData, ItemSuggestion, RankCategory, RankDays, SortField, HeroRankInfo, Team, DraftAnalysisResult, NextPickSuggestion, StrategicItemSuggestion, LaneOrNone, HeroDetails, HeroRelation, HeroStrategy, UserSignupRank, GameMode, AITacticalCounter, HeroStrategicAnalysis, UserProfile } from './types';
 import { fetchHeroes, fetchCounters, fetchHeroDetails, fetchHeroRankings, ApiHeroRankData, fetchHeroRelations } from './services/heroService';
 import { getCombined1v1Analysis, getDraftAnalysis, getHeroStrategicAnalysis } from './services/geminiService';
 import { findClosestString } from './utils';
@@ -35,14 +35,6 @@ import PremiumScreen from './components/PremiumScreen';
 import DashboardScreen from './components/DashboardScreen';
 import { supabase } from './supabaseClient';
 
-export interface UserProfile {
-    username: string;
-    rank: UserSignupRank;
-    subscription_status: 'free' | 'premium';
-    analysis_count: number;
-    last_analysis_at: string | null;
-    subscription_expires_at: string | null;
-}
 const DAILY_ANALYSIS_LIMIT = 5;
 
 const NUMBER_OF_META_BAN_SUGGESTIONS = 8;
@@ -901,6 +893,7 @@ const App: React.FC = () => {
                 onNavigateToHeroAnalysis={handleNavigateToHeroAnalysis}
                 onSetMode={handleSetGameMode}
                 userProfile={userProfile}
+                effectiveSubscriptionStatus={effectiveSubscriptionStatus}
             />
         }
         if (gameMode === '1v1') {

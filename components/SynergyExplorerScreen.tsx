@@ -1,15 +1,11 @@
-
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 // FIX: Corrected typo from HeroStrategyAnalysis to HeroStrategicAnalysis.
-import { BanSuggestion, Hero, HeroStrategicAnalysis, HeroRankInfo, RankCategory, HeroDetails, HeroRelation, HeroSuggestion, ItemSuggestion, Role } from '../types';
+import { BanSuggestion, Hero, HeroStrategicAnalysis, RankCategory, HeroRelation, HeroSuggestion, Role } from '../types';
 import CollapsibleTutorial from './CollapsibleTutorial';
-import HeroSlot from './HeroSlot';
 import SynergyPanel from './SynergyPanel';
 import HeroStrategyPanel from './HeroStrategyPanel';
 import BanSuggestions from './BanSuggestions';
-import { fetchHeroRankings } from '../services/heroService';
-import { META_SYNERGIES } from './data/synergyData';
-import { RATING_STYLES } from '../constants';
+import { RATING_STYLES, ROLE_TAGS } from '../constants';
 
 interface SynergyExplorerScreenProps {
     selectedHeroId: string | null;
@@ -37,7 +33,7 @@ const SectionHeader: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     <h2 className="text-xl sm:text-2xl font-black text-center mb-3 tracking-wider text-amber-300">{children}</h2>
 );
 
-const PerfectCounterPanel: React.FC<{ suggestion: HeroSuggestion, isLoading: boolean, error: string | null }> = ({ suggestion, isLoading, error }) => {
+const PerfectCounterPanel: React.FC<{ suggestion: HeroSuggestion | null, isLoading: boolean, error: string | null }> = ({ suggestion, isLoading, error }) => {
     if (isLoading) {
         return (
             <div className="flex flex-col items-center justify-center p-8">
@@ -94,80 +90,6 @@ const SynergyExplorerScreen: React.FC<SynergyExplorerScreenProps> = ({
     const selectedHero = selectedHeroId ? heroes[selectedHeroId] : null;
     const analysisSectionRef = useRef<HTMLDivElement>(null);
 
-    const [risingHeroes, setRisingHeroes] = useState<HeroRankInfo[]>([]);
-    const [isRisingHeroesLoading, setIsRisingHeroesLoading] = useState(true);
-    const [risingHeroesError, setRisingHeroesError] = useState<string | null>(null);
-
-    const [popularHeroes, setPopularHeroes] = useState<HeroRankInfo[]>([]);
-    const [isPopularHeroesLoading, setIsPopularHeroesLoading] = useState(true);
-    const [popularHeroesError, setPopularHeroesError] = useState<string | null>(null);
-
-    const heroNameToImageMap = useMemo(() => {
-        // FIX: Explicitly type the 'hero' parameter to avoid it being inferred as 'unknown'.
-        return Object.values(heroes).reduce((acc, hero: Hero) => {
-            acc[hero.name] = hero.imageUrl;
-            return acc;
-        }, {} as Record<string, string>);
-    }, [heroes]);
-
-    useEffect(() => {
-        if (Object.keys(heroes).length === 0 || Object.keys(heroApiIdMap).length === 0) return;
-
-        const fetchMetaHeroes = async () => {
-            setIsRisingHeroesLoading(true);
-            setIsPopularHeroesLoading(true);
-            setRisingHeroesError(null);
-            setPopularHeroesError(null);
-            try {
-                const [winRateData, pickRateData] = await Promise.all([
-                    fetchHeroRankings(7, 'glory', 'win_rate'),
-                    fetchHeroRankings(7, 'glory', 'pick_rate')
-                ]);
-
-                // Processar heróis em ascensão (taxa de vitória)
-                const mappedRisingHeroes: HeroRankInfo[] = winRateData
-                    .map(data => {
-                        const hero = heroApiIdMap[data.main_heroid];
-                        if (!hero) return null;
-                        return {
-                            hero,
-                            winRate: data.main_hero_win_rate,
-                            pickRate: data.main_hero_appearance_rate,
-                            banRate: data.main_hero_ban_rate
-                        };
-                    })
-                    .filter((r): r is HeroRankInfo => r !== null)
-                    .slice(0, 5);
-                setRisingHeroes(mappedRisingHeroes);
-                
-                // Processar heróis populares (taxa de escolha)
-                const mappedPopularHeroes: HeroRankInfo[] = pickRateData
-                    .map(data => {
-                        const hero = heroApiIdMap[data.main_heroid];
-                        if (!hero) return null;
-                        return {
-                            hero,
-                            winRate: data.main_hero_win_rate,
-                            pickRate: data.main_hero_appearance_rate,
-                            banRate: data.main_hero_ban_rate
-                        };
-                    })
-                    .filter((r): r is HeroRankInfo => r !== null)
-                    .slice(0, 5);
-                setPopularHeroes(mappedPopularHeroes);
-
-            } catch (error) {
-                setRisingHeroesError("Não foi possível carregar os heróis em ascensão.");
-                setPopularHeroesError("Não foi possível carregar os heróis mais escolhidos.");
-            } finally {
-                setIsRisingHeroesLoading(false);
-                setIsPopularHeroesLoading(false);
-            }
-        };
-        
-        fetchMetaHeroes();
-    }, [heroes, heroApiIdMap]);
-
     useEffect(() => {
         if (isAnalysisLoading) {
             setTimeout(() => {
@@ -176,95 +98,60 @@ const SynergyExplorerScreen: React.FC<SynergyExplorerScreenProps> = ({
         }
     }, [isAnalysisLoading]);
 
-    const renderRisingHeroes = () => {
-        if (isRisingHeroesLoading) {
-            return (
-                <div className="flex items-center justify-center h-full">
-                    <div className="w-8 h-8 border-2 border-dashed rounded-full animate-spin border-violet-400"></div>
-                </div>
-            );
-        }
-        if (risingHeroesError) {
-            return <p className="text-center text-xs text-yellow-400">{risingHeroesError}</p>;
-        }
-        return (
-            <div className="grid grid-cols-5 gap-3">
-                {risingHeroes.map(info => (
-                    <div key={info.hero.id} className="group relative flex flex-col items-center text-center">
-                        <img src={info.hero.imageUrl} alt={info.hero.name} className="w-14 h-14 rounded-full border-2 border-amber-400 transform transition-transform group-hover:scale-110" />
-                        <span className="text-xs mt-1 font-semibold">{info.hero.name}</span>
-                        <div className="absolute bottom-full mb-2 w-36 p-2 bg-black text-white text-xs rounded-xl shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-20">
-                            Taxa de Vitória: <span className="font-bold text-green-400">{(info.winRate * 100).toFixed(1)}%</span> (Glória, 7 dias)
-                            <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-black"></div>
-                        </div>
-                    </div>
-                ))}
-            </div>
-        );
-    };
-
-    const renderPopularHeroes = () => {
-        if (isPopularHeroesLoading) {
-            return (
-                <div className="flex items-center justify-center h-full">
-                    <div className="w-8 h-8 border-2 border-dashed rounded-full animate-spin border-blue-400"></div>
-                </div>
-            );
-        }
-        if (popularHeroesError) {
-            return <p className="text-center text-xs text-yellow-400">{popularHeroesError}</p>;
-        }
-        return (
-            <div className="grid grid-cols-5 gap-3">
-                {popularHeroes.map(info => (
-                    <div key={info.hero.id} className="group relative flex flex-col items-center text-center">
-                        <img src={info.hero.imageUrl} alt={info.hero.name} className="w-14 h-14 rounded-full border-2 border-blue-400 transform transition-transform group-hover:scale-110" />
-                        <span className="text-xs mt-1 font-semibold">{info.hero.name}</span>
-                        <div className="absolute bottom-full mb-2 w-40 p-2 bg-black text-white text-xs rounded-xl shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-20">
-                            Taxa de Escolha: <span className="font-bold text-blue-300">{(info.pickRate * 100).toFixed(1)}%</span> (Glória, 7 dias)
-                            <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-black"></div>
-                        </div>
-                    </div>
-                ))}
-            </div>
-        );
-    };
-
-    const renderMetaSynergies = () => (
-        <div className="space-y-3">
-            {META_SYNERGIES.map((synergy, index) => (
-                <div key={index} className="p-3 bg-black bg-opacity-30 rounded-xl flex flex-col transform transition-transform hover:scale-105 hover:bg-black/50">
-                    <div className="flex justify-center items-center gap-2">
-                        <img src={heroNameToImageMap[synergy.heroNames[0]]} alt={synergy.heroNames[0]} className="w-12 h-12 rounded-full border-2 border-gray-500" />
-                        <span className="text-2xl font-bold text-amber-300">+</span>
-                        <img src={heroNameToImageMap[synergy.heroNames[1]]} alt={synergy.heroNames[1]} className="w-12 h-12 rounded-full border-2 border-gray-500" />
-                    </div>
-                    <p className="text-xs text-center text-gray-300 mt-2">{synergy.description}</p>
-                </div>
-            ))}
-        </div>
-    );
-
     return (
         <div className="w-full max-w-5xl mx-auto animated-entry flex flex-col gap-6">
             <div className="flex flex-col items-center gap-4">
                 <CollapsibleTutorial title="Como Usar o Painel Estratégico">
                      <ol className="list-decimal list-inside space-y-1 text-xs sm:text-sm text-gray-300">
-                        <li>Explore os painéis de <strong className="text-amber-300">dados do meta</strong> para insights imediatos.</li>
                         <li>Clique abaixo para selecionar um herói para uma análise aprofundada.</li>
                         <li>Clique em <strong className="text-violet-500">"Analisar"</strong> para a IA gerar a build, as táticas de jogo, sinergias e o counter perfeito contra seu herói.</li>
                     </ol>
                 </CollapsibleTutorial>
                 
-                <div className="w-full max-w-xs glassmorphism p-3 rounded-2xl border-2 panel-glow-purple flex flex-col gap-3">
-                    <h2 className="text-xl font-black text-center text-amber-300 tracking-wider">SELECIONE O HERÓI</h2>
-                     <HeroSlot 
-                        type="synergy" 
-                        heroId={selectedHeroId} 
-                        heroes={heroes} 
-                        onClick={onHeroSelectClick}
-                        onClear={onClearHero}
-                    />
+                <div className="w-full max-w-md glassmorphism p-4 rounded-2xl border-2 panel-glow-purple flex flex-col gap-4">
+                    <h2 className="text-xl font-black text-center text-amber-300 tracking-wider">SELECIONE O HERÓI PARA ANÁLISE</h2>
+                    
+                    {selectedHero ? (
+                        <div className="relative group">
+                            <button
+                                onClick={onClearHero}
+                                className="absolute top-2 right-2 w-7 h-7 bg-black/50 rounded-full text-white/70 hover:text-white hover:bg-black/80 flex items-center justify-center z-20 transition-all opacity-0 group-hover:opacity-100"
+                                aria-label="Limpar herói"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                            <div
+                                className="flex flex-col sm:flex-row items-center gap-4 cursor-pointer p-2 rounded-lg hover:bg-black/20"
+                                onClick={onHeroSelectClick}
+                                aria-label="Trocar herói"
+                            >
+                                <img src={selectedHero.imageUrl} alt={selectedHero.name} className="w-24 h-24 rounded-full border-4 border-violet-400 object-cover flex-shrink-0" />
+                                <div className="flex-grow text-center sm:text-left">
+                                    <h3 className="text-2xl font-bold text-white">{selectedHero.name}</h3>
+                                    <p className="font-semibold text-violet-300">{selectedHero.roles.join(' / ')}</p>
+                                    <div className="flex flex-wrap justify-center sm:justify-start gap-1 mt-2">
+                                        {(selectedHero.roles.flatMap(role => ROLE_TAGS[role as Role] || [])).slice(0, 3).map(tag => (
+                                            <span key={tag} className="text-xs bg-slate-700 text-slate-300 px-2 py-0.5 rounded-full">
+                                                {tag}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        <div
+                            onClick={onHeroSelectClick}
+                            className="hero-slot empty flex flex-col items-center justify-center text-center gap-2 p-4 rounded-2xl cursor-pointer min-h-[140px]"
+                        >
+                            <span className="text-5xl text-gray-600">+</span>
+                            <span className="text-lg font-semibold text-gray-400 mt-1">Selecionar Herói</span>
+                            <span className="text-sm text-gray-500">Clique para escolher um herói para análise</span>
+                        </div>
+                    )}
+
                     <button
                         onClick={onAnalyze}
                         disabled={!selectedHeroId || isAnalysisLoading}
@@ -296,17 +183,19 @@ const SynergyExplorerScreen: React.FC<SynergyExplorerScreenProps> = ({
                  <div ref={analysisSectionRef} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div className="glassmorphism p-4 rounded-2xl border-2 panel-glow-primary flex flex-col">
                         <SectionHeader>Sinergias</SectionHeader>
+                        {/* FIX: Pass tacticalCounters and heroes props to SynergyPanel. */}
                         <SynergyPanel
                             isLoading={isAnalysisLoading}
                             error={synergyError}
                             relations={synergyRelations}
                             heroApiIdMap={heroApiIdMap}
-                            tacticalCounters={[]}
+                            tacticalCounters={strategyAnalysis?.tacticalCounters || []}
                             heroes={heroes}
                         />
                     </div>
                      <div className="glassmorphism p-4 rounded-2xl border-2 panel-glow-primary flex flex-col">
                         <SectionHeader>Análise Estratégica da IA</SectionHeader>
+                        {/* FIX: Pass the correct 'strategy' object to the analysis prop. */}
                         <HeroStrategyPanel
                             selectedHero={selectedHero}
                             analysis={strategyAnalysis?.strategy ?? null}
@@ -320,36 +209,13 @@ const SynergyExplorerScreen: React.FC<SynergyExplorerScreenProps> = ({
                             Este é o counter ideal <strong className="text-red-300">contra o seu herói</strong>, sugerido pela IA para banimento ou para saber como jogar contra.
                         </p>
                         <PerfectCounterPanel 
-                            suggestion={perfectCounter!}
+                            suggestion={perfectCounter}
                             isLoading={isAnalysisLoading}
                             error={perfectCounterError}
                         />
                     </div>
                 </div>
             )}
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
-                <div className="flex flex-col gap-6">
-                    <div className="glassmorphism p-4 rounded-2xl border-2 panel-glow-primary flex flex-col flex-1">
-                        <SectionHeader>Heróis em Ascensão</SectionHeader>
-                        <div className="flex-grow flex items-center justify-center">
-                            {renderRisingHeroes()}
-                        </div>
-                    </div>
-                     <div className="glassmorphism p-4 rounded-2xl border-2 panel-glow-primary flex flex-col flex-1">
-                        <SectionHeader>Heróis Mais Escolhidos</SectionHeader>
-                        <div className="flex-grow flex items-center justify-center">
-                            {renderPopularHeroes()}
-                        </div>
-                    </div>
-                </div>
-                <div className="glassmorphism p-4 rounded-2xl border-2 panel-glow-primary flex flex-col h-full">
-                    <SectionHeader>Sinergias Chave do Meta</SectionHeader>
-                    <div className="flex-grow flex items-center justify-center">
-                        {renderMetaSynergies()}
-                    </div>
-                </div>
-            </div>
         </div>
     );
 };

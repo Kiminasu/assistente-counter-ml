@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
-import { UserProfile } from '../App';
+import { UserProfile } from '../types';
 import { USER_SIGNUP_RANKS, UserSignupRank } from '../types';
 
 interface UserProfileModalProps {

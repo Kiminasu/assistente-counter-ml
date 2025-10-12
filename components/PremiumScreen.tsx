@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from '../supabaseClient';
-import { UserProfile } from '../App';
+import { UserProfile } from '../types';
 
 const FeatureIcon: React.FC<{ icon: 'lightning' | 'book' | 'chart' | 'chess' | 'star' | 'group' | 'chat' }> = ({ icon }) => {
     const icons = {

@@ -1,7 +1,13 @@
 
-
-
-import { UserProfile } from "./App";
+// FIX: Moved UserProfile here from App.tsx to break circular dependency.
+export interface UserProfile {
+    username: string;
+    rank: UserSignupRank;
+    subscription_status: 'free' | 'premium';
+    analysis_count: number;
+    last_analysis_at: string | null;
+    subscription_expires_at: string | null;
+}
 
 export type GameMode = 'dashboard' | '1v1' | '5v5' | 'ranking' | 'item' | 'synergy' | 'heroes' | 'premium';
 
