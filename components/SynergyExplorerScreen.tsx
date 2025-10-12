@@ -1,11 +1,12 @@
-import React, { useEffect, useRef } from 'react';
-// FIX: Corrected typo from HeroStrategyAnalysis to HeroStrategicAnalysis.
-import { BanSuggestion, Hero, HeroStrategicAnalysis, RankCategory, HeroRelation, HeroSuggestion, Role } from '../types';
+import React, { useEffect, useRef, useState } from 'react';
+// FIX: Corrected typo from HeroStrategyAnalysis to HeroStrategicAnalysis and added Lane type.
+import { BanSuggestion, Hero, HeroStrategicAnalysis, RankCategory, HeroRelation, HeroSuggestion, Role, Lane } from '../types';
 import CollapsibleTutorial from './CollapsibleTutorial';
 import SynergyPanel from './SynergyPanel';
 import HeroStrategyPanel from './HeroStrategyPanel';
 import BanSuggestions from './BanSuggestions';
-import { RATING_STYLES, ROLE_TAGS } from '../constants';
+// FIX: Added LANE_ICONS and SPELL_ICONS for the new panel.
+import { RATING_STYLES, ROLE_TAGS, LANE_ICONS, SPELL_ICONS } from '../constants';
 
 interface SynergyExplorerScreenProps {
     selectedHeroId: string | null;
@@ -25,43 +26,90 @@ interface SynergyExplorerScreenProps {
     strategyAnalysisError: string | null;
     synergyRelations: HeroRelation | null;
     synergyError: string | null;
-    perfectCounter: HeroSuggestion | null;
-    perfectCounterError: string | null;
+    // FIX: Replaced perfectCounter with perfectLaneCounters to support multiple suggestions.
+    perfectLaneCounters: HeroSuggestion[];
+    perfectLaneCountersError: string | null;
 }
 
 const SectionHeader: React.FC<{ children: React.ReactNode }> = ({ children }) => (
     <h2 className="text-xl sm:text-2xl font-black text-center mb-3 tracking-wider text-amber-300">{children}</h2>
 );
 
-const PerfectCounterPanel: React.FC<{ suggestion: HeroSuggestion | null, isLoading: boolean, error: string | null }> = ({ suggestion, isLoading, error }) => {
-    if (isLoading) {
+// FIX: Replaced PerfectCounterPanel with PerfectLaneCountersPanel to display suggestions by lane.
+const PerfectLaneCountersPanel: React.FC<{ suggestions: HeroSuggestion[], isLoading: boolean, error: string | null }> = ({ suggestions, isLoading, error }) => {
+    const [expandedLane, setExpandedLane] = useState<Lane | null>(null);
+
+    if (isLoading && suggestions.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center p-8">
                 <div className="w-10 h-10 border-2 border-dashed rounded-full animate-spin border-red-400"></div>
-                <p className="mt-3 text-sm text-gray-300">ANALISANDO O COUNTER PERFEITO...</p>
+                <p className="mt-3 text-sm text-gray-300">ANALISANDO COUNTERS PERFEITOS...</p>
             </div>
         );
     }
-    if (error) {
+    if (error && suggestions.length === 0) {
         return <p className="text-center text-xs text-yellow-400 p-4">{error}</p>;
     }
-    if (!suggestion) return null;
+    if (suggestions.length === 0) return null;
 
-    const styles = RATING_STYLES[suggestion.classificacao] || { text: 'text-gray-300', border: 'border-gray-400' };
+    const laneOrder: Lane[] = ['EXP', 'SELVA', 'MEIO', 'OURO', 'ROTAÇÃO'];
+    const sortedSuggestions = [...suggestions].sort((a, b) => laneOrder.indexOf(a.lane!) - laneOrder.indexOf(b.lane!));
 
     return (
-        <div className={`p-3 mt-2 bg-black bg-opacity-30 rounded-xl animated-entry border-l-4 ${styles.border}`}>
-            <div className="flex items-center gap-4 mb-3">
-                <img src={suggestion.imageUrl} alt={suggestion.nome} className={`w-20 h-20 rounded-full border-4 ${styles.border}`} />
-                <div className="flex-grow">
-                    <p className="font-bold text-xl">{suggestion.nome}</p>
-                    <div>
-                        <span className={`font-black text-md ${styles.text}`}>{suggestion.classificacao}</span>
-                        <span className="text-xs text-gray-400 font-mono ml-2">{suggestion.estatistica}</span>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {sortedSuggestions.map(suggestion => {
+                const isExpanded = expandedLane === suggestion.lane;
+                return (
+                    <div key={suggestion.lane} className="p-3 bg-black bg-opacity-30 rounded-xl animated-entry border-l-4 border-red-500">
+                        <div 
+                            className="flex items-center gap-2 mb-2 cursor-pointer" 
+                            onClick={() => setExpandedLane(isExpanded ? null : suggestion.lane!)}
+                            aria-expanded={isExpanded}
+                        >
+                            <img src={LANE_ICONS[suggestion.lane!]} alt={suggestion.lane} className="w-8 h-8"/>
+                            <h4 className="font-bold text-lg text-red-300">{suggestion.lane}</h4>
+                            <span className="flex-grow text-right font-bold text-white">{suggestion.nome}</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 transition-transform ${isExpanded ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
+                        </div>
+                        <div className={`transition-all duration-300 ease-in-out overflow-hidden ${isExpanded ? 'max-h-[500px]' : 'max-h-0'}`}>
+                            <div className="pt-2 border-t border-slate-700 space-y-3">
+                                <div className="flex items-center gap-3">
+                                    <img src={suggestion.imageUrl} alt={suggestion.nome} className="w-14 h-14 rounded-full border-2 border-red-400" />
+                                    <span className="font-semibold text-xs text-red-300">COUNTER PERFEITO</span>
+                                </div>
+                                <p className="text-sm text-gray-300">{suggestion.motivo}</p>
+                                
+                                {suggestion.avisos && suggestion.avisos.length > 0 && (
+                                    <div>
+                                        <p className="text-xs uppercase font-bold text-yellow-400 mb-1">Avisos</p>
+                                        {suggestion.avisos.map((aviso, i) => (
+                                            <div key={i} className="flex items-start gap-2 mt-1">
+                                                <svg className="w-3 h-3 text-yellow-400 flex-shrink-0 mt-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 3.001-1.742 3.001H4.42c-1.53 0-2.493-1.667-1.743-3.001l5.58-9.92zM10 13a1 1 0 110-2 1 1 0 010 2zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
+                                                <p className="text-xs text-gray-300">{aviso}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {suggestion.spells && suggestion.spells.length > 0 && (
+                                    <div>
+                                        <p className="text-xs uppercase font-bold text-gray-400 mb-1">Feitiços</p>
+                                        {suggestion.spells.map(spell => (
+                                            <div key={spell.nome} className="mt-1 flex items-start gap-2">
+                                                <img loading="lazy" src={SPELL_ICONS[spell.nome] || SPELL_ICONS.default} alt={spell.nome} className="w-6 h-6 rounded-md flex-shrink-0" />
+                                                <div>
+                                                    <p className="text-sm font-semibold text-violet-300">{spell.nome}</p>
+                                                    <p className="text-xs text-gray-400">{spell.motivo}</p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </div>
-            <p className="text-sm text-gray-300">{suggestion.motivo}</p>
+                )
+            })}
         </div>
     );
 };
@@ -84,8 +132,8 @@ const SynergyExplorerScreen: React.FC<SynergyExplorerScreenProps> = ({
     strategyAnalysisError,
     synergyRelations,
     synergyError,
-    perfectCounter,
-    perfectCounterError
+    perfectLaneCounters,
+    perfectLaneCountersError
 }) => {
     const selectedHero = selectedHeroId ? heroes[selectedHeroId] : null;
     const analysisSectionRef = useRef<HTMLDivElement>(null);
@@ -104,7 +152,7 @@ const SynergyExplorerScreen: React.FC<SynergyExplorerScreenProps> = ({
                 <CollapsibleTutorial title="Como Usar o Painel Estratégico">
                      <ol className="list-decimal list-inside space-y-1 text-xs sm:text-sm text-gray-300">
                         <li>Clique abaixo para selecionar um herói para uma análise aprofundada.</li>
-                        <li>Clique em <strong className="text-violet-500">"Analisar"</strong> para a IA gerar a build, as táticas de jogo, sinergias e o counter perfeito contra seu herói.</li>
+                        <li>Clique em <strong className="text-violet-500">"Analisar"</strong> para a IA gerar a build, as táticas de jogo, sinergias e os counters perfeitos para cada lane.</li>
                     </ol>
                 </CollapsibleTutorial>
                 
@@ -204,14 +252,14 @@ const SynergyExplorerScreen: React.FC<SynergyExplorerScreenProps> = ({
                         />
                     </div>
                     <div className="lg:col-span-2 glassmorphism p-4 rounded-2xl border-2 panel-glow-red animated-entry mt-2">
-                        <SectionHeader>Recomendação Perfeita (Counter)</SectionHeader>
-                        <p className="text-xs text-center text-gray-400 -mt-2 mb-3 max-w-sm mx-auto">
-                            Este é o counter ideal <strong className="text-red-300">contra o seu herói</strong>, sugerido pela IA para banimento ou para saber como jogar contra.
+                        <SectionHeader>Recomendações Perfeitas por Lane</SectionHeader>
+                         <p className="text-xs text-center text-gray-400 -mt-2 mb-3 max-w-lg mx-auto">
+                            Estes são os counters ideais <strong className="text-red-300">contra o seu herói</strong>, sugeridos pela IA para cada uma das 5 lanes. Use-os para banimento ou para saber como jogar contra.
                         </p>
-                        <PerfectCounterPanel 
-                            suggestion={perfectCounter}
+                        <PerfectLaneCountersPanel 
+                            suggestions={perfectLaneCounters}
                             isLoading={isAnalysisLoading}
-                            error={perfectCounterError}
+                            error={perfectLaneCountersError}
                         />
                     </div>
                 </div>

@@ -15,6 +15,14 @@ const HeroDatabaseScreen: React.FC<HeroDatabaseScreenProps> = ({ heroes, heroLan
     const searchInputRef = useRef<HTMLInputElement>(null);
 
     const laneFilters: (Lane | 'Todas')[] = ['Todas', ...LANES];
+    
+    const heroApiIdMap = useMemo(() => {
+        // FIX: Explicitly type `hero` as `Hero` to ensure correct type inference within the reduce function.
+        return Object.values(heroes).reduce((acc, hero: Hero) => {
+            acc[hero.apiId] = hero;
+            return acc;
+        }, {} as Record<number, Hero>);
+    }, [heroes]);
 
     const filteredHeroes = useMemo(() => {
         const heroesArray: Hero[] = Object.values(heroes);
@@ -110,6 +118,7 @@ const HeroDatabaseScreen: React.FC<HeroDatabaseScreenProps> = ({ heroes, heroLan
                 heroId={selectedHeroId}
                 heroes={heroes}
                 onClose={() => setSelectedHeroId(null)}
+                heroApiIdMap={heroApiIdMap}
             />
         </div>
     );

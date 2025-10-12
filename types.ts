@@ -1,3 +1,4 @@
+import { Session } from '@supabase/supabase-js';
 
 export interface UserProfile {
     username: string;
@@ -181,11 +182,13 @@ export interface HeroStrategicAnalysis {
 export interface HeroSkill {
     skillname: string;
     skilldesc: string;
+    skillicon?: string;
 }
 
 export interface SkillCombo {
     title: string;
     desc: string;
+    skillIcons: string[];
 }
 
 export interface HeroDetails {
@@ -200,4 +203,34 @@ export interface HeroRelation {
     assist: { target_hero_id: number[] };
     strong: { target_hero_id: number[] };
     weak: { target_hero_id: number[] };
+}
+
+export interface HeroDetailStats {
+    winRate: number;
+    pickRate: number;
+    banRate: number;
+}
+
+export interface TimeWinRate {
+    time: string;
+    winRate: number;
+}
+
+export interface SynergyStat {
+    hero: Hero;
+    increaseWinRate: number;
+    winRateOverTime: TimeWinRate[];
+}
+
+export interface FullHeroStats {
+    stats: HeroDetailStats;
+    bestSynergies: SynergyStat[];
+    worstSynergies: SynergyStat[];
+}
+
+export interface HeroDailyStats {
+    date: string;
+    winRate: number;
+    pickRate: number;
+    banRate: number;
 }

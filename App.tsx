@@ -2,13 +2,12 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Session } from '@supabase/supabase-js';
 // FIX: Import AILaneRecommendation to handle the new analysis object.
 import { Hero, Lane, AnalysisResult, LANES, ROLES, Role, HeroSuggestion, BanSuggestion, MatchupData, ItemSuggestion, RankCategory, RankDays, SortField, HeroRankInfo, Team, DraftAnalysisResult, NextPickSuggestion, StrategicItemSuggestion, LaneOrNone, HeroDetails, HeroRelation, HeroStrategy, UserSignupRank, GameMode, AITacticalCounter, HeroStrategicAnalysis, UserProfile, AILaneRecommendation } from './types';
-import { fetchHeroes, fetchCounters, fetchHeroDetails, fetchHeroRankings, ApiHeroRankData, fetchHeroRelations } from './services/heroService';
+import { fetchHeroes, fetchHeroCounterStats, fetchHeroDetails, fetchHeroRankings, ApiHeroRankData, fetchHeroRelations, fetchHeroPositionsData } from './services/heroService';
 import { getCombined1v1Analysis, getDraftAnalysis, getHeroStrategicAnalysis } from './services/geminiService';
 import { findClosestString } from './utils';
 import { SPELL_ICONS } from './constants';
 import { HERO_EXPERT_RANK } from './components/data/heroData';
 import { GAME_ITEMS } from './components/data/items';
-import { HERO_CATEGORIZATION } from './components/data/heroCategorization';
 import { MANUAL_HERO_DATA } from './components/data/manualHeroData';
 import { MANUAL_SYNERGY_DATA } from './components/data/synergyData';
 import LoadingOverlay from './components/LoadingOverlay';
@@ -235,7 +234,10 @@ const App: React.FC = () => {
     useEffect(() => {
         const loadInitialData = async () => {
             try {
-                const fetchedHeroesFromApi = await fetchHeroes();
+                const [fetchedHeroesFromApi, positionsData] = await Promise.all([
+                    fetchHeroes(),
+                    fetchHeroPositionsData()
+                ]);
                 
                 const allHeroesData = { ...MANUAL_HERO_DATA, ...fetchedHeroesFromApi };
 
@@ -244,7 +246,7 @@ const App: React.FC = () => {
 
                 for (const heroId in allHeroesData) {
                     const baseHero = allHeroesData[heroId as keyof typeof allHeroesData];
-                    const categorization = HERO_CATEGORIZATION[baseHero.name];
+                    const categorization = positionsData[baseHero.apiId];
                     
                     const enrichedHero: Hero = {
                         ...baseHero,
@@ -310,8 +312,7 @@ const App: React.FC = () => {
             setIsRankingsLoading(true);
             setRankingsError(null);
             try {
-                const sortFieldApi = sortField === 'pick_rate' ? 'appearance_rate' : sortField;
-                const rankingsData: ApiHeroRankData[] = await fetchHeroRankings(rankDays, rankCategory, sortFieldApi);
+                const rankingsData: ApiHeroRankData[] = await fetchHeroRankings(rankDays, rankCategory, sortField);
                 
                 const mappedRankings: HeroRankInfo[] = rankingsData
                     .map(data => {
@@ -370,7 +371,7 @@ const App: React.FC = () => {
             setIsMetaBansLoading(true);
             try {
                 const metaRankDays: RankDays = 7;
-                const rankingsData: ApiHeroRankData[] = await fetchHeroRankings(metaRankDays, metaBanRankCategory, 'appearance_rate');
+                const rankingsData: ApiHeroRankData[] = await fetchHeroRankings(metaRankDays, metaBanRankCategory, 'pick_rate');
                 
                 const rankLabel: Record<RankCategory, string> = { all: "Todos", epic: "Épico", legend: "Lenda", mythic: "Mítico", honor: "Honra", glory: "Glória" };
 
@@ -611,12 +612,12 @@ const App: React.FC = () => {
             // Otimização: Buscar winrate em paralelo com a chamada da IA (se possível)
             let winRate: number | null = null;
             if (yourHero && yourHero.apiId && enemyHero.apiId) {
-                 const enemyCounters = await fetchCounters(enemyHero.apiId); 
-                 const matchupStat = enemyCounters.find(counter => counter.heroid === yourHero.apiId);
+                 const enemyCounterStats = await fetchHeroCounterStats(enemyHero.apiId);
+                 const matchupStat = enemyCounterStats.counters.find(counter => counter.heroid === yourHero.apiId);
                  let wr = matchupStat?.increase_win_rate ?? 0;
                  if (wr === 0) {
-                     const yourCounters = await fetchCounters(yourHero.apiId);
-                     const counterMatchupStat = yourCounters.find(counter => counter.heroid === enemyHero.apiId);
+                     const yourCounterStats = await fetchHeroCounterStats(yourHero.apiId);
+                     const counterMatchupStat = yourCounterStats.counters.find(counter => counter.heroid === enemyHero.apiId);
                      if (counterMatchupStat) wr = -counterMatchupStat.increase_win_rate;
                  }
                  winRate = wr;
@@ -634,7 +635,7 @@ const App: React.FC = () => {
             if (session?.user) await fetchUserProfile(session.user);
     
             // Após a resposta da IA, buscar dados estatísticos para enriquecer a UI
-            const counterData = await fetchCounters(enemyHero.apiId);
+            const { counters: counterData } = await fetchHeroCounterStats(enemyHero.apiId);
             const allStatCounters = counterData
                 .map(c => ({ hero: heroApiIdMap[c.heroid], increase_win_rate: c.increase_win_rate }))
                 .filter((item): item is { hero: Hero; increase_win_rate: number } => !!item.hero)
@@ -1043,6 +1044,7 @@ const App: React.FC = () => {
                 counterBanSuggestions={counterBanSuggestions}
                 metaBanSuggestions={metaBanSuggestions}
                 isMetaBansLoading={isMetaBansLoading}
+                // FIX: Pass metaBanRankCategory state variable instead of undefined 'activeMetaRank'
                 activeMetaRank={metaBanRankCategory}
                 onMetaRankChange={setMetaBanRankCategory}
                 onAnalyze={handleSynergyAnalysis}

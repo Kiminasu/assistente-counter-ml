@@ -11,8 +11,8 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Eclipse da Lua Oculta", skilldesc: "Miya se remove de todos os debuffs e se esconde, ganhando 35% de Velocidade de Movimento extra por 2s. Ela também ganha acúmulos completos de Bênção da Lua imediatamente." }
     ],
     combos: [
-      { title: "Engajamento/Dano", desc: "Use a Habilidade 1 para aumentar seu dano. Se o inimigo tentar fugir, use a Habilidade 2 para retardá-lo e imobilizá-lo. Use a Ultimate para escapar de situações perigosas ou para se reposicionar." },
-      { title: "Perseguição", desc: "Ative a Ultimate para ganhar velocidade e se esconder, aproxime-se do alvo e use a Habilidade 2 para imobilizá-lo, seguido da Habilidade 1 para dano máximo." }
+      { title: "Engajamento/Dano", desc: "Use a Habilidade 1 para aumentar seu dano. Se o inimigo tentar fugir, use a Habilidade 2 para retardá-lo e imobilizá-lo. Use a Ultimate para escapar de situações perigosas ou para se reposicionar.", skillIcons: [] },
+      { title: "Perseguição", desc: "Ative a Ultimate para ganhar velocidade e se esconder, aproxime-se do alvo e use a Habilidade 2 para imobilizá-lo, seguido da Habilidade 1 para dano máximo.", skillIcons: [] }
     ]
   },
   "Balmond": {
@@ -25,8 +25,8 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Fúria Letal", skilldesc: "Balmond esmaga seu machado no chão, causando 400 (+60% de Ataque Físico Total) + 20% do HP perdido do alvo como Dano Verdadeiro em uma área em forma de leque. Causa lentidão de 40% por 2s." }
     ],
     combos: [
-      { title: "Combo de Dano", desc: "Use a Habilidade 2 para dano contínuo. Finalize com a Ultimate para executar alvos com pouca vida." },
-      { title: "Iniciação/Fuga", desc: "Use a Habilidade 1 para se aproximar de um alvo ou para escapar de uma luta." }
+      { title: "Combo de Dano", desc: "Use a Habilidade 2 para dano contínuo. Finalize com a Ultimate para executar alvos com pouca vida.", skillIcons: [] },
+      { title: "Iniciação/Fuga", desc: "Use a Habilidade 1 para se aproximar de um alvo ou para escapar de uma luta.", skillIcons: [] }
     ]
   },
   "Saber": {
@@ -39,7 +39,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Golpe Triplo", skilldesc: "Saber avança para um herói inimigo, arremessando-o ao ar por 1.2s e causando três golpes que totalizam 200 (+120% de Ataque Físico Extra) de Dano Físico." }
     ],
     combos: [
-      { title: "Combo de Abate", desc: "Use a Habilidade 2 para se aproximar, seguido da Ultimate para prender e causar dano massivo. A Habilidade 1 pode ser usada antes ou durante a Ultimate para dano adicional." }
+      { title: "Combo de Abate", desc: "Use a Habilidade 2 para se aproximar, seguido da Ultimate para prender e causar dano massivo. A Habilidade 1 pode ser usada antes ou durante a Ultimate para dano adicional.", skillIcons: [] }
     ]
   },
     "Badang": {
@@ -52,8 +52,8 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Rachadura de Punho", skilldesc: "Badang lança uma rajada de socos em uma direção, causando dano várias vezes. Durante isso, ele ganha um escudo. Os socos podem acionar efeitos de Ataque Básico." }
     ],
     combos: [
-      { title: "Combo de Atordoamento na Parede", desc: "Use a Habilidade 2 para avançar por um inimigo, criando uma parede atrás dele. Use a Habilidade 1 para empurrá-lo contra a parede para um atordoamento da passiva." },
-      { title: "Combo de Explosão Total", desc: "Prenda um inimigo contra uma parede com a Habilidade 2. Use a Ultimate imediatamente, seguido da Habilidade 1 para maximizar o dano enquanto eles estão atordoados." }
+      { title: "Combo de Atordoamento na Parede", desc: "Use a Habilidade 2 para avançar por um inimigo, criando uma parede atrás dele. Use a Habilidade 1 para empurrá-lo contra a parede para um atordoamento da passiva.", skillIcons: [] },
+      { title: "Combo de Explosão Total", desc: "Prenda um inimigo contra uma parede com a Habilidade 2. Use a Ultimate imediatamente, seguido da Habilidade 1 para maximizar o dano enquanto eles estão atordoados.", skillIcons: [] }
     ]
   },
   "Nana": {
@@ -66,7 +66,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Pancada de Molina", skilldesc: "Nana invoca um grande dragão-gato que ataca uma área 3 vezes. Cada ataque causa 400 (+180% de Poder Mágico Total) de Dano Mágico e retarda os inimigos." }
     ],
     combos: [
-      { title: "Combo de Controle", desc: "Use a Habilidade 2 para transformar um inimigo, seguido da Ultimate para atordoar e causar dano em área. Use a Habilidade 1 para pokear à distância." }
+      { title: "Combo de Controle", desc: "Use a Habilidade 2 para transformar um inimigo, seguido da Ultimate para atordoar e causar dano em área. Use a Habilidade 1 para pokear à distância.", skillIcons: [] }
     ]
   },
   "Tigreal": {
@@ -79,7 +79,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Implosão", skilldesc: "Tigreal suga os inimigos ao seu redor, causando 270 (+130% de Ataque Físico Total) de Dano Físico e os atordoando por 1.5s." }
     ],
     combos: [
-      { title: "Combo de Iniciação", desc: "Use Lampejo e a Ultimate para agrupar os inimigos. Em seguida, use a Habilidade 2 para empurrá-los em direção aos seus aliados e arremessá-los ao ar." }
+      { title: "Combo de Iniciação", desc: "Use Lampejo e a Ultimate para agrupar os inimigos. Em seguida, use a Habilidade 2 para empurrá-los em direção aos seus aliados e arremessá-los ao ar.", skillIcons: [] }
     ]
   },
    "Aamon": {
@@ -92,8 +92,8 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Fragmentos Infinitos", skilldesc: "Aamon lança todos os seus fragmentos em um alvo, que então caem e atacam a área, causando dano massivo com base no número de fragmentos e no HP perdido do alvo." }
     ],
     combos: [
-      { title: "Combo de Abate Rápido", desc: "Use a Habilidade 2 para se aproximar ou causar dano, ativando a camuflagem. Use a Habilidade 1 no alvo, use um Ataque Básico aprimorado, e finalize com a Ultimate para dano explosivo." },
-      { title: "Poke e Fuga", desc: "Use a Habilidade 1 para pokear à distância. Se um inimigo se aproximar, use a Habilidade 2 para causar dano e criar distância com o recuo." }
+      { title: "Combo de Abate Rápido", desc: "Use a Habilidade 2 para se aproximar ou causar dano, ativando a camuflagem. Use a Habilidade 1 no alvo, use um Ataque Básico aprimorado, e finalize com a Ultimate para dano explosivo.", skillIcons: [] },
+      { title: "Poke e Fuga", desc: "Use a Habilidade 1 para pokear à distância. Se um inimigo se aproximar, use a Habilidade 2 para causar dano e criar distância com o recuo.", skillIcons: [] }
     ]
   },
   "Akai": {
@@ -106,7 +106,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Furacão Dançante", skilldesc: "Akai gira como um tornado por 3.5s, repelindo e causando 180 (+100% de Poder Mágico Total) de Dano Mágico. Ele se torna imune a lentidão durante o efeito." }
     ],
     combos: [
-      { title: "Combo de Controle", desc: "Use a Habilidade 2 para marcar um inimigo, seguido da Habilidade 1 para pular e atordoá-lo. Use a Ultimate para empurrar os inimigos contra paredes ou para longe de seus aliados." }
+      { title: "Combo de Controle", desc: "Use a Habilidade 2 para marcar um inimigo, seguido da Habilidade 1 para pular e atordoá-lo. Use a Ultimate para empurrar os inimigos contra paredes ou para longe de seus aliados.", skillIcons: [] }
     ]
   },
    "Alpha": {
@@ -119,8 +119,8 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Lança de Alpha", skilldesc: "Alpha comanda Beta para esmagar um local, causando Dano Físico e atordoando os inimigos. Alpha então avança para a área, causando dano e arremessando os inimigos ao ar." }
     ],
     combos: [
-      { title: "Iniciação e Dano em Área", desc: "Use a Ultimate para pular em um inimigo, atordoando e arremessando-o ao ar. Siga com a Habilidade 2 para dano e cura, e use a Habilidade 1 para lentidão e dano adicional, maximizando as marcas de Beta." },
-      { title: "Perseguição", desc: "Use a Habilidade 1 para retardar o alvo. Use a Habilidade 2 para se curar e continuar o ataque. Se o inimigo estiver longe, use a Ultimate para fechar a distância e garantir o abate." }
+      { title: "Iniciação e Dano em Área", desc: "Use a Ultimate para pular em um inimigo, atordoando e arremessando-o ao ar. Siga com a Habilidade 2 para dano e cura, e use a Habilidade 1 para lentidão e dano adicional, maximizando as marcas de Beta.", skillIcons: [] },
+      { title: "Perseguição", desc: "Use a Habilidade 1 para retardar o alvo. Use a Habilidade 2 para se curar e continuar o ataque. Se o inimigo estiver longe, use a Ultimate para fechar a distância e garantir o abate.", skillIcons: [] }
     ]
   },
   "Alucard": {
@@ -133,7 +133,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Onda de Fissão", skilldesc: "Alucard absorve a energia dos inimigos, aumentando seu Roubo de Vida Físico em 40% e retardando os alvos em 40% por 4s. Ele pode reativar para lançar uma onda de choque, causando 400 (+200% de Ataque Físico Extra) de Dano Físico." }
     ],
     combos: [
-      { title: "Combo de Dano", desc: "Ative a Ultimate, use a Habilidade 1 para se aproximar, use Ataques Básicos para ativar a passiva, use a Habilidade 2 para dano em área e finalize com a reativação da Ultimate." }
+      { title: "Combo de Dano", desc: "Ative a Ultimate, use a Habilidade 1 para se aproximar, use Ataques Básicos para ativar a passiva, use a Habilidade 2 para dano em área e finalize com a reativação da Ultimate.", skillIcons: [] }
     ]
   },
     "Alice": {
@@ -146,8 +146,8 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Ode de Sangue", skilldesc: "Alice entra em modo de drenagem de sangue por 5s, causando Dano Mágico contínuo aos inimigos próximos e se curando. Este efeito custa mana continuamente." }
     ],
     combos: [
-      { title: "Iniciação e Dano em Área", desc: "Use a Habilidade 1 para se teletransportar para o meio da equipe inimiga. Imediatamente use a Habilidade 2 para imobilizá-los e, em seguida, ative a Ultimate para causar dano massivo e se curar." },
-      { title: "Fuga", desc: "Jogue a Habilidade 1 em uma direção segura e use a reativação para escapar de situações perigosas." }
+      { title: "Iniciação e Dano em Área", desc: "Use a Habilidade 1 para se teletransportar para o meio da equipe inimiga. Imediatamente use a Habilidade 2 para imobilizá-los e, em seguida, ative a Ultimate para causar dano massivo e se curar.", skillIcons: [] },
+      { title: "Fuga", desc: "Jogue a Habilidade 1 em uma direção segura e use a reativação para escapar de situações perigosas.", skillIcons: [] }
     ]
   },
   "Karina": {
@@ -160,7 +160,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Assalto Sombrio", skilldesc: "Karina avança para um alvo, causando 350 (+160% de Poder Mágico Total) de Dano Mágico. Matar um herói ou obter uma assistência reseta a recarga desta habilidade." }
     ],
     combos: [
-      { title: "Combo de Abate", desc: "Use a Habilidade 1 para se aproximar e causar dano, use a Habilidade 2 para imunidade e dano adicional, e finalize com a Ultimate." }
+      { title: "Combo de Abate", desc: "Use a Habilidade 1 para se aproximar e causar dano, use a Habilidade 2 para imunidade e dano adicional, e finalize com a Ultimate.", skillIcons: [] }
     ]
   },
   "Franco": {
@@ -173,7 +173,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Caça Sangrenta", skilldesc: "Franco suprime um inimigo por 1.8s, atingindo-o 6 vezes e causando 50 (+70% de Ataque Físico Total) de Dano Físico por golpe." }
     ],
     combos: [
-      { title: "Combo de Pickoff", desc: "Use a Habilidade 1 para puxar um inimigo vulnerável. Imediatamente use a Ultimate para suprimi-lo, e use a Habilidade 2 para retardá-lo se ele tentar escapar." }
+      { title: "Combo de Pickoff", desc: "Use a Habilidade 1 para puxar um inimigo vulnerável. Imediatamente use a Ultimate para suprimi-lo, e use a Habilidade 2 para retardá-lo se ele tentar escapar.", skillIcons: [] }
     ]
   },
   "Bane": {
@@ -186,7 +186,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Armadilha Mortal", skilldesc: "Bane convoca um cardume de tubarões que avança, causando 600 (+200% de Ataque Físico Total) de Dano Físico aos inimigos e arremessando-os ao ar." }
     ],
     combos: [
-      { title: "Combo de Poke/Burst", desc: "Use a Habilidade 1 para pokear à distância. Se engajar, use a Habilidade 2 para se curar e a Ultimate para controle de grupo e dano massivo." }
+      { title: "Combo de Poke/Burst", desc: "Use a Habilidade 1 para pokear à distância. Se engajar, use a Habilidade 2 para se curar e a Ultimate para controle de grupo e dano massivo.", skillIcons: [] }
     ]
   },
   "Bruno": {
@@ -199,7 +199,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Onda do Mundo", skilldesc: "Bruno chuta uma bola de energia com força total, que ricocheteia entre os inimigos, causando 250 (+100% de Ataque Físico Total) de Dano Físico e reduzindo a Defesa Física deles." }
     ],
     combos: [
-      { title: "Combo de Dano", desc: "Use a Habilidade 1 para pokear e carregar a passiva. Use a Habilidade 2 para se reposicionar ou atordoar. A Ultimate é ideal para lutas em equipe para maximizar os ricochetes." }
+      { title: "Combo de Dano", desc: "Use a Habilidade 1 para pokear e carregar a passiva. Use a Habilidade 2 para se reposicionar ou atordoar. A Ultimate é ideal para lutas em equipe para maximizar os ricochetes.", skillIcons: [] }
     ]
   },
   "Clint": {
@@ -212,7 +212,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Granada Howitzer", skilldesc: "Clint lança uma granada, causando 280 (+100% de Ataque Físico Total) de Dano Físico. Ele pode armazenar até 5 granadas." }
     ],
     combos: [
-      { title: "Combo de Burst", desc: "Use a Habilidade 1, seguido de um Ataque Básico (passiva). Use a Habilidade 3 para dano e lentidão. Use a Habilidade 2 para escapar ou imobilizar um inimigo que se aproxima." }
+      { title: "Combo de Burst", desc: "Use a Habilidade 1, seguido de um Ataque Básico (passiva). Use a Habilidade 3 para dano e lentidão. Use a Habilidade 2 para escapar ou imobilizar um inimigo que se aproxima.", skillIcons: [] }
     ]
   },
   "Rafaela": {
@@ -225,7 +225,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Batismo Sagrado", skilldesc: "Rafaela libera a luz sagrada em uma linha, causando 460 (+120% de Poder Mágico Total) de Dano Mágico e atordoando os inimigos por 1.5s." }
     ],
     combos: [
-      { title: "Combo de Suporte", desc: "Use a Habilidade 2 para curar e dar velocidade aos aliados. Use a Habilidade 1 para pokear e revelar inimigos. A Ultimate é crucial para iniciar lutas ou proteger seus aliados com o atordoamento em área." }
+      { title: "Combo de Suporte", desc: "Use a Habilidade 2 para curar e dar velocidade aos aliados. Use a Habilidade 1 para pokear e revelar inimigos. A Ultimate é crucial para iniciar lutas ou proteger seus aliados com o atordoamento em área.", skillIcons: [] }
     ]
   },
   "Eudora": {
@@ -238,7 +238,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Trovão da Fúria", skilldesc: "Eudora invoca uma tempestade de raios, causando 480 (+180% de Poder Mágico Total) de Dano Mágico. Se o alvo estiver com a marca, a tempestade causa dano adicional massivo." }
     ],
     combos: [
-      { title: "Combo de Burst Completo", desc: "Use a Habilidade 2 para atordoar e aplicar a marca, seguido da Habilidade 1 para dano e, em seguida, a Ultimate para finalizar o alvo com dano massivo." }
+      { title: "Combo de Burst Completo", desc: "Use a Habilidade 2 para atordoar e aplicar a marca, seguido da Habilidade 1 para dano e, em seguida, a Ultimate para finalizar o alvo com dano massivo.", skillIcons: [] }
     ]
   },
   "Zilong": {
@@ -251,7 +251,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Guerreiro Supremo", skilldesc: "Zilong ganha 40% de Velocidade de Movimento, 45% de Velocidade de Ataque e imunidade a lentidão por 7.5s." }
     ],
     combos: [
-      { title: "Combo de Pickoff", desc: "Ative a Ultimate para velocidade. Use a Habilidade 2 para se aproximar do alvo, seguido da Habilidade 1 para jogá-lo em direção à sua equipe. Use Ataques Básicos para finalizar." }
+      { title: "Combo de Pickoff", desc: "Ative a Ultimate para velocidade. Use a Habilidade 2 para se aproximar do alvo, seguido da Habilidade 1 para jogá-lo em direção à sua equipe. Use Ataques Básicos para finalizar.", skillIcons: [] }
     ]
   },
   "Fanny": {
@@ -264,7 +264,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Corte do Carniceiro", skilldesc: "Fanny inicia um ataque rápido em um inimigo, causando 500 (+240% de Ataque Físico Extra) de Dano Físico. Cada acúmulo da Marca da Presa no alvo aumentará o dano em 20%." }
     ],
     combos: [
-      { title: "Combo de Voo", desc: "Use a Habilidade 2 para voar pelo mapa, atingindo os inimigos para aplicar marcas. Use a Habilidade 1 enquanto voa para causar dano em área. Finalize um alvo marcado com a Ultimate." }
+      { title: "Combo de Voo", desc: "Use a Habilidade 2 para voar pelo mapa, atingindo os inimigos para aplicar marcas. Use a Habilidade 1 enquanto voa para causar dano em área. Finalize um alvo marcado com a Ultimate.", skillIcons: [] }
     ]
   },
   "Layla": {
@@ -277,7 +277,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Destruição Apressada", skilldesc: "Layla dispara um canhão de energia, causando 500 (+150% de Ataque Físico Total) de Dano Físico em uma linha. O alcance de seus Ataques Básicos aumenta temporariamente." }
     ],
     combos: [
-      { title: "Combo de Longo Alcance", desc: "Use a Habilidade 1 e Habilidade 2 à distância para aplicar marcas. Ative a Ultimate para dano massivo e aumento de alcance para finalizar alvos em fuga." }
+      { title: "Combo de Longo Alcance", desc: "Use a Habilidade 1 e Habilidade 2 à distância para aplicar marcas. Ative a Ultimate para dano massivo e aumento de alcance para finalizar alvos em fuga.", skillIcons: [] }
     ]
   },
   "Hayabusa": {
@@ -290,7 +290,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Ougi: Matança Sombria", skilldesc: "Hayabusa se funde com as sombras e causa múltiplos ataques em uma área, causando 130 (+75% de Ataque Físico Extra) de Dano Físico. Prioriza inimigos com a Marca Sombra." }
     ],
     combos: [
-      { title: "Combo de Assassino", desc: "Use a Habilidade 2 para se aproximar ou posicionar sombras. Use a Habilidade 1 para pokear e aplicar marcas. Ative a Ultimate em um alvo marcado para dano máximo e, em seguida, use a Habilidade 2 para escapar." }
+      { title: "Combo de Assassino", desc: "Use a Habilidade 2 para se aproximar ou posicionar sombras. Use a Habilidade 1 para pokear e aplicar marcas. Ative a Ultimate em um alvo marcado para dano máximo e, em seguida, use a Habilidade 2 para escapar.", skillIcons: [] }
     ]
   },
   "Gord": {
@@ -303,7 +303,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Êxtase Místico", skilldesc: "Gord dispara um raio de energia, causando 200 (+50% de Poder Mágico Total) de Dano Mágico a cada 0.2s e retardando os inimigos em 20%." }
     ],
     combos: [
-      { title: "Combo de Controle e Dano", desc: "Use a Habilidade 1 para atordoar o alvo. Imediatamente coloque a Habilidade 2 sob ele e ative a Ultimate para dano contínuo massivo." }
+      { title: "Combo de Controle e Dano", desc: "Use a Habilidade 1 para atordoar o alvo. Imediatamente coloque a Habilidade 2 sob ele e ative a Ultimate para dano contínuo massivo.", skillIcons: [] }
     ]
   },
   "Kagura": {
@@ -316,7 +316,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Reversão do Yin Yang", skilldesc: "Com o guarda-chuva, ele repele inimigos próximos. Sem o guarda-chuva, ele puxa os inimigos em direção a ele, causando dano e retardando-os." }
     ],
     combos: [
-      { title: "Combo de Burst Completo", desc: "Jogue o guarda-chuva (Habilidade 1), use a Ultimate para puxar os inimigos, use a Habilidade 1 novamente para reposicionar o guarda-chuva, e use a segunda parte da Ultimate para causar dano massivo." }
+      { title: "Combo de Burst Completo", desc: "Jogue o guarda-chuva (Habilidade 1), use a Ultimate para puxar os inimigos, use a Habilidade 1 novamente para reposicionar o guarda-chuva, e use a segunda parte da Ultimate para causar dano massivo.", skillIcons: [] }
     ]
   },
   "Chou": {
@@ -329,7 +329,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "O Caminho do Dragão", skilldesc: "Chou chuta um alvo, repelindo-o e causando 400 (+200% de Ataque Físico Extra) de Dano Físico. Ele pode reativar para perseguir o alvo chutado." }
     ],
     combos: [
-      { title: "Combo de Insec", desc: "Use a Habilidade 2 para se posicionar atrás de um alvo, use a Ultimate para chutá-lo em direção à sua equipe, e use a Habilidade 1 para controle adicional." }
+      { title: "Combo de Insec", desc: "Use a Habilidade 2 para se posicionar atrás de um alvo, use a Ultimate para chutá-lo em direção à sua equipe, e use a Habilidade 1 para controle adicional.", skillIcons: [] }
     ]
   },
   "Ruby": {
@@ -342,7 +342,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Eu Estou Ofendida!", skilldesc: "Ruby usa sua foice para puxar todos os inimigos em uma grande área em sua direção, causando 200 (+200% de Ataque Físico Total) de Dano Físico e atordoando-os." }
     ],
     combos: [
-      { title: "Combo de Controle em Massa", desc: "Use a Ultimate para puxar vários inimigos, seguido da Habilidade 2 para atordoá-los em grupo. Use a Habilidade 1 e Ataques Básicos para se curar com o Roubo de Vida." }
+      { title: "Combo de Controle em Massa", desc: "Use a Ultimate para puxar vários inimigos, seguido da Habilidade 2 para atordoá-los em grupo. Use a Habilidade 1 e Ataques Básicos para se curar com o Roubo de Vida.", skillIcons: [] }
     ]
   },
   "Yi Sun-shin": {
@@ -355,7 +355,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Chuva de Flechas da Montanha", skilldesc: "Yi Sun-shin comanda a frota para lançar 3 ondas de flechas de fogo em todos os heróis inimigos no mapa, causando dano e revelando sua posição." }
     ],
     combos: [
-      { title: "Combo de Dano Híbrido", desc: "Use a Habilidade 3 para pokear à distância. Use a Habilidade 2 para se aproximar ou escapar. Alterne entre arco e espada para maximizar o dano da passiva. A Ultimate é global e pode ser usada para garantir abates ou ajudar aliados." }
+      { title: "Combo de Dano Híbrido", desc: "Use a Habilidade 3 para pokear à distância. Use a Habilidade 2 para se aproximar ou escapar. Alterne entre arco e espada para maximizar o dano da passiva. A Ultimate é global e pode ser usada para garantir abates ou ajudar aliados.", skillIcons: [] }
     ]
   },
   "Moskov": {
@@ -368,7 +368,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Lança da Destruição", skilldesc: "Moskov lança uma lança poderosa que viaja pelo mapa, causando dano massivo com base na distância percorrida." }
     ],
     combos: [
-      { title: "Combo de Atordoamento e Dano", desc: "Use a Habilidade 1 para se reposicionar. Use a Habilidade 2 para empurrar um inimigo contra uma parede e atordoá-lo. Use Ataques Básicos para causar dano penetrante. A Ultimate pode ser usada para finalizar alvos em fuga em qualquer lugar do mapa." }
+      { title: "Combo de Atordoamento e Dano", desc: "Use a Habilidade 1 para se reposicionar. Use a Habilidade 2 para empurrar um inimigo contra uma parede e atordoá-lo. Use Ataques Básicos para causar dano penetrante. A Ultimate pode ser usada para finalizar alvos em fuga em qualquer lugar do mapa.", skillIcons: [] }
     ]
   },
   "Johnson": {
@@ -381,7 +381,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Aceleração Máxima", skilldesc: "Johnson se transforma em um carro, acelerando gradualmente. Ele pode levar um aliado com ele. Colidir com um inimigo causa dano e atordoamento em área." }
     ],
     combos: [
-      { title: "Combo de Gank", desc: "Ative a Ultimate e dirija pelo mapa com um aliado. Ao encontrar um alvo, colida com ele para atordoar. Use a Habilidade 1 para atordoar novamente e a Habilidade 2 para causar lentidão e dano." }
+      { title: "Combo de Gank", desc: "Ative a Ultimate e dirija pelo mapa com um aliado. Ao encontrar um alvo, colida com ele para atordoar. Use a Habilidade 1 para atordoar novamente e a Habilidade 2 para causar lentidão e dano.", skillIcons: [] }
     ]
   },
   "Cyclops": {
@@ -394,7 +394,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Bloqueio Estelar", skilldesc: "Cyclops cria uma esfera gigante que persegue um herói, imobilizando-o por 1-2s e causando 500 (+220% de Poder Mágico Total) de Dano Mágico." }
     ],
     combos: [
-      { title: "Combo de Perseguição e Dano", desc: "Use a Ultimate para prender um alvo. Aproxime-se com a Habilidade 2 ativada para dano contínuo e use a Habilidade 1 para dano em área. A passiva reduzirá suas recargas rapidamente." }
+      { title: "Combo de Perseguição e Dano", desc: "Use a Ultimate para prender um alvo. Aproxime-se com a Habilidade 2 ativada para dano contínuo e use a Habilidade 1 para dano em área. A passiva reduzirá suas recargas rapidamente.", skillIcons: [] }
     ]
   },
   "Hilda": {
@@ -407,7 +407,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Poder da Megalitia", skilldesc: "Hilda salta e ataca um alvo, causando 800 (+250% de Ataque Físico Extra) de Dano Físico. A habilidade ganha acúmulos a cada abate ou assistência, aumentando seu dano." }
     ],
     combos: [
-      { title: "Combo de Caça", desc: "Fique nos arbustos para ativar a passiva. Use a Habilidade 1 para se aproximar rapidamente, use a Habilidade 2 para prender o alvo e, em seguida, finalize com a Ultimate para dano massivo." }
+      { title: "Combo de Caça", desc: "Fique nos arbustos para ativar a passiva. Use a Habilidade 1 para se aproximar rapidamente, use a Habilidade 2 para prender o alvo e, em seguida, finalize com a Ultimate para dano massivo.", skillIcons: [] }
     ]
   },
   "Aurora": {
@@ -420,7 +420,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Destruição Fria", skilldesc: "Aurora invoca um meteoro de gelo gigante que atinge uma área, causando 800 (+240% de Poder Mágico Total) de Dano Mágico e retardando muito os inimigos." }
     ],
     combos: [
-      { title: "Combo de Congelamento em Massa", desc: "Carregue a passiva com 4 acúmulos. Use a Habilidade 2 ou Habilidade 1 para congelar um alvo (ou a Ultimate para congelar em área), seguido das outras habilidades para dano máximo enquanto estão imobilizados." }
+      { title: "Combo de Congelamento em Massa", desc: "Carregue a passiva com 4 acúmulos. Use a Habilidade 2 ou Habilidade 1 para congelar um alvo (ou a Ultimate para congelar em área), seguido das outras habilidades para dano máximo enquanto estão imobilizados.", skillIcons: [] }
     ]
   },
   "Lapu-Lapu": {
@@ -433,7 +433,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "O Mais Corajoso Lutador", skilldesc: "Lapu-Lapu salta e combina suas lâminas, entrando na postura de Lâminas Pesadas com habilidades aprimoradas. Ele causa dano massivo na aterrissagem." }
     ],
     combos: [
-      { title: "Combo de Transformação", desc: "Use a Habilidade 1 e 2 para carregar a passiva. Ative a Ultimate para pular nos inimigos, entre na postura de Lâminas Pesadas e use suas habilidades aprimoradas para dano massivo e controle." }
+      { title: "Combo de Transformação", desc: "Use a Habilidade 1 e 2 para carregar a passiva. Ative a Ultimate para pular nos inimigos, entre na postura de Lâminas Pesadas e use suas habilidades aprimoradas para dano massivo e controle.", skillIcons: [] }
     ]
   },
   "Vexana": {
@@ -446,7 +446,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Guardião Eterno", skilldesc: "Vexana invoca um Cavaleiro Amaldiçoado que ataca junto com ela, causando dano e arremessando os inimigos ao ar com seu ataque inicial." }
     ],
     combos: [
-      { title: "Combo de Controle e Invocação", desc: "Use a Habilidade 1 para aterrorizar um alvo, coloque a Habilidade 2 sob ele e invoque a Ultimate para dano contínuo e controle adicional do cavaleiro." }
+      { title: "Combo de Controle e Invocação", desc: "Use a Habilidade 1 para aterrorizar um alvo, coloque a Habilidade 2 sob ele e invoque a Ultimate para dano contínuo e controle adicional do cavaleiro.", skillIcons: [] }
     ]
   },
   "Roger": {
@@ -459,7 +459,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Forma de Lobo / Restaurar Forma Humana", skilldesc: "Roger se transforma em lobo, saltando e causando dano. Retornar à forma humana causa dano em área e concede um escudo." }
     ],
     combos: [
-      { title: "Combo de Caça", desc: "Na forma humana, use a Habilidade 1 para pokear. Use a Ultimate para pular em um alvo com pouca vida. Na forma de lobo, use a Habilidade 2 para velocidade de ataque e a Habilidade 1 para finalizar." }
+      { title: "Combo de Caça", desc: "Na forma humana, use a Habilidade 1 para pokear. Use a Ultimate para pular em um alvo com pouca vida. Na forma de lobo, use a Habilidade 2 para velocidade de ataque e a Habilidade 1 para finalizar.", skillIcons: [] }
     ]
   },
   "Gatotkaca": {
@@ -472,7 +472,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Avatar do Guardião", skilldesc: "Gatotkaca salta para uma área, arremessando os inimigos ao ar e causando dano massivo. Inimigos próximos à borda da área são puxados para o centro." }
     ],
     combos: [
-      { title: "Combo de Iniciação e Provocação", desc: "Use a Ultimate para pular no meio da equipe inimiga. Em seguida, use a Habilidade 2 para provocar e forçá-los a atacá-lo, enquanto sua equipe causa dano." }
+      { title: "Combo de Iniciação e Provocação", desc: "Use a Ultimate para pular no meio da equipe inimiga. Em seguida, use a Habilidade 2 para provocar e forçá-los a atacá-lo, enquanto sua equipe causa dano.", skillIcons: [] }
     ]
   },
   "Harley": {
@@ -485,7 +485,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Anel de Fogo Mortal", skilldesc: "Harley lança um anel de fogo em um alvo, causando 200 (+60% de Poder Mágico Total) de Dano Mágico e criando um anel ao redor dele. O anel explode após 4s, causando dano massivo com base no dano que Harley causou ao alvo enquanto o anel estava ativo." }
     ],
     combos: [
-      { title: "Combo de Burst e Fuga", desc: "Use a Habilidade 2 para se aproximar, ative a Ultimate no alvo, use a Habilidade 1 para causar o máximo de dano possível e, em seguida, reative a Habilidade 2 para retornar com segurança antes que o anel exploda." }
+      { title: "Combo de Burst e Fuga", desc: "Use a Habilidade 2 para se aproximar, ative a Ultimate no alvo, use a Habilidade 1 para causar o máximo de dano possível e, em seguida, reative a Habilidade 2 para retornar com segurança antes que o anel exploda.", skillIcons: [] }
     ]
   },
   "Irithel": {
@@ -498,7 +498,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Besta Pesada", skilldesc: "Irithel ordena que Leo salte, ganhando dano de Ataque Básico aumentado e dano em área por 15s." }
     ],
     combos: [
-      { title: "Combo de Dano em Movimento", desc: "Ative a Ultimate para dano em área. Use a Habilidade 1 para reduzir a defesa dos alvos e a Habilidade 2 para retardá-los, enquanto se move e ataca continuamente." }
+      { title: "Combo de Dano em Movimento", desc: "Ative a Ultimate para dano em área. Use a Habilidade 1 para reduzir a defesa dos alvos e a Habilidade 2 para retardá-los, enquanto se move e ataca continuamente.", skillIcons: [] }
     ]
   },
   "Grock": {
@@ -511,7 +511,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Carga Selvagem", skilldesc: "Grock avança, repelindo os inimigos. Se ele colidir com uma parede ou torre, causa dano massivo em área e atordoa." }
     ],
     combos: [
-      { title: "Combo de Parede", desc: "Use a Habilidade 2 para criar uma parede atrás de um inimigo. Em seguida, use a Ultimate para avançar e colidir com o inimigo contra a parede, causando atordoamento e dano massivo." }
+      { title: "Combo de Parede", desc: "Use a Habilidade 2 para criar uma parede atrás de um inimigo. Em seguida, use a Ultimate para avançar e colidir com o inimigo contra a parede, causando atordoamento e dano massivo.", skillIcons: [] }
     ]
   },
   "Argus": {
@@ -524,7 +524,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Eterno Mal", skilldesc: "Argus se transforma em um anjo caído por 4s, tornando-se imune à morte. 40% do dano recebido durante este período o curará." }
     ],
     combos: [
-      { title: "Combo de Imortalidade", desc: "Use a Habilidade 1 para se aproximar. Ative a Ultimate quando estiver com pouca vida para se tornar imortal e se curar. Use a Habilidade 2 e Ataques Básicos para causar dano enquanto estiver invulnerável." }
+      { title: "Combo de Imortalidade", desc: "Use a Habilidade 1 para se aproximar. Ative a Ultimate quando estiver com pouca vida para se tornar imortal e se curar. Use a Habilidade 2 e Ataques Básicos para causar dano enquanto estiver invulnerável.", skillIcons: [] }
     ]
   },
   "Odette": {
@@ -537,7 +537,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Canção do Cisne", skilldesc: "Odette canta uma canção, causando dano contínuo em uma grande área e retardando os inimigos. Ela também ganha um escudo." }
     ],
     combos: [
-      { title: "Combo de Dano em Área", desc: "Use a Habilidade 2 para imobilizar os alvos. Em seguida, ative a Ultimate para causar dano massivo em área. Use a Habilidade 1 para pokear e ativar a passiva." }
+      { title: "Combo de Dano em Área", desc: "Use a Habilidade 2 para imobilizar os alvos. Em seguida, ative a Ultimate para causar dano massivo em área. Use a Habilidade 1 para pokear e ativar a passiva.", skillIcons: [] }
     ]
   },
   "Lancelot": {
@@ -550,7 +550,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Execução Fantasma", skilldesc: "Lancelot se torna invulnerável e ataca em uma direção, causando 400 (+250% de Ataque Físico Extra) de Dano Físico." }
     ],
     combos: [
-      { title: "Combo de Dano e Mobilidade", desc: "Use a Habilidade 1 para avançar através de minions e heróis, zerando a recarga. Use a Habilidade 2 para dano em área e para desviar de habilidades. Finalize com a Ultimate para dano e invulnerabilidade." }
+      { title: "Combo de Dano e Mobilidade", desc: "Use a Habilidade 1 para avançar através de minions e heróis, zerando a recarga. Use a Habilidade 2 para dano em área e para desviar de habilidades. Finalize com a Ultimate para dano e invulnerabilidade.", skillIcons: [] }
     ]
   },
   "Diggie": {
@@ -563,7 +563,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Jornada do Tempo", skilldesc: "Diggie cria um escudo para si e seus aliados próximos que os torna imunes a efeitos de controle de grupo por 2.5s." }
     ],
     combos: [
-      { title: "Combo de Proteção e Controle", desc: "Use a Habilidade 1 para zoneamento e dano. Use a Habilidade 2 em um alvo que está fugindo para puxá-lo de volta. A Ultimate é crucial para salvar sua equipe de habilidades de controle de grupo em massa." }
+      { title: "Combo de Proteção e Controle", desc: "Use a Habilidade 1 para zoneamento e dano. Use a Habilidade 2 em um alvo que está fugindo para puxá-lo de volta. A Ultimate é crucial para salvar sua equipe de habilidades de controle de grupo em massa.", skillIcons: [] }
     ]
   },
   "Hylos": {
@@ -576,7 +576,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Caminho Glorioso", skilldesc: "Hylos cria um caminho que aumenta sua velocidade de movimento e cura, enquanto retarda os inimigos que estão nele." }
     ],
     combos: [
-      { title: "Combo de Tanque e Suporte", desc: "Ative a Habilidade 2 para causar dano e lentidão contínuos. Use a Habilidade 1 para atordoar um alvo prioritário. Use a Ultimate para iniciar uma luta, dar velocidade à sua equipe ou para escapar." }
+      { title: "Combo de Tanque e Suporte", desc: "Ative a Habilidade 2 para causar dano e lentidão contínuos. Use a Habilidade 1 para atordoar um alvo prioritário. Use a Ultimate para iniciar uma luta, dar velocidade à sua equipe ou para escapar.", skillIcons: [] }
     ]
   },
   "Zhask": {
@@ -590,7 +590,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Dominador do Descenso", skilldesc: "Zhask se funde com sua cria, aumentando muito seus atributos e aprimorando suas habilidades." }
     ],
     combos: [
-      { title: "Combo de Invocador", desc: "Posicione sua cria (Habilidade 1). Use a Habilidade 3 para dano em área e a Habilidade 2 para atordoar. Ative a Ultimate para se fundir com a cria e maximizar seu dano e sobrevivência." }
+      { title: "Combo de Invocador", desc: "Posicione sua cria (Habilidade 1). Use a Habilidade 3 para dano em área e a Habilidade 2 para atordoar. Ative a Ultimate para se fundir com a cria e maximizar seu dano e sobrevivência.", skillIcons: [] }
     ]
   },
   "Helcurt": {
@@ -603,7 +603,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Olho da Noite", skilldesc: "Helcurt mergulha o mapa inteiro na escuridão, reduzindo a visão de todos os heróis inimigos. Ele ganha velocidade de movimento e ataque durante o efeito." }
     ],
     combos: [
-      { title: "Combo de Emboscada", desc: "Ative a Ultimate para criar escuridão. Use a Habilidade 1 para se teletransportar para um alvo, silenciando-o. Use a Habilidade 2 para dano massivo." }
+      { title: "Combo de Emboscada", desc: "Ative a Ultimate para criar escuridão. Use a Habilidade 1 para se teletransportar para um alvo, silenciando-o. Use a Habilidade 2 para dano massivo.", skillIcons: [] }
     ]
   },
   "Pharsa": {
@@ -616,7 +616,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Ataque Aéreo Emplumado", skilldesc: "Pharsa voa e pode lançar 4 rodadas de bombardeios aéreos em uma grande área, causando dano massivo." }
     ],
     combos: [
-      { title: "Combo de Bombardeio", desc: "Use a Habilidade 1 para marcar os alvos. Ative a Ultimate para bombardeá-los à distância. A marca da Habilidade 1 os atordoará se forem atingidos pela Ultimate. Use a Habilidade 2 para escapar ou se reposicionar." }
+      { title: "Combo de Bombardeio", desc: "Use a Habilidade 1 para marcar os alvos. Ative a Ultimate para bombardeá-los à distância. A marca da Habilidade 1 os atordoará se forem atingidos pela Ultimate. Use a Habilidade 2 para escapar ou se reposicionar.", skillIcons: [] }
     ]
   },
   "Lesley": {
@@ -629,7 +629,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Tiro Final", skilldesc: "Lesley mira em um herói inimigo e dispara 4 balas mortais. Cada bala pode ser bloqueada por outros heróis." }
     ],
     combos: [
-      { title: "Combo de Atiradora", desc: "Use a Habilidade 1 para se posicionar e aprimorar seu próximo ataque. Use a Habilidade 2 para se afastar de inimigos que se aproximam. Finalize alvos em fuga com a Ultimate." }
+      { title: "Combo de Atiradora", desc: "Use a Habilidade 1 para se posicionar e aprimorar seu próximo ataque. Use a Habilidade 2 para se afastar de inimigos que se aproximam. Finalize alvos em fuga com a Ultimate.", skillIcons: [] }
     ]
   },
   "Jawhead": {
@@ -642,7 +642,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Incontrolável", skilldesc: "Jawhead se prende a um alvo, avança e o esmaga no chão, causando dano e atordoamento." }
     ],
     combos: [
-      { title: "Combo de Arremesso", desc: "Ative a Habilidade 2 para pegar velocidade. Use a Ultimate para se prender a um alvo. Use a Habilidade 1 para arremessar o alvo em direção à sua equipe." }
+      { title: "Combo de Arremesso", desc: "Ative a Habilidade 2 para pegar velocidade. Use a Ultimate para se prender a um alvo. Use a Habilidade 1 para arremessar o alvo em direção à sua equipe.", skillIcons: [] }
     ]
   },
   "Angela": {
@@ -655,7 +655,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Guarda-Coração", skilldesc: "Angela se anexa a um herói aliado, concedendo-lhe um escudo massivo. Ela pode usar suas outras habilidades enquanto estiver anexada." }
     ],
     combos: [
-      { title: "Combo de Suporte Global", desc: "Use a Ultimate para se anexar a um aliado em perigo em qualquer lugar do mapa. Enquanto estiver anexada, use a Habilidade 1 para curar/causar dano e a Habilidade 2 para prender inimigos." }
+      { title: "Combo de Suporte Global", desc: "Use a Ultimate para se anexar a um aliado em perigo em qualquer lugar do mapa. Enquanto estiver anexada, use a Habilidade 1 para curar/causar dano e a Habilidade 2 para prender inimigos.", skillIcons: [] }
     ]
   },
   "Gusion": {
@@ -668,7 +668,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Incandescência", skilldesc: "Gusion avança e zera a recarga da Habilidade 1 e 2. Ele pode reativar para avançar novamente." }
     ],
     combos: [
-      { title: "Combo de Burst Rápido", desc: "Use a Habilidade 1 para marcar, reative para se aproximar. Use a Habilidade 2, ative a Ultimate para zerar as recargas, use a Habilidade 2 novamente, e traga as adagas de volta para dano massivo." }
+      { title: "Combo de Burst Rápido", desc: "Use a Habilidade 1 para marcar, reative para se aproximar. Use a Habilidade 2, ative a Ultimate para zerar as recargas, use a Habilidade 2 novamente, e traga as adagas de volta para dano massivo.", skillIcons: [] }
     ]
   },
   "Valir": {
@@ -681,7 +681,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Vingança Flamejante", skilldesc: "Valir remove todos os debuffs e aprimora suas outras habilidades, aumentando seu dano e alcance por um período." }
     ],
     combos: [
-      { title: "Combo de Controle e Queimadura", desc: "Use a Habilidade 1 para pokear e aplicar marcas. Use a Habilidade 2 para repelir inimigos que se aproximam. Ative a Ultimate para aprimorar suas habilidades e use a Habilidade 1 repetidamente para atordoar e causar dano massivo." }
+      { title: "Combo de Controle e Queimadura", desc: "Use a Habilidade 1 para pokear e aplicar marcas. Use a Habilidade 2 para repelir inimigos que se aproximam. Ative a Ultimate para aprimorar suas habilidades e use a Habilidade 1 repetidamente para atordoar e causar dano massivo.", skillIcons: [] }
     ]
   },
   "Martis": {
@@ -694,7 +694,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Dizimação", skilldesc: "Martis avança em um herói, causando Dano Verdadeiro massivo. Se o alvo for morto, a recarga é zerada e ele ganha velocidade de movimento." }
     ],
     combos: [
-      { title: "Combo de Aniquilação", desc: "Use a Habilidade 1 para agrupar os inimigos. Use a Habilidade 2 para causar dano e evitar controle de grupo. Finalize alvos com pouca vida com a Ultimate e repita em outros inimigos." }
+      { title: "Combo de Aniquilação", desc: "Use a Habilidade 1 para agrupar os inimigos. Use a Habilidade 2 para causar dano e evitar controle de grupo. Finalize alvos com pouca vida com a Ultimate e repita em outros inimigos.", skillIcons: [] }
     ]
   },
   "Uranus": {
@@ -707,7 +707,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Consagração", skilldesc: "Uranus remove efeitos de lentidão e se cura, ganhando velocidade de movimento e aumentando o poder de sua passiva e escudo." }
     ],
     combos: [
-      { title: "Combo de Regeneração", desc: "Ative a Habilidade 1 para dano contínuo. Use a Habilidade 2 para se aproximar ou escapar. Ative a Ultimate para aumentar drasticamente sua regeneração e sobrevivência no meio da luta." }
+      { title: "Combo de Regeneração", desc: "Ative a Habilidade 1 para dano contínuo. Use a Habilidade 2 para se aproximar ou escapar. Ative a Ultimate para aumentar drasticamente sua regeneração e sobrevivência no meio da luta.", skillIcons: [] }
     ]
   },
   "Hanabi": {
@@ -720,7 +720,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Técnica Proibida: Higanbana", skilldesc: "Hanabi joga o Higanbana que floresce, imobilizando o primeiro inimigo atingido. A flor se espalha para inimigos próximos, imobilizando-os também." }
     ],
     combos: [
-      { title: "Combo de Luta em Equipe", desc: "Ative a Habilidade 1 para ricochetear seus ataques em lutas em equipe. Use a Ultimate para prender um grupo de inimigos. Use a Habilidade 2 para retardar e pokear." }
+      { title: "Combo de Luta em Equipe", desc: "Ative a Habilidade 1 para ricochetear seus ataques em lutas em equipe. Use a Ultimate para prender um grupo de inimigos. Use a Habilidade 2 para retardar e pokear.", skillIcons: [] }
     ]
   },
   "Chang'e": {
@@ -733,7 +733,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Chuva de Meteoros", skilldesc: "Chang'e dispara uma torrente de meteoros para a frente, causando dano massivo. Sua velocidade de movimento aumenta durante a habilidade." }
     ],
     combos: [
-      { title: "Combo de Dano Contínuo", desc: "Use a Habilidade 2 para ganhar escudo e aprimorar suas habilidades. Use a Ultimate para dano massivo à distância e finalize com a Habilidade 1." }
+      { title: "Combo de Dano Contínuo", desc: "Use a Habilidade 2 para ganhar escudo e aprimorar suas habilidades. Use a Ultimate para dano massivo à distância e finalize com a Habilidade 1.", skillIcons: [] }
     ]
   },
   "Kaja": {
@@ -746,7 +746,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Julgamento Divino", skilldesc: "Kaja prende e suprime um herói inimigo com seu chicote, puxando-o por 2s e causando dano. Ele rouba a Defesa Física e Mágica do alvo." }
     ],
     combos: [
-      { title: "Combo de Pickoff Supremo", desc: "Use a Habilidade 2 para se aproximar. Use a Ultimate para prender um alvo importante e use Lampejo para puxá-lo instantaneamente para sua equipe." }
+      { title: "Combo de Pickoff Supremo", desc: "Use a Habilidade 2 para se aproximar. Use a Ultimate para prender um alvo importante e use Lampejo para puxá-lo instantaneamente para sua equipe.", skillIcons: [] }
     ]
   },
   "Selena": {
@@ -759,7 +759,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Queda Primeva / Bênção da Lua Negra", skilldesc: "Muda para a forma Abissal, ganhando velocidade e aprimorando seu próximo ataque. Retorna para a forma Élfica, ganhando velocidade." }
     ],
     combos: [
-      { title: "Combo de Atordoamento e Abate", desc: "Na forma élfica, acerte uma Flecha Abissal (Habilidade 2) de longa distância. Mude para a forma abissal (Ultimate), use a Habilidade 1 para se aproximar e a Habilidade 2 para finalizar com dano." }
+      { title: "Combo de Atordoamento e Abate", desc: "Na forma élfica, acerte uma Flecha Abissal (Habilidade 2) de longa distância. Mude para a forma abissal (Ultimate), use a Habilidade 1 para se aproximar e a Habilidade 2 para finalizar com dano.", skillIcons: [] }
     ]
   },
   "Aldous": {
@@ -772,7 +772,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Contrato: Perseguir o Destino", skilldesc: "Aldous revela a posição de todos os heróis inimigos. Ele pode reativar para voar em direção a um herói, causando dano e repelindo-o na chegada." }
     ],
     combos: [
-      { title: "Combo de Abate Global", desc: "Farme acúmulos com a Habilidade 1 em minions e monstros. Use a Ultimate para voar até um alvo com pouca vida em qualquer lugar do mapa e finalize-o com um soco fortalecido da Habilidade 1." }
+      { title: "Combo de Abate Global", desc: "Farme acúmulos com a Habilidade 1 em minions e monstros. Use a Ultimate para voar até um alvo com pouca vida em qualquer lugar do mapa e finalize-o com um soco fortalecido da Habilidade 1.", skillIcons: [] }
     ]
   },
   "Claude": {
@@ -785,7 +785,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Dueto Ardente", skilldesc: "Claude e Dexter disparam uma barragem de balas ao redor, causando dano em área. Concede um escudo a Claude." }
     ],
     combos: [
-      { title: "Combo de Dano em Área", desc: "Use a Habilidade 2 para posicionar a imagem. Use a Habilidade 1 para roubar status dos inimigos, ative a Ultimate para dano massivo e, se necessário, use a Habilidade 2 para escapar." }
+      { title: "Combo de Dano em Área", desc: "Use a Habilidade 2 para posicionar a imagem. Use a Habilidade 1 para roubar status dos inimigos, ative a Ultimate para dano massivo e, se necessário, use a Habilidade 2 para escapar.", skillIcons: [] }
     ]
   },
   "Vale": {
@@ -798,7 +798,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Lufada de Vento", skilldesc: "Vale invoca uma tempestade de vento em uma área, causando dano massivo. Pode ser aprimorado para puxar os inimigos." }
     ],
     combos: [
-      { title: "Combo de Controle e Burst (Aprimorado para Controle)", desc: "Use a Habilidade 2 aprimorada para arremessar o alvo. Imediatamente use a Ultimate para dano e controle adicionais, seguido da Habilidade 1 para finalizar." }
+      { title: "Combo de Controle e Burst (Aprimorado para Controle)", desc: "Use a Habilidade 2 aprimorada para arremessar o alvo. Imediatamente use a Ultimate para dano e controle adicionais, seguido da Habilidade 1 para finalizar.", skillIcons: [] }
     ]
   },
   "Leomord": {
@@ -811,7 +811,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Chamado do Cavalo Fantasma", skilldesc: "Leomord convoca Barbiel, que corre pelo campo de batalha, repelindo e retardando os inimigos. Leomord pode então montar Barbiel, ganhando novas habilidades." }
     ],
     combos: [
-      { title: "Combo Montado", desc: "Use a Ultimate para convocar Barbiel e derrubar os inimigos. Monte no cavalo e use suas habilidades aprimoradas (Habilidade 1 e 2) para perseguir e causar dano." }
+      { title: "Combo Montado", desc: "Use a Ultimate para convocar Barbiel e derrubar os inimigos. Monte no cavalo e use suas habilidades aprimoradas (Habilidade 1 e 2) para perseguir e causar dano.", skillIcons: [] }
     ]
   },
   "Lunox": {
@@ -824,8 +824,8 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Ordem e Caos", skilldesc: "Brilho (Luz): Lunox se torna invulnerável, causando dano em área. Escuridão (Trevas): Lunox pisca em uma direção, causando dano e aprimorando sua Habilidade 1." }
     ],
     combos: [
-      { title: "Combo de Dano (Escuridão)", desc: "Use a Habilidade 1 (escura) repetidamente nos inimigos para maximizar o dano. Se estiver em perigo, use a Ultimate (escura) para piscar e escapar." },
-      { title: "Combo de Sobrevivência (Luz)", desc: "Use a Habilidade 2 para se curar. Se for focada, use a Ultimate (luz) para se tornar invulnerável e causar dano." }
+      { title: "Combo de Dano (Escuridão)", desc: "Use a Habilidade 1 (escura) repetidamente nos inimigos para maximizar o dano. Se estiver em perigo, use a Ultimate (escura) para piscar e escapar.", skillIcons: [] },
+      { title: "Combo de Sobrevivência (Luz)", desc: "Use a Habilidade 2 para se curar. Se for focada, use a Ultimate (luz) para se tornar invulnerável e causar dano.", skillIcons: [] }
     ]
   },
   "Hanzo": {
@@ -838,7 +838,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Kinjutsu: Pináculo Ninja", skilldesc: "Hanzo envia seu espírito para fora do corpo, ganhando novas habilidades e mobilidade, mas seu corpo real fica vulnerável. Consome Sangue Demoníaco." }
     ],
     combos: [
-      { title: "Combo de Assassino Espectral", desc: "Use a Habilidade 1 para farmar Sangue Demoníaco. Esconda seu corpo real e use a Ultimate para enviar seu espírito. Na forma de espírito, use a Habilidade 1 para dano em área e a Habilidade 2 para se aproximar e finalizar." }
+      { title: "Combo de Assassino Espectral", desc: "Use a Habilidade 1 para farmar Sangue Demoníaco. Esconda seu corpo real e use a Ultimate para enviar seu espírito. Na forma de espírito, use a Habilidade 1 para dano em área e a Habilidade 2 para se aproximar e finalizar.", skillIcons: [] }
     ]
   },
   "Belerick": {
@@ -851,7 +851,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Guardião da Natureza", skilldesc: "Belerick invoca uma área de vinhas que causa dano contínuo e provoca os inimigos que entram nela." }
     ],
     combos: [
-      { title: "Combo de Controle de Área", desc: "Use a Habilidade 2 para se posicionar, use a Ultimate para provocar vários inimigos, e então use a Habilidade 1 para imobilizá-los, permitindo que sua equipe cause dano." }
+      { title: "Combo de Controle de Área", desc: "Use a Habilidade 2 para se posicionar, use a Ultimate para provocar vários inimigos, e então use a Habilidade 1 para imobilizá-los, permitindo que sua equipe cause dano.", skillIcons: [] }
     ]
   },
   "Kimmy": {
@@ -864,7 +864,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Carga Máxima", skilldesc: "Kimmy carrega e dispara um projétil químico de longo alcance que explode, causando dano em área com base na distância percorrida." }
     ],
     combos: [
-      { title: "Combo de Kite e Dano", desc: "Mantenha distância usando o joystick de ataque. Use a Habilidade 1 para dano contínuo. Use a Habilidade 2 para escapar de ameaças. Finalize inimigos em fuga com a Ultimate." }
+      { title: "Combo de Kite e Dano", desc: "Mantenha distância usando o joystick de ataque. Use a Habilidade 1 para dano contínuo. Use a Habilidade 2 para escapar de ameaças. Finalize inimigos em fuga com a Ultimate.", skillIcons: [] }
     ]
   },
   "Thamuz": {
@@ -877,7 +877,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Inferno Cauterizante", skilldesc: "Thamuz explode em chamas, causando dano contínuo ao seu redor e se curando. Ele ganha velocidade de ataque e aprimora sua passiva." }
     ],
     combos: [
-      { title: "Combo de Dano Contínuo", desc: "Jogue as foices (Habilidade 1), pule no inimigo com a Habilidade 2 para recuperar as foices e causar dano. Ative a Ultimate para dano em área, cura e aumento de velocidade de ataque." }
+      { title: "Combo de Dano Contínuo", desc: "Jogue as foices (Habilidade 1), pule no inimigo com a Habilidade 2 para recuperar as foices e causar dano. Ative a Ultimate para dano em área, cura e aumento de velocidade de ataque.", skillIcons: [] }
     ]
   },
   "Harith": {
@@ -890,7 +890,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Era da Força", skilldesc: "Harith invoca uma cruz de força que retarda os inimigos. Se ele tocar a cruz com sua Habilidade 2, a recarga da Habilidade 2 é reduzida drasticamente." }
     ],
     combos: [
-      { title: "Combo de Mobilidade Infinita", desc: "Use a Ultimate para criar o campo. Use a Habilidade 2 para avançar e ganhar escudo. Continue usando a Habilidade 2 dentro do campo da ultimate para ter recargas quase instantâneas, enquanto causa dano com a Habilidade 1 e ataques básicos aprimorados." }
+      { title: "Combo de Mobilidade Infinita", desc: "Use a Ultimate para criar o campo. Use a Habilidade 2 para avançar e ganhar escudo. Continue usando a Habilidade 2 dentro do campo da ultimate para ter recargas quase instantâneas, enquanto causa dano com a Habilidade 1 e ataques básicos aprimorados.", skillIcons: [] }
     ]
   },
   "Minsitthar": {
@@ -903,7 +903,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Chamado do Rei", skilldesc: "Minsitthar invoca 4 guardas reais que formam uma área. Inimigos dentro da área não podem usar habilidades de avanço e são atacados pelos guardas." }
     ],
     combos: [
-      { title: "Combo Anti-Avanço", desc: "Puxe um alvo com a Habilidade 1. Use a Habilidade 2 para atordoá-lo. Ative a Ultimate para prender a equipe inimiga e impedir que usem habilidades de mobilidade para escapar." }
+      { title: "Combo Anti-Avanço", desc: "Puxe um alvo com a Habilidade 1. Use a Habilidade 2 para atordoá-lo. Ative a Ultimate para prender a equipe inimiga e impedir que usem habilidades de mobilidade para escapar.", skillIcons: [] }
     ]
   },
   "Kadita": {
@@ -916,7 +916,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Ondas Impetuosas", skilldesc: "Kadita invoca um tsunami que ataca ao seu redor. As ondas retornam a ela, causando dano massivo. Ela é imune a dano e mais lenta durante a conjuração." }
     ],
     combos: [
-      { title: "Combo de Mergulho e Explosão", desc: "Use a Habilidade 1 para arremessar o alvo. Use a Habilidade 2 para se aproximar e se tornar imune. Ative a Ultimate para causar dano massivo enquanto estão próximos." }
+      { title: "Combo de Mergulho e Explosão", desc: "Use a Habilidade 1 para arremessar o alvo. Use a Habilidade 2 para se aproximar e se tornar imune. Ative a Ultimate para causar dano massivo enquanto estão próximos.", skillIcons: [] }
     ]
   },
   "Faramis": {
@@ -929,7 +929,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Altar Cultista", skilldesc: "Faramis cria um altar que ressuscita os heróis aliados que morrerem dentro dele, dando-lhes 80% de HP e 100% de ataque por um curto período." }
     ],
     combos: [
-      { title: "Combo de Suporte e Ressurreição", desc: "Use a Habilidade 1 para agrupar inimigos. Use a Habilidade 2 para causar dano. Em lutas de equipe, posicione a Ultimate para que seus aliados possam lutar sem medo da morte, ressuscitando para continuar o combate." }
+      { title: "Combo de Suporte e Ressurreição", desc: "Use a Habilidade 1 para agrupar inimigos. Use a Habilidade 2 para causar dano. Em lutas de equipe, posicione a Ultimate para que seus aliados possam lutar sem medo da morte, ressuscitando para continuar o combate.", skillIcons: [] }
     ]
   },
   "Granger": {
@@ -942,7 +942,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Serenata da Morte", skilldesc: "Granger transforma seu estojo em um super canhão e dispara 3 super balas de longo alcance que explodem, causando dano e lentidão." }
     ],
     combos: [
-      { title: "Combo de Dano Explosivo", desc: "Use a Habilidade 2 para se posicionar e aprimorar seu próximo tiro. Descarregue suas balas com a Habilidade 1, garantindo que a sexta bala (crítica) acerte. Finalize com a Ultimate em alvos distantes ou em fuga." }
+      { title: "Combo de Dano Explosivo", desc: "Use a Habilidade 2 para se posicionar e aprimorar seu próximo tiro. Descarregue suas balas com a Habilidade 1, garantindo que a sexta bala (crítica) acerte. Finalize com a Ultimate em alvos distantes ou em fuga.", skillIcons: [] }
     ]
   },
   "Esmeralda": {
@@ -955,7 +955,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Estrela Cadente", skilldesc: "Esmeralda carrega poder e salta para uma área, causando dano massivo e imobilizando os inimigos." }
     ],
     combos: [
-      { title: "Combo de Roubo de Escudo", desc: "Use a Habilidade 1 para ganhar escudo e velocidade. Aproxime-se dos inimigos e use a Habilidade 2 para causar dano e roubar mais escudos. Use a Ultimate para iniciar uma luta ou finalizar alvos." }
+      { title: "Combo de Roubo de Escudo", desc: "Use a Habilidade 1 para ganhar escudo e velocidade. Aproxime-se dos inimigos e use a Habilidade 2 para causar dano e roubar mais escudos. Use a Ultimate para iniciar uma luta ou finalizar alvos.", skillIcons: [] }
     ]
   },
   "Terizla": {
@@ -968,7 +968,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Zona de Pênalti", skilldesc: "Terizla esmaga o chão, criando uma zona que puxa os inimigos para o centro continuamente e causa dano." }
     ],
     combos: [
-      { title: "Combo de Controle em Massa", desc: "Use a Habilidade 2 para se aproximar e imobilizar. Use a Ultimate para prender os inimigos na zona e, em seguida, use a Habilidade 1 para causar dano massivo enquanto eles estão sendo puxados." }
+      { title: "Combo de Controle em Massa", desc: "Use a Habilidade 2 para se aproximar e imobilizar. Use a Ultimate para prender os inimigos na zona e, em seguida, use a Habilidade 1 para causar dano massivo enquanto eles estão sendo puxados.", skillIcons: [] }
     ]
   },
   "X.Borg": {
@@ -981,7 +981,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Última Insanidade", skilldesc: "X.Borg avança e começa a girar, causando dano de fogo contínuo antes de explodir sua armadura, causando Dano Verdadeiro massivo." }
     ],
     combos: [
-      { title: "Combo de Dano Verdadeiro", desc: "Use a Habilidade 1 para superaquecer os inimigos. Use a Habilidade 2 para puxá-los. Ative a Ultimate para causar dano massivo e explodir a armadura para finalizar." }
+      { title: "Combo de Dano Verdadeiro", desc: "Use a Habilidade 1 para superaquecer os inimigos. Use a Habilidade 2 para puxá-los. Ative a Ultimate para causar dano massivo e explodir a armadura para finalizar.", skillIcons: [] }
     ]
   },
   "Ling": {
@@ -994,7 +994,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Tempestade de Lâminas", skilldesc: "Ling salta, tornando-se invulnerável, e cria um campo de espadas. Ele pode então atacar livremente dentro do campo, enquanto os inimigos na borda são repelidos." }
     ],
     combos: [
-      { title: "Combo de Ataque Aéreo", desc: "Use a Habilidade 1 para pular nas paredes. Aproxime-se de um alvo e use a Habilidade 2 para atacar. Use a Ultimate para ficar invulnerável e prender os inimigos, e então use a Habilidade 2 e ataques básicos para finalizar." }
+      { title: "Combo de Ataque Aéreo", desc: "Use a Habilidade 1 para pular nas paredes. Aproxime-se de um alvo e use a Habilidade 2 para atacar. Use a Ultimate para ficar invulnerável e prender os inimigos, e então use a Habilidade 2 e ataques básicos para finalizar.", skillIcons: [] }
     ]
   },
   "Dyrroth": {
@@ -1007,7 +1007,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "O Golpe da Destruição", skilldesc: "Dyrroth carrega e ataca, causando dano massivo com base no HP perdido do alvo e retardando-os." }
     ],
     combos: [
-      { title: "Combo de Execução", desc: "Use a Habilidade 2 para se aproximar e reduzir a defesa. Use a Habilidade 1 para causar dano e lentidão. Finalize com a Ultimate carregada para dano de execução massivo." }
+      { title: "Combo de Execução", desc: "Use a Habilidade 2 para se aproximar e reduzir a defesa. Use a Habilidade 1 para causar dano e lentidão. Finalize com a Ultimate carregada para dano de execução massivo.", skillIcons: [] }
     ]
   },
   "Lylia": {
@@ -1020,7 +1020,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Sapatos Negros", skilldesc: "Lylia volta no tempo 4s, restaurando seu HP, mana e recargas de Energia Sombria para o estado em que estavam. Ela também pode se teletransportar para a localização de seus sapatos." }
     ],
     combos: [
-      { title: "Combo de Bomba", desc: "Use a Habilidade 2 para posicionar várias bombas. Use a Habilidade 1 para detoná-las e causar dano massivo. Se estiver em perigo, use a Ultimate para voltar no tempo e recuperar todos os recursos." }
+      { title: "Combo de Bomba", desc: "Use a Habilidade 2 para posicionar várias bombas. Use a Habilidade 1 para detoná-las e causar dano massivo. Se estiver em perigo, use a Ultimate para voltar no tempo e recuperar todos os recursos.", skillIcons: [] }
     ]
   },
   "Baxia": {
@@ -1033,7 +1033,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Poder da Tartaruga", skilldesc: "Baxia cria um escudo frontal e avança, repelindo os inimigos e deixando um rastro de lava que causa dano." }
     ],
     combos: [
-      { title: "Combo de Iniciação e Anti-Cura", desc: "Use a Habilidade 1 para rolar rapidamente e atordoar um alvo. Use a Ultimate para criar um campo de dano e aplicar o efeito anti-cura em massa, e use a Habilidade 2 para dano contínuo." }
+      { title: "Combo de Iniciação e Anti-Cura", desc: "Use a Habilidade 1 para rolar rapidamente e atordoar um alvo. Use a Ultimate para criar um campo de dano e aplicar o efeito anti-cura em massa, e use a Habilidade 2 para dano contínuo.", skillIcons: [] }
     ]
   },
   "Masha": {
@@ -1047,7 +1047,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Recuperação de Vida", skilldesc: "Masha recupera a energia e restaura uma barra de HP. Esta habilidade só pode ser usada fora de combate." }
     ],
     combos: [
-      { title: "Combo de Dano Total", desc: "Ative a Habilidade 1 para aumentar seu dano. Use a Habilidade 3 para se aproximar e repelir o alvo. Use a Habilidade 2 para desarmá-lo e finalize com ataques básicos poderosos." }
+      { title: "Combo de Dano Total", desc: "Ative a Habilidade 1 para aumentar seu dano. Use a Habilidade 3 para se aproximar e repelir o alvo. Use a Habilidade 2 para desarmá-lo e finalize com ataques básicos poderosos.", skillIcons: [] }
     ]
   },
   "Wanwan": {
@@ -1060,7 +1060,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Besta de Tang", skilldesc: "Wanwan ativa sua besta e ataca um inimigo no ar, tornando-se inalvejável. Para ativar, ela precisa atingir todos os pontos fracos do alvo." }
     ],
     combos: [
-      { title: "Combo de Inalvejabilidade", desc: "Use ataques básicos e a Habilidade 1 para atingir todos os pontos fracos de um inimigo. Uma vez que a Ultimate esteja disponível, ative-a para se tornar inalvejável e causar dano massivo. Use a Habilidade 2 para se purificar de controle de grupo." }
+      { title: "Combo de Inalvejabilidade", desc: "Use ataques básicos e a Habilidade 1 para atingir todos os pontos fracos de um inimigo. Uma vez que a Ultimate esteja disponível, ative-a para se tornar inalvejável e causar dano massivo. Use a Habilidade 2 para se purificar de controle de grupo.", skillIcons: [] }
     ]
   },
   "Silvanna": {
@@ -1073,7 +1073,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Julgamento Imperial", skilldesc: "Silvanna salta para uma área, criando um Círculo de Luz que prende o inimigo mais próximo. Dentro do círculo, ela ganha velocidade de ataque e roubo de vida mágico." }
     ],
     combos: [
-      { title: "Combo de Duelo", desc: "Use a Habilidade 1 para atordoar o alvo. Use a Ultimate para prendê-lo no círculo. Dentro do círculo, use a Habilidade 2 para dano contínuo e ataques básicos para finalizar." }
+      { title: "Combo de Duelo", desc: "Use a Habilidade 1 para atordoar o alvo. Use a Ultimate para prendê-lo no círculo. Dentro do círculo, use a Habilidade 2 para dano contínuo e ataques básicos para finalizar.", skillIcons: [] }
     ]
   },
   "Cecilion": {
@@ -1087,7 +1087,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Pouso da Lua", skilldesc: "Cecilion pode puxar Carmilla para si, concedendo a ela um escudo. (Habilidade especial com Carmilla na equipe)." }
     ],
     combos: [
-      { title: "Combo de Poke e Dano", desc: "Use a Habilidade 2 para prender os inimigos. Siga com a Habilidade 1 para dano massivo. Use a Ultimate para se curar, causar dano e perseguir ou escapar." }
+      { title: "Combo de Poke e Dano", desc: "Use a Habilidade 2 para prender os inimigos. Siga com a Habilidade 1 para dano massivo. Use a Ultimate para se curar, causar dano e perseguir ou escapar.", skillIcons: [] }
     ]
   },
   "Carmilla": {
@@ -1100,7 +1100,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Maldição de Sangue", skilldesc: "Carmilla lança uma maldição que se espalha entre os heróis inimigos próximos, causando dano e lentidão. 90% do dano e controle recebido por um alvo amaldiçoado é compartilhado com os outros." }
     ],
     combos: [
-      { title: "Combo de Controle e Debuff", desc: "Use a Habilidade 2 para se aproximar e atordoar. Ative a Habilidade 1 para dano contínuo e cura. Use a Ultimate em um grupo de inimigos para que sua equipe possa causar dano em todos ao mesmo tempo." }
+      { title: "Combo de Controle e Debuff", desc: "Use a Habilidade 2 para se aproximar e atordoar. Ative a Habilidade 1 para dano contínuo e cura. Use a Ultimate em um grupo de inimigos para que sua equipe possa causar dano em todos ao mesmo tempo.", skillIcons: [] }
     ]
   },
   "Atlas": {
@@ -1113,7 +1113,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Laços Fatais", skilldesc: "Atlas lança correntes que prendem os heróis inimigos próximos. Ele pode reativar para arrastar os alvos presos e jogá-los em um local, atordoando-os." }
     ],
     combos: [
-      { title: "Combo de Iniciação Perfeito", desc: "Use a Habilidade 2 para se aproximar rapidamente dos inimigos. Ative a Ultimate para prender o máximo de alvos possível e jogue-os em direção à sua equipe. Siga com a Habilidade 1 para dano." }
+      { title: "Combo de Iniciação Perfeito", desc: "Use a Habilidade 2 para se aproximar rapidamente dos inimigos. Ative a Ultimate para prender o máximo de alvos possível e jogue-os em direção à sua equipe. Siga com a Habilidade 1 para dano.", skillIcons: [] }
     ]
   },
   "Popol and Kupa": {
@@ -1127,7 +1127,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Nós Estamos com Raiva!", skilldesc: "Popol e Kupa entram em modo de fúria, ganhando velocidade de ataque, movimento e aprimorando suas outras habilidades." }
     ],
     combos: [
-      { title: "Combo de Caça e Controle", desc: "Use a Habilidade 3 para posicionar armadilhas. Use a Habilidade 1 para dano e lentidão. Ative a Ultimate para aumentar o dano, e use a Habilidade 2 para proteger Popol se ele for atacado." }
+      { title: "Combo de Caça e Controle", desc: "Use a Habilidade 3 para posicionar armadilhas. Use a Habilidade 1 para dano e lentidão. Ative a Ultimate para aumentar o dano, e use a Habilidade 2 para proteger Popol se ele for atacado.", skillIcons: [] }
     ]
   },
   "Yu Zhong": {
@@ -1141,7 +1141,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Dragão Negro Furioso", skilldesc: "Yu Zhong se transforma em um Dragão Negro, voando sobre o terreno e repelindo os inimigos. Ele então entra na forma de Dragão Humano com habilidades aprimoradas." }
     ],
     combos: [
-      { title: "Combo de Transformação", desc: "Use a Ultimate para voar sobre a equipe inimiga. Na forma de Dragão Humano, use a Habilidade 1 e 2 para dano em área, e a Habilidade 3 para se aproximar e aplicar acúmulos da passiva para cura e dano." }
+      { title: "Combo de Transformação", desc: "Use a Ultimate para voar sobre a equipe inimiga. Na forma de Dragão Humano, use a Habilidade 1 e 2 para dano em área, e a Habilidade 3 para se aproximar e aplicar acúmulos da passiva para cura e dano.", skillIcons: [] }
     ]
   },
   "Luo Yi": {
@@ -1154,7 +1154,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Diversão", skilldesc: "Luo Yi cria um círculo de teletransporte para si mesma e para os aliados, permitindo que se movam instantaneamente para outro local no mapa." }
     ],
     combos: [
-      { title: "Combo de Reação em Cadeia", desc: "Use a Habilidade 1 para aplicar uma marca, e imediatamente use a Habilidade 2 no mesmo local para aplicar a marca oposta, causando atordoamento em área. A Ultimate é usada para ganks surpresa ou para reposicionar a equipe." }
+      { title: "Combo de Reação em Cadeia", desc: "Use a Habilidade 1 para aplicar uma marca, e imediatamente use a Habilidade 2 no mesmo local para aplicar a marca oposta, causando atordoamento em área. A Ultimate é usada para ganks surpresa ou para reposicionar a equipe.", skillIcons: [] }
     ]
   },
   "Benedetta": {
@@ -1167,7 +1167,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Alecto: Golpe Final", skilldesc: "Benedetta avança e corta a área, tornando-se invulnerável e causando dano e lentidão contínuos." }
     ],
     combos: [
-      { title: "Combo de Dano e Imunidade", desc: "Use a passiva para se aproximar. Use a Habilidade 1 para dano. Use a Habilidade 2 para bloquear um CC e atordoar. Finalize com a Ultimate para dano em área e invulnerabilidade." }
+      { title: "Combo de Dano e Imunidade", desc: "Use a passiva para se aproximar. Use a Habilidade 1 para dano. Use a Habilidade 2 para bloquear um CC e atordoar. Finalize com a Ultimate para dano em área e invulnerabilidade.", skillIcons: [] }
     ]
   },
   "Khaleed": {
@@ -1180,7 +1180,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Guarda da Tempestade de Areia", skilldesc: "Khaleed invoca uma tempestade de areia e avança para um local, causando dano e atordoando os inimigos. Ele é imune a controle de grupo durante a habilidade." }
     ],
     combos: [
-      { title: "Combo de Iniciação e Sobrevivência", desc: "Use a Ultimate para iniciar uma luta e atordoar os inimigos. Use a Habilidade 1 para dano em área. Se ficar com pouca vida, use a Habilidade 2 para se curar e reduzir o dano." }
+      { title: "Combo de Iniciação e Sobrevivência", desc: "Use a Ultimate para iniciar uma luta e atordoar os inimigos. Use a Habilidade 1 para dano em área. Se ficar com pouca vida, use a Habilidade 2 para se curar e reduzir o dano.", skillIcons: [] }
     ]
   },
   "Barats": {
@@ -1193,7 +1193,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Festa do Detona", skilldesc: "Detona devora um herói inimigo, suprimindo-o. Ele pode então cuspir o herói, causando dano e atordoamento se ele colidir com uma parede ou outro herói." }
     ],
     combos: [
-      { title: "Combo de Controle e Devorar", desc: "Acumule a passiva para ficar maior. Use a Habilidade 1 para retardar. Use a Habilidade 2 para empurrar os inimigos para o óleo. Use a Ultimate para devorar um alvo prioritário e cuspi-lo contra uma parede." }
+      { title: "Combo de Controle e Devorar", desc: "Acumule a passiva para ficar maior. Use a Habilidade 1 para retardar. Use a Habilidade 2 para empurrar os inimigos para o óleo. Use a Ultimate para devorar um alvo prioritário e cuspi-lo contra uma parede.", skillIcons: [] }
     ]
   },
   "Brody": {
@@ -1206,7 +1206,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Memória Despedaçada", skilldesc: "Brody trava em todos os alvos com Marca do Abismo em um alcance e dispara orbes de energia neles, causando dano com base no HP perdido e no número de marcas." }
     ],
     combos: [
-      { title: "Combo de Marca e Execução", desc: "Use a Habilidade 2 e a Habilidade 1 para aplicar marcas e controlar os inimigos. Use Ataques Básicos para adicionar mais marcas. Quando os alvos estiverem marcados e com pouca vida, ative a Ultimate para dano de execução massivo." }
+      { title: "Combo de Marca e Execução", desc: "Use a Habilidade 2 e a Habilidade 1 para aplicar marcas e controlar os inimigos. Use Ataques Básicos para adicionar mais marcas. Quando os alvos estiverem marcados e com pouca vida, ative a Ultimate para dano de execução massivo.", skillIcons: [] }
     ]
   },
   "Yve": {
@@ -1219,7 +1219,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Manipulação do Plano Real", skilldesc: "Yve cria um tabuleiro estelar. Ela se torna imune a controle aéreo e pode tocar no tabuleiro para causar dano ou deslizar para causar dano e lentidão contínuos." }
     ],
     combos: [
-      { title: "Combo de Zoneamento", desc: "Use a Habilidade 2 para retardar os inimigos. Use a Habilidade 1 para dano. Ative a Ultimate em lutas de equipe para criar um campo de controle massivo, usando toques para dano e deslizes para lentidão." }
+      { title: "Combo de Zoneamento", desc: "Use a Habilidade 2 para retardar os inimigos. Use a Habilidade 1 para dano. Ative a Ultimate em lutas de equipe para criar um campo de controle massivo, usando toques para dano e deslizes para lentidão.", skillIcons: [] }
     ]
   },
   "Mathilda": {
@@ -1232,7 +1232,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Círculo da Águia", skilldesc: "Mathilda marca um herói e circula ao redor dele. Ela pode então voar em direção ao alvo, repelindo e atordoando os inimigos no caminho." }
     ],
     combos: [
-      { title: "Combo de Suporte e Engajamento", desc: "Use a Habilidade 2 para dar mobilidade à sua equipe. Use a Ultimate para marcar um alvo, voar em sua direção e atordoar os inimigos. Use a Habilidade 1 para dano enquanto circula ou voa." }
+      { title: "Combo de Suporte e Engajamento", desc: "Use a Habilidade 2 para dar mobilidade à sua equipe. Use a Ultimate para marcar um alvo, voar em sua direção e atordoar os inimigos. Use a Habilidade 1 para dano enquanto circula ou voa.", skillIcons: [] }
     ]
   },
   "Paquito": {
@@ -1245,7 +1245,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Nocaute", skilldesc: "Paquito dá um soco de cotovelo que repele, seguido de um gancho que causa dano e lentidão. Aprimorado, ele dá um gancho que arremessa ao ar em vez de retardar." }
     ],
     combos: [
-      { title: "Combo de Dano Explosivo", desc: "Acumule a passiva. Use a Habilidade 2 aprimorada para se aproximar, use a Ultimate aprimorada para controle, seguido da Habilidade 1 aprimorada para dano massivo. Use ataques básicos e habilidades normais entre os combos." }
+      { title: "Combo de Dano Explosivo", desc: "Acumule a passiva. Use a Habilidade 2 aprimorada para se aproximar, use a Ultimate aprimorada para controle, seguido da Habilidade 1 aprimorada para dano massivo. Use ataques básicos e habilidades normais entre os combos.", skillIcons: [] }
     ]
   },
   "Gloo": {
@@ -1258,7 +1258,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Dividir, Dividir", skilldesc: "Gloo se divide em vários Goos. Ele pode se prender a um herói inimigo, recuperando HP e transferindo parte do dano que recebe para o hospedeiro. Ele pode controlar a direção do hospedeiro." }
     ],
     combos: [
-      { title: "Combo de Controle e Anexação", desc: "Use a Habilidade 1 para imobilizar e a Habilidade 2 para se aproximar, aplicando acúmulos da passiva. Ative a Ultimate para se dividir, e use a Ultimate novamente para se prender a um inimigo e levá-lo para sua equipe." }
+      { title: "Combo de Controle e Anexação", desc: "Use a Habilidade 1 para imobilizar e a Habilidade 2 para se aproximar, aplicando acúmulos da passiva. Ative a Ultimate para se dividir, e use a Ultimate novamente para se prender a um inimigo e levá-lo para sua equipe.", skillIcons: [] }
     ]
   },
   "Beatrix": {
@@ -1274,8 +1274,8 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Frenesi de Nibiru", skilldesc: "Ultimate (Submetralhadora): Dispara 6 tiros rápidos em um alvo." }
     ],
     combos: [
-      { title: "Combo de Sniper", desc: "Use a Renner para pokear à distância e finalize com sua Ultimate." },
-      { title: "Combo de Curto Alcance", desc: "Use a Wesker para dano explosivo de perto, trocando para a Nibiru para dano contínuo." }
+      { title: "Combo de Sniper", desc: "Use a Renner para pokear à distância e finalize com sua Ultimate.", skillIcons: [] },
+      { title: "Combo de Curto Alcance", desc: "Use a Wesker para dano explosivo de perto, trocando para a Nibiru para dano contínuo.", skillIcons: [] }
     ]
   },
   "Natan": {
@@ -1288,7 +1288,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Entropia", skilldesc: "Natan abre um buraco de minhoca e invoca um clone reverso de si mesmo. O clone copia seus movimentos e ataques. Usar a habilidade novamente teletransporta Natan." }
     ],
     combos: [
-      { title: "Combo de Dano Duplo", desc: "Use a Ultimate para invocar o clone. Use a Habilidade 1 e Habilidade 2 para causar dano duplo e controle. Acumule a passiva para velocidade de ataque máxima." }
+      { title: "Combo de Dano Duplo", desc: "Use a Ultimate para invocar o clone. Use a Habilidade 1 e Habilidade 2 para causar dano duplo e controle. Acumule a passiva para velocidade de ataque máxima.", skillIcons: [] }
     ]
   },
   "Aulus": {
@@ -1301,7 +1301,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Fúria Imortal", skilldesc: "Aulus esmaga seu machado no chão, criando uma zona de fogo que causa dano contínuo e retarda os inimigos. Ele ganha acúmulos de sua passiva." }
     ],
     combos: [
-      { title: "Combo de Dano Contínuo", desc: "Use a Habilidade 1 para se aproximar e ganhar buffs. Ative a Ultimate para dano em área e lentidão. Use a Habilidade 2 para dano contínuo enquanto usa ataques básicos." }
+      { title: "Combo de Dano Contínuo", desc: "Use a Habilidade 1 para se aproximar e ganhar buffs. Ative a Ultimate para dano em área e lentidão. Use a Habilidade 2 para dano contínuo enquanto usa ataques básicos.", skillIcons: [] }
     ]
   },
   "Edith": {
@@ -1314,7 +1314,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Fúria Primordial", skilldesc: "Edith ejeta de Phylax, ganhando novas habilidades de atiradora, velocidade de ataque e roubo de vida mágico. Ela pode acumular 'Ira' para aumentar a velocidade de ataque." }
     ],
     combos: [
-      { title: "Combo de Controle e Dano", desc: "Na forma de tanque, use a Habilidade 1 e 2 para controle de grupo. Quando a Ira estiver cheia, use a Ultimate para ejetar e causar dano massivo com suas habilidades de atiradora." }
+      { title: "Combo de Controle e Dano", desc: "Na forma de tanque, use a Habilidade 1 e 2 para controle de grupo. Quando a Ira estiver cheia, use a Ultimate para ejetar e causar dano massivo com suas habilidades de atiradora.", skillIcons: [] }
     ]
   },
   "Floryn": {
@@ -1327,7 +1327,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Florescer", skilldesc: "Floryn cura todos os heróis aliados no mapa duas vezes, independentemente da distância. Inimigos na área da cura recebem dano." }
     ],
     combos: [
-      { title: "Combo de Cura e Suporte", desc: "Use a Habilidade 1 para pokear e curar. Use a Habilidade 2 para atordoar inimigos. A Ultimate é uma cura global que pode salvar aliados em todo o mapa." }
+      { title: "Combo de Cura e Suporte", desc: "Use a Habilidade 1 para pokear e curar. Use a Habilidade 2 para atordoar inimigos. A Ultimate é uma cura global que pode salvar aliados em todo o mapa.", skillIcons: [] }
     ]
   },
   "Valentina": {
@@ -1340,7 +1340,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Eu Sou Você", skilldesc: "Valentina rouba a ultimate do herói inimigo alvo e pode usá-la. Se o inimigo for um herói de transformação, ela também pode se transformar e usar suas habilidades." }
     ],
     combos: [
-      { title: "Combo de Flexibilidade", desc: "O combo depende da ultimate roubada. Geralmente, use a Habilidade 1 para controle, a Habilidade 2 para se aproximar ou escapar, e a Ultimate roubada para virar a luta." }
+      { title: "Combo de Flexibilidade", desc: "O combo depende da ultimate roubada. Geralmente, use a Habilidade 1 para controle, a Habilidade 2 para se aproximar ou escapar, e a Ultimate roubada para virar a luta.", skillIcons: [] }
     ]
   },
   "Melissa": {
@@ -1353,7 +1353,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Vai! Muddles!", skilldesc: "Melissa cria um campo de proteção ao seu redor por 5s. Inimigos que tentarem entrar no campo serão repelidos." }
     ],
     combos: [
-      { title: "Combo de Proteção e Dano", desc: "Use a Habilidade 2 para ligar os inimigos ao boneco. Use a Habilidade 1 para se reposicionar e ganhar velocidade de ataque. Ative a Ultimate para se proteger de heróis de curto alcance enquanto causa dano." }
+      { title: "Combo de Proteção e Dano", desc: "Use a Habilidade 2 para ligar os inimigos ao boneco. Use a Habilidade 1 para se reposicionar e ganhar velocidade de ataque. Ative a Ultimate para se proteger de heróis de curto alcance enquanto causa dano.", skillIcons: [] }
     ]
   },
   "Yin": {
@@ -1366,7 +1366,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Meu Turno", skilldesc: "Yin puxa um herói inimigo para seu domínio por 8s, transformando-se em Lieh. Se ele matar o inimigo no domínio, ele pode continuar como Lieh no campo de batalha." }
     ],
     combos: [
-      { title: "Combo de Duelo", desc: "Use a Habilidade 2 para se aproximar e atordoar. Use a Habilidade 1 para dano. Ative a Ultimate para levar um alvo para o domínio e use as habilidades aprimoradas de Lieh para garantir o abate." }
+      { title: "Combo de Duelo", desc: "Use a Habilidade 2 para se aproximar e atordoar. Use a Habilidade 1 para dano. Ative a Ultimate para levar um alvo para o domínio e use as habilidades aprimoradas de Lieh para garantir o abate.", skillIcons: [] }
     ]
   },
   "Xavier": {
@@ -1379,7 +1379,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Luz Ofuscante", skilldesc: "Xavier dispara um raio de luz global que causa dano a todos os inimigos em uma linha. Ele entra em estado de transcendência ao usar a habilidade." }
     ],
     combos: [
-      { title: "Combo de Controle e Dano", desc: "Use a Habilidade 1 para pokear e acumular a passiva. Use a Habilidade 2 para retardar e, com a passiva carregada, use a Habilidade 1 novamente para imobilizar. A Ultimate pode ser usada para finalizar alvos em todo o mapa." }
+      { title: "Combo de Controle e Dano", desc: "Use a Habilidade 1 para pokear e acumular a passiva. Use a Habilidade 2 para retardar e, com a passiva carregada, use a Habilidade 1 novamente para imobilizar. A Ultimate pode ser usada para finalizar alvos em todo o mapa.", skillIcons: [] }
     ]
   },
   "Julian": {
@@ -1392,8 +1392,8 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Corrente", skilldesc: "Julian lança correntes que causam dano e imobilizam. Aprimorada, ela arremessa os inimigos ao ar." }
     ],
     combos: [
-      { title: "Combo de Controle", desc: "Use Habilidade 1 -> Habilidade 2 -> Habilidade 3 Aprimorada (arremesso ao ar)." },
-      { title: "Combo de Dano", desc: "Use Habilidade 2 -> Habilidade 3 -> Habilidade 1 Aprimorada (dano contínuo)." }
+      { title: "Combo de Controle", desc: "Use Habilidade 1 -> Habilidade 2 -> Habilidade 3 Aprimorada (arremesso ao ar).", skillIcons: [] },
+      { title: "Combo de Dano", desc: "Use Habilidade 2 -> Habilidade 3 -> Habilidade 1 Aprimorada (dano contínuo).", skillIcons: [] }
     ]
   },
   "Fredrinn": {
@@ -1407,7 +1407,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Fúria do Perito", skilldesc: "Fredrinn ataca em uma área, causando dano massivo com base no Cristal de Energia que ele acumulou." }
     ],
     combos: [
-      { title: "Combo de Tanque e Dano", desc: "Use a Habilidade 2 para provocar os inimigos e absorver dano. Use a Habilidade 1 e 3 para controle. Quando tiver acumulado bastante dano, use a Ultimate para causar dano de execução em área." }
+      { title: "Combo de Tanque e Dano", desc: "Use a Habilidade 2 para provocar os inimigos e absorver dano. Use a Habilidade 1 e 3 para controle. Quando tiver acumulado bastante dano, use a Ultimate para causar dano de execução em área.", skillIcons: [] }
     ]
   },
   "Joy": {
@@ -1420,7 +1420,7 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Ha, Batidas Eletrizantes!", skilldesc: "Após avançar 4 vezes no ritmo, Joy libera seu poder total, tornando-se imune a controle e causando Dano Mágico contínuo aos inimigos próximos por 4s." }
     ],
     combos: [
-      { title: "Dança Rítmica", desc: "Use a Habilidade 2 no ritmo da batida para avançar continuamente, ganhando imunidade a CC. Use a Habilidade 1 para criar alvos para seus avanços e, após 4 avanços rítmicos, ative a Ultimate para dano em área massivo." }
+      { title: "Dança Rítmica", desc: "Use a Habilidade 2 no ritmo da batida para avançar continuamente, ganhando imunidade a CC. Use a Habilidade 1 para criar alvos para seus avanços e, após 4 avanços rítmicos, ative a Ultimate para dano em área massivo.", skillIcons: [] }
     ]
   },
   "Novaria": {
@@ -1433,8 +1433,8 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Voleio Astral", skilldesc: "Novaria entra em um estado astral, ganhando a habilidade de atravessar terrenos e aumentando sua visão. Ela pode disparar um poderoso Voleio Astral que viaja pelo mapa, explodindo ao atingir um herói para causar Dano Mágico massivo." }
     ],
     combos: [
-      { title: "Combo de Atiradora de Longo Alcance", desc: "Use a Habilidade 2 para invocar uma esfera. Posicione-se a uma grande distância e dispare a esfera para causar dano máximo. Use a Habilidade 1 para retardar inimigos e facilitar o acerto." },
-      { title: "Execução Global", desc: "Ative a Ultimate para ganhar visão de um alvo com pouca vida em qualquer lugar do mapa. Dispare o Voleio Astral para garantir o abate à distância." }
+      { title: "Combo de Atiradora de Longo Alcance", desc: "Use a Habilidade 2 para invocar uma esfera. Posicione-se a uma grande distância e dispare a esfera para causar dano máximo. Use a Habilidade 1 para retardar inimigos e facilitar o acerto.", skillIcons: [] },
+      { title: "Execução Global", desc: "Ative a Ultimate para ganhar visão de um alvo com pouca vida em qualquer lugar do mapa. Dispare o Voleio Astral para garantir o abate à distância.", skillIcons: [] }
     ]
   },
   "Zhuxin": {
@@ -1447,8 +1447,8 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Farol Carmesim", skilldesc: "Zhuxin cria um campo de borboletas que causa dano contínuo e aplica Laço da Alma aos inimigos dentro dele. O campo se move lentamente." }
     ],
     combos: [
-      { title: "Combo de Controle em Massa", desc: "Use a Habilidade 2 e Habilidade 1 para aplicar acúmulos da passiva nos inimigos. Use a Ultimate para aplicar mais acúmulos e, em seguida, use outra habilidade para ativar o puxão em massa da passiva." },
-      { title: "Troca Rápida", desc: "Use a Habilidade 1 para pokear e aplicar marcas. Se um inimigo se aproximar, use a Habilidade 2 para ganhar um escudo e contra-atacar, ativando a passiva para controle." }
+      { title: "Combo de Controle em Massa", desc: "Use a Habilidade 2 e Habilidade 1 para aplicar acúmulos da passiva nos inimigos. Use a Ultimate para aplicar mais acúmulos e, em seguida, use outra habilidade para ativar o puxão em massa da passiva.", skillIcons: [] },
+      { title: "Troca Rápida", desc: "Use a Habilidade 1 para pokear e aplicar marcas. Se um inimigo se aproximar, use a Habilidade 2 para ganhar um escudo e contra-atacar, ativando a passiva para controle.", skillIcons: [] }
     ]
   },
   "Sun": {
@@ -1461,8 +1461,8 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Técnicas de Clone", skilldesc: "Sun invoca um clone poderoso por 12s. O clone herda uma porcentagem dos atributos de Sun e pode usar suas habilidades." }
     ],
     combos: [
-      { title: "Engajamento com Clones", desc: "Use a Ultimate para invocar o clone principal. Use a Habilidade 1 para criar um segundo clone e, em seguida, use a Habilidade 2 para fazer com que todos os macacos ataquem o mesmo alvo, destruindo sua defesa." },
-      { title: "Split Push", desc: "Use seus clones para empurrar rotas e destruir torres rapidamente, enquanto o Sun real fica seguro ou participa de lutas." }
+      { title: "Engajamento com Clones", desc: "Use a Ultimate para invocar o clone principal. Use a Habilidade 1 para criar um segundo clone e, em seguida, use a Habilidade 2 para fazer com que todos os macacos ataquem o mesmo alvo, destruindo sua defesa.", skillIcons: [] },
+      { title: "Split Push", desc: "Use seus clones para empurrar rotas e destruir torres rapidamente, enquanto o Sun real fica seguro ou participa de lutas.", skillIcons: [] }
     ]
   },
   "Obsidia": {
@@ -1475,8 +1475,8 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Voleio do Crepúsculo", skilldesc: "Obsidia canaliza e dispara uma rajada de 5 projéteis de obsidiana de longo alcance em uma área alvo, com cada projétil causando Dano Físico massivo a todos os inimigos atingidos." }
     ],
     combos: [
-      { title: "Combo de Dano e Kite", desc: "Use a Habilidade 1 para pokear e aplicar marcas. Use a Habilidade 2 para criar distância de ameaças e se reposicionar. Em lutas de equipe, use a Ultimate para dano em área e foque em aplicar marcas para ativar o dano verdadeiro da passiva." },
-      { title: "Execução à Distância", desc: "Posicione-se com a Habilidade 2, enfraqueça os alvos com a Habilidade 1 e ataques básicos, e finalize-os com a Ultimate de longo alcance." }
+      { title: "Combo de Dano e Kite", desc: "Use a Habilidade 1 para pokear e aplicar marcas. Use a Habilidade 2 para criar distância de ameaças e se reposicionar. Em lutas de equipe, use a Ultimate para dano em área e foque em aplicar marcas para ativar o dano verdadeiro da passiva.", skillIcons: [] },
+      { title: "Execução à Distância", desc: "Posicione-se com a Habilidade 2, enfraqueça os alvos com a Habilidade 1 e ataques básicos, e finalize-os com a Ultimate de longo alcance.", skillIcons: [] }
     ]
   },
   "Ixia": {
@@ -1489,8 +1489,8 @@ export const HERO_TRANSLATIONS: Record<string, HeroDetails> = {
       { skillname: "Barragem de Arcoluz", skilldesc: "Ixia desmonta sua arma em seis armas menores e entra em um estado estacionário. Ela pode então disparar uma barragem contínua de tiros em uma grande área em forma de leque, causando dano a todos os inimigos na área." }
     ],
     combos: [
-      { title: "Combo de Dano em Área", desc: "Use a Habilidade 2 para agrupar os inimigos. Imediatamente, ative a Ultimate para atingir todos eles com a barragem. Use a Habilidade 1 para aplicar lentidão e marcas." },
-      { title: "Troca na Lane", desc: "Use a Habilidade 1 para pokear e, em seguida, use Ataques Básicos para ativar a cura da passiva, permitindo trocas favoráveis." }
+      { title: "Combo de Dano em Área", desc: "Use a Habilidade 2 para agrupar os inimigos. Imediatamente, ative a Ultimate para atingir todos eles com a barragem. Use a Habilidade 1 para aplicar lentidão e marcas.", skillIcons: [] },
+      { title: "Troca na Lane", desc: "Use a Habilidade 1 para pokear e, em seguida, use Ataques Básicos para ativar a cura da passiva, permitindo trocas favoráveis.", skillIcons: [] }
     ]
   }
 };
