@@ -1,5 +1,4 @@
 
-// FIX: Moved UserProfile here from App.tsx to break circular dependency.
 export interface UserProfile {
     username: string;
     rank: UserSignupRank;
@@ -162,16 +161,20 @@ export interface HeroStrategy {
   powerSpikes: string;
 }
 
-// FIX: Added 'perfectCounter' to the HeroStrategicAnalysis interface to support the new AI feature.
+// FIX: Added interface for the new AI feature.
+export interface AILaneRecommendation {
+    lane: Lane;
+    heroName: string;
+    reason: string;
+    warnings: string[];
+    spells: SpellSuggestion[];
+}
+
+// FIX: Replaced 'perfectCounter' with 'perfectLaneCounters' to support the new AI feature.
 export interface HeroStrategicAnalysis {
     strategy: HeroStrategy;
     tacticalCounters: AITacticalCounter[];
-    perfectCounter?: {
-        nome: string;
-        motivo: string;
-        avisos: string[];
-        spells: SpellSuggestion[];
-    };
+    perfectLaneCounters?: AILaneRecommendation[];
 }
 
 

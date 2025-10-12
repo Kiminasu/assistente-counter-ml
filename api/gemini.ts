@@ -5,7 +5,7 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { createClient } from '@supabase/supabase-js';
 
 // CORREÇÃO: Importando da pasta local _lib com extensões .js para compatibilidade com ESM no Node.js
-import { Hero, HeroDetails, DraftAnalysisResult, AnalysisResult, HeroStrategy, LANES, AITacticalCounter, HeroStrategicAnalysis } from "./_lib/types.js";
+import { Hero, HeroDetails, DraftAnalysisResult, AnalysisResult, HeroStrategy, LANES, AITacticalCounter, HeroStrategicAnalysis, AILaneRecommendation } from "./_lib/types.js";
 import { GAME_ITEMS } from './_lib/items.js';
 import { SPELL_ICONS } from './_lib/constants.js';
 
@@ -36,12 +36,15 @@ const combined1v1Schema = { type: Type.OBJECT, properties: { strategicAnalysis: 
 const compositionSchema = { type: Type.OBJECT, properties: { physicalDamage: { type: Type.INTEGER }, magicDamage: { type: Type.INTEGER }, tankiness: { type: Type.INTEGER }, control: { type: Type.INTEGER } }, required: ["physicalDamage", "magicDamage", "tankiness", "control"] };
 const draftAnalysisSchema = { type: Type.OBJECT, properties: { advantageScore: { type: Type.INTEGER }, advantageReason: { type: Type.STRING }, allyComposition: compositionSchema, enemyComposition: compositionSchema, teamStrengths: { type: Type.ARRAY, items: { type: Type.STRING } }, teamWeaknesses: { type: Type.ARRAY, items: { type: Type.STRING } }, nextPickSuggestion: { type: Type.OBJECT, properties: { heroName: { type: Type.STRING }, role: { type: Type.STRING }, reason: { type: Type.STRING } }, nullable: true }, strategicItems: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { name: { type: Type.STRING }, reason: { type: Type.STRING } }, required: ["name", "reason"] } }, banSuggestions: { type: Type.ARRAY, items: tacticalCounterSchema } }, required: ["advantageScore", "advantageReason", "allyComposition", "enemyComposition", "teamStrengths", "teamWeaknesses", "strategicItems", "banSuggestions"] };
 const heroStrategySchema = { type: Type.OBJECT, properties: { coreItems: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { nome: { type: Type.STRING }, motivo: { type: Type.STRING } }, required: ["nome", "motivo"] } }, situationalItems: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { nome: { type: Type.STRING }, motivo: { type: Type.STRING } }, required: ["nome", "motivo"] } }, playstyle: { type: Type.STRING }, powerSpikes: { type: Type.STRING } }, required: ["coreItems", "situationalItems", "playstyle", "powerSpikes"] };
-const heroSuggestionForAISchema = {
+
+// FIX: Added schema for the new AI feature.
+const aiLaneRecommendationSchema = {
     type: Type.OBJECT,
     properties: {
-        nome: { type: Type.STRING },
-        motivo: { type: Type.STRING },
-        avisos: { type: Type.ARRAY, items: { type: Type.STRING } },
+        lane: { type: Type.STRING, enum: LANES as any },
+        heroName: { type: Type.STRING },
+        reason: { type: Type.STRING },
+        warnings: { type: Type.ARRAY, items: { type: Type.STRING } },
         spells: {
             type: Type.ARRAY,
             items: {
@@ -54,10 +57,23 @@ const heroSuggestionForAISchema = {
             }
         }
     },
-    required: ["nome", "motivo", "avisos", "spells"]
+    required: ["lane", "heroName", "reason", "warnings", "spells"]
 };
-// FIX: Added 'perfectCounter' to the schema to match the requested AI output.
-const heroStrategicAnalysisSchema = { type: Type.OBJECT, properties: { strategy: heroStrategySchema, tacticalCounters: { type: Type.ARRAY, items: tacticalCounterSchema }, perfectCounter: { ...heroSuggestionForAISchema, nullable: true } }, required: ["strategy", "tacticalCounters"] };
+
+// FIX: Replaced 'perfectCounter' with 'perfectLaneCounters' to support the new AI feature.
+const heroStrategicAnalysisSchema = { 
+    type: Type.OBJECT, 
+    properties: { 
+        strategy: heroStrategySchema, 
+        tacticalCounters: { type: Type.ARRAY, items: tacticalCounterSchema },
+        perfectLaneCounters: {
+            type: Type.ARRAY,
+            items: aiLaneRecommendationSchema,
+            description: "An array of 5 perfect counter recommendations, one for each lane."
+        }
+    }, 
+    required: ["strategy", "tacticalCounters", "perfectLaneCounters"] 
+};
 
 
 // --- FUNÇÕES DE ANÁLISE ---
@@ -134,8 +150,9 @@ async function handleHeroStrategicAnalysis(payload: any): Promise<HeroStrategicA
     const spellList = Object.keys(SPELL_ICONS).filter(spell => spell !== 'default').join(', ');
     const heroToAnalyzePrompt = formatHeroDetailsForPrompt(heroToAnalyzeDetails);
     const systemPrompt = "Você é um analista Mítico de Mobile Legends. Sua análise é tática, precisa e direta. Responda APENAS com um objeto JSON válido que siga o schema.";
-    // FIX: Updated prompt to request 'perfectCounter' information.
-    const userQuery = `ANÁLISE ESTRATÉGICA PROFUNDA\nHERÓI: ${heroToAnalyzePrompt}\nItens Disponíveis: [${itemNames}]\nINSTRUÇÕES:\n1. Para 'strategy': sugira 3 'coreItems' e 3 'situationalItems', um 'playstyle' detalhado e os 'powerSpikes' (momentos de força) do herói.\n2. Para 'tacticalCounters': Forneça uma lista de 3 a 5 dos melhores counters táticos CONTRA ${heroToAnalyzeDetails.name}. A 'reason' deve ser de nível profissional, explicando interações de habilidades específicas. Considere heróis que: a) anulam a habilidade principal (ex: imunidade a CC), b) exploram sua falta de mobilidade ou superam sua mobilidade, c) sobrevivem ao seu burst e contra-atacam. Inclua matchups cruciais conhecidos por jogadores experientes (ex: Yin contra Angela). Classifique cada um como 'HARD' ou 'SOFT' counter.\n3. Para 'perfectCounter': Sugira um único herói que seja o 'counter perfeito' tático CONTRA ${heroToAnalyzeDetails.name}, com 'motivo' detalhado, 'avisos' importantes e 'spells' recomendados da lista [${spellList}]. Este campo pode ser nulo se não houver um counter verdadeiramente "perfeito".`;
+    
+    // FIX: Updated prompt to request 'perfectLaneCounters' information.
+    const userQuery = `ANÁLISE ESTRATÉGICA PROFUNDA\nHERÓI: ${heroToAnalyzePrompt}\nItens Disponíveis: [${itemNames}]\nFeitiços Disponíveis: [${spellList}]\nINSTRUÇÕES:\n1. Para 'strategy': sugira 3 'coreItems' e 3 'situationalItems', um 'playstyle' detalhado e os 'powerSpikes' (momentos de força) do herói.\n2. Para 'tacticalCounters': Forneça uma lista de 3 a 5 dos melhores counters táticos gerais CONTRA ${heroToAnalyzeDetails.name}. A 'reason' deve ser de nível profissional. Classifique cada um como 'HARD' ou 'SOFT' counter.\n3. Para 'perfectLaneCounters': Forneça um array com exatamente 5 recomendações de counter, uma para cada lane: 'EXP', 'SELVA', 'MEIO', 'OURO', 'ROTAÇÃO'. Para cada recomendação, forneça 'lane', 'heroName', 'reason' detalhada explicando por que ele é o counter perfeito naquela lane específica contra ${heroToAnalyzeDetails.name}, 'warnings' sobre o matchup, e 'spells' recomendados da lista.`;
     
     const response = await ai.models.generateContent({
         model: "gemini-2.5-flash",

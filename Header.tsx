@@ -1,10 +1,6 @@
-
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Session } from '@supabase/supabase-js';
-import { UserProfile } from '../App'; 
-
-type GameMode = '1v1' | '5v5' | 'ranking' | 'item' | 'synergy' | 'heroes';
+import { GameMode, UserProfile } from './types';
 
 interface HeaderProps {
     activeMode: GameMode;
@@ -13,11 +9,13 @@ interface HeaderProps {
     userProfile: UserProfile | null;
     onLogout: () => void;
     onEditProfile: () => void;
+    onUpgradeClick: () => void;
     analysisLimit: number;
+    effectiveSubscriptionStatus: 'free' | 'premium';
 }
 
-const UserPanel: React.FC<Pick<HeaderProps, 'userProfile' | 'onLogout' | 'onEditProfile' | 'analysisLimit'>> = 
-({ userProfile, onLogout, onEditProfile, analysisLimit }) => {
+const UserPanel: React.FC<Pick<HeaderProps, 'userProfile' | 'onLogout' | 'onEditProfile' | 'onUpgradeClick' | 'analysisLimit' | 'effectiveSubscriptionStatus'>> = 
+({ userProfile, onLogout, onEditProfile, onUpgradeClick, analysisLimit, effectiveSubscriptionStatus }) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
 
@@ -31,7 +29,7 @@ const UserPanel: React.FC<Pick<HeaderProps, 'userProfile' | 'onLogout' | 'onEdit
     const today = new Date().toISOString().split('T')[0];
     const lastAnalysisDate = userProfile?.last_analysis_at ? new Date(userProfile.last_analysis_at).toISOString().split('T')[0] : null;
     const analysesToday = lastAnalysisDate === today ? userProfile?.analysis_count || 0 : 0;
-    const analysesRemaining = analysisLimit - analysesToday;
+    const analysesRemaining = Math.max(0, analysisLimit - analysesToday);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -46,16 +44,38 @@ const UserPanel: React.FC<Pick<HeaderProps, 'userProfile' | 'onLogout' | 'onEdit
     if (!userProfile) return null;
 
     return (
-        <div ref={menuRef} className="absolute top-0 right-0 text-right z-20">
-            <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="flex items-center gap-3 bg-black/30 p-2 rounded-lg cursor-pointer hover:bg-black/50 transition-colors">
-                <div className="flex flex-col items-end">
-                    <span className="font-bold text-sm text-white truncate max-w-[150px]">{userProfile.username}</span>
-                    <span className="text-xs text-slate-400">{userProfile.rank}</span>
-                </div>
-                <div className="w-10 h-10 rounded-full bg-violet-800 flex items-center justify-center font-bold text-violet-300 border-2 border-violet-600">
-                    {getInitials(userProfile.username)}
-                </div>
-            </button>
+        <div ref={menuRef} className="absolute top-4 right-0 text-right z-20">
+            <div className="flex items-center gap-3">
+                {effectiveSubscriptionStatus === 'premium' ? (
+                    <div className="flex items-center gap-2 bg-gradient-to-r from-amber-500 to-yellow-600 p-1.5 rounded-full border border-amber-400/50 shadow-lg shadow-amber-500/20">
+                        <div className="flex items-center gap-1.5 px-2">
+                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-black" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                            <span className="font-bold text-sm text-black">PREMIUM</span>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="flex items-center gap-2 bg-slate-900/50 backdrop-blur-sm p-1.5 rounded-full border border-slate-700">
+                         <span className="text-xs font-mono text-slate-300 px-3 flex items-center gap-1.5 whitespace-nowrap" title="Análises restantes">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-violet-400" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
+                            </svg>
+                            <span className="font-semibold">{analysesRemaining}/{analysisLimit}</span>
+                        </span>
+                         <button onClick={onUpgradeClick} className="flex items-center gap-1.5 text-xs font-bold bg-gradient-to-r from-amber-400 to-yellow-500 text-black px-3 py-1.5 rounded-full hover:opacity-90 transition-all duration-300 transform hover:scale-105 whitespace-nowrap">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
+                            UPGRADE
+                        </button>
+                    </div>
+                )}
+                <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="flex-shrink-0">
+                    <div className="w-10 h-10 rounded-full bg-violet-800 flex items-center justify-center font-bold text-violet-300 border-2 border-violet-600">
+                        {getInitials(userProfile.username)}
+                    </div>
+                </button>
+            </div>
+
 
             {isMenuOpen && (
                 <div className="absolute top-full right-0 mt-2 w-64 bg-slate-900/80 backdrop-blur-md rounded-lg shadow-lg border border-slate-700 p-3 modal-animation">
@@ -65,30 +85,17 @@ const UserPanel: React.FC<Pick<HeaderProps, 'userProfile' | 'onLogout' | 'onEdit
                         </div>
                         <div>
                              <p className="font-bold text-white text-left">{userProfile.username}</p>
-                             {userProfile.subscription_status === 'premium' ? (
-                                <div className="flex items-center gap-1 text-yellow-400">
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                    </svg>
-                                    <span className="text-xs font-bold">CONTA PREMIUM</span>
-                                </div>
-                             ) : (
-                                <span className="text-xs font-semibold bg-gray-700 text-gray-300 px-2 py-0.5 rounded-full">CONTA FREE</span>
-                             )}
+                             <p className="text-xs text-slate-400 text-left">{userProfile.rank}</p>
                         </div>
                     </div>
-                    {userProfile.subscription_status === 'free' && (
-                        <div className="mb-3 text-left">
-                            <p className="text-xs text-slate-300 mb-1">Análises Diárias Restantes:</p>
-                            <div className="w-full bg-slate-700 rounded-full h-2.5">
-                                <div 
-                                    className="bg-gradient-to-r from-violet-500 to-fuchsia-500 h-2.5 rounded-full" 
-                                    style={{ width: `${(analysesRemaining / analysisLimit) * 100}%` }}
-                                ></div>
-                            </div>
-                            <p className="text-center font-mono text-xs mt-1 text-slate-400">{analysesRemaining} / {analysisLimit}</p>
+
+                    {effectiveSubscriptionStatus === 'premium' && userProfile.subscription_expires_at && (
+                        <div className="px-3 py-2 text-xs border-b border-slate-700 mb-2">
+                            <p className="font-semibold text-amber-300">Plano Premium Ativo</p>
+                            <p className="text-slate-400">Expira em: {new Date(userProfile.subscription_expires_at).toLocaleDateString('pt-BR')}</p>
                         </div>
                     )}
+                    
                     <button onClick={onEditProfile} className="w-full text-left px-3 py-2 text-sm text-slate-200 hover:bg-slate-700 rounded-md transition-colors">Editar Perfil</button>
                     <button onClick={onLogout} className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-slate-700 rounded-md transition-colors">Sair</button>
                 </div>
@@ -98,17 +105,20 @@ const UserPanel: React.FC<Pick<HeaderProps, 'userProfile' | 'onLogout' | 'onEdit
 };
 
 
-const Header: React.FC<HeaderProps> = ({ activeMode, onSetMode, session, userProfile, onLogout, onEditProfile, analysisLimit }) => {
+const Header: React.FC<HeaderProps> = ({ activeMode, onSetMode, session, userProfile, onLogout, onEditProfile, onUpgradeClick, analysisLimit, effectiveSubscriptionStatus }) => {
     const descriptions: Record<GameMode, string> = {
+        'dashboard': 'Seu centro de comando estratégico com insights do meta, desafios diários e acesso rápido às principais ferramentas.',
         'synergy': 'Selecione um herói para ver sugestões de ban, sinergias e uma análise estratégica completa da IA com build e estilo de jogo.',
         '1v1': 'Analise confrontos, descubra os melhores counters e domine sua lane com sugestões táticas baseadas em dados.',
         '5v5': 'Planeje o draft da sua equipe, selecione heróis para cada time e visualize a composição completa da partida.',
         'heroes': 'Explore a enciclopédia de heróis, visualize suas habilidades, e encontre o personagem perfeito para seu estilo de jogo.',
         'item': 'Navegue por todos os itens do jogo, filtrados por categoria, para entender seus atributos e habilidades.',
         'ranking': 'Explore as estatísticas de heróis, filtre por elo e período para descobrir os heróis mais fortes do meta atual.',
+        'premium': 'Conheça os planos e desbloqueie o acesso ilimitado a todas as ferramentas da Mítica Estratégia.'
     };
 
     const modes: { id: GameMode; label: string, isPro?: boolean }[] = [
+        { id: 'dashboard', label: 'Painel' },
         { id: 'synergy', label: 'Análise de Herói' },
         { id: '1v1', label: 'Análise 1vs1' },
         { id: '5v5', label: 'Draft 5vs5', isPro: true },
@@ -116,54 +126,75 @@ const Header: React.FC<HeaderProps> = ({ activeMode, onSetMode, session, userPro
         { id: 'item', label: 'Itens' },
         { id: 'ranking', label: 'Ranking' },
     ];
+    
+    // Não mostra a barra de navegação na tela premium
+    const showNavBar = activeMode !== 'premium';
 
     return (
         <header className="relative text-center mb-8 animated-entry">
+            {activeMode === 'premium' && (
+                 <button 
+                    onClick={() => onSetMode('dashboard')} 
+                    className="absolute top-4 left-0 text-slate-300 hover:text-white font-semibold transition-colors text-lg p-2 rounded-lg flex items-center gap-2 z-30"
+                    aria-label="Voltar"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                    Voltar
+                </button>
+            )}
             {session && (
                  <UserPanel 
                     userProfile={userProfile} 
                     onLogout={onLogout} 
                     onEditProfile={onEditProfile}
+                    onUpgradeClick={onUpgradeClick}
                     analysisLimit={analysisLimit}
+                    effectiveSubscriptionStatus={effectiveSubscriptionStatus}
                 />
             )}
 
-            <img src="https://i.postimg.cc/ZK4nFyHG/mitica-logo-Photoroom.png" alt="Mítica Estratégia MLBB Logo" className="h-56 sm:h-80 lg:h-[27rem] mx-auto -mt-4 sm:-mt-10 lg:-mt-12 animated-logo" />
-            <h1 className="text-4xl sm:text-7xl lg:text-8xl font-black tracking-tight title-main -mt-12 sm:-mt-20 lg:-mt-24 relative animated-logo max-w-sm sm:max-w-none mx-auto">
+            <img src="https://i.postimg.cc/ZK4nFyHG/mitica-logo-Photoroom.png" alt="Mítica Estratégia MLBB Logo" className={`h-56 sm:h-80 lg:h-[27rem] mx-auto -mt-4 sm:-mt-10 lg:-mt-12 ${activeMode !== 'premium' ? 'animated-logo' : ''}`} />
+            <h1 className={`text-4xl sm:text-7xl lg:text-8xl font-black tracking-tight title-main -mt-12 sm:-mt-20 lg:-mt-24 relative max-w-sm sm:max-w-none mx-auto ${activeMode !== 'premium' ? 'animated-logo' : ''}`}>
                 MÍTICA ESTRATÉGIA MLBB
             </h1>
-             <p className="text-base sm:text-lg text-slate-300 mt-4 max-w-3xl mx-auto tracking-wide">
-                Seu Guia de Counters, Builds e Estratégias para Mobile Legends: Bang Bang.
-            </p>
             
-            <div className="mt-8">
-                <div className="inline-flex flex-wrap justify-center bg-black bg-opacity-30 p-1 rounded-xl gap-1">
-                    {modes.map((mode) => {
-                        const isProFeature = mode.isPro && userProfile?.subscription_status !== 'premium';
-                        return (
-                            <button
-                                key={mode.id}
-                                onClick={() => onSetMode(mode.id)}
-                                className={`relative px-3 sm:px-4 py-2 text-sm font-semibold rounded-lg transition-colors duration-200 ${
-                                    activeMode === mode.id
-                                        ? 'bg-violet-600 text-white shadow-lg shadow-violet-500/30'
-                                        : 'text-gray-300 hover:bg-gray-700/50'
-                                }`}
-                            >
-                                {mode.label}
-                                {isProFeature && (
-                                     <span className="absolute -top-1.5 -right-1.5 bg-gradient-to-br from-amber-400 to-yellow-500 text-black text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow-lg animate-pulse">
-                                        PRO
-                                    </span>
-                                )}
-                            </button>
-                        );
-                    })}
-                </div>
-                <p className="text-sm text-slate-400 mt-4 max-w-xl mx-auto h-10 flex items-center justify-center transition-opacity duration-300">
-                    {descriptions[activeMode]}
-                </p>
-            </div>
+            {showNavBar && (
+                <>
+                    <p className="text-base sm:text-lg text-slate-300 mt-4 max-w-3xl mx-auto tracking-wide">
+                        Seu Guia de Counters, Builds e Estratégias para Mobile Legends: Bang Bang.
+                    </p>
+                    <div className="mt-8">
+                        <div className="inline-flex flex-wrap justify-center bg-black bg-opacity-30 p-1 rounded-xl gap-1">
+                            {modes.map((mode) => {
+                                const isPremiumFeature = mode.isPro;
+                                return (
+                                    <button
+                                        key={mode.id}
+                                        onClick={() => onSetMode(mode.id)}
+                                        className={`relative px-3 sm:px-4 py-2 text-sm font-semibold rounded-lg transition-colors duration-200 ${
+                                            activeMode === mode.id
+                                                ? 'bg-violet-600 text-white shadow-lg shadow-violet-500/30'
+                                                : 'text-gray-300 hover:bg-gray-700/50'
+                                        }`}
+                                    >
+                                        {mode.label}
+                                        {isPremiumFeature && effectiveSubscriptionStatus !== 'premium' && (
+                                             <span className="absolute -top-1.5 -right-1.5 bg-gradient-to-br from-amber-400 to-yellow-500 text-black text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow-lg animate-soft-blink">
+                                                PREMIUM
+                                            </span>
+                                        )}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        <p className="text-sm text-slate-400 mt-4 max-w-xl mx-auto h-10 flex items-center justify-center transition-opacity duration-300">
+                            {descriptions[activeMode]}
+                        </p>
+                    </div>
+                </>
+            )}
         </header>
     );
 };
