@@ -523,35 +523,29 @@ const App: React.FC = () => {
         setPerfectLaneCounters([]);
         setPerfectLaneCountersError(null);
 
-        const getDetailsForAnalysis = async (hero: Hero): Promise<HeroDetails | null> => {
-            if (heroDetailsCacheRef.current[hero.apiId]) {
-                return heroDetailsCacheRef.current[hero.apiId];
-            }
-            if (!hero.apiId) return null;
+        // Etapa 1: Verificar e buscar detalhes ausentes
+        let heroDetailsToAnalyze = heroDetailsCacheRef.current[selectedHero.apiId];
+        if (!heroDetailsToAnalyze) {
             try {
-                // Fetch new details but don't set state yet
-                return await fetchHeroDetails(hero.apiId);
-            } catch (e) {
-                console.error(`Falha ao buscar detalhes para ${hero.name}`, e);
-                return null;
+                heroDetailsToAnalyze = await fetchHeroDetails(selectedHero.apiId);
+                // Atualiza o cache e continua para a análise principal
+                setHeroDetailsCache(prev => ({ ...prev, [selectedHero.apiId]: heroDetailsToAnalyze! }));
+            } catch (err) {
+                const errorMessage = err instanceof Error ? err.message : "Erro ao buscar detalhes do herói.";
+                setStrategicAnalysisError(errorMessage);
+                setIsSynergyAnalysisLoading(false);
+                return;
             }
-        };
-
+        }
+        
+        // Etapa 2: Executar as análises da IA e de sinergia em paralelo
         try {
-            const heroToAnalyzeDetails = await getDetailsForAnalysis(selectedHero);
-            if (!heroToAnalyzeDetails) {
-                throw new Error(`Não foi possível carregar os detalhes para ${selectedHero.name}.`);
-            }
-
             const [analysisResult, relationsData] = await Promise.all([
-                getHeroStrategicAnalysis(heroToAnalyzeDetails),
+                getHeroStrategicAnalysis(heroDetailsToAnalyze),
                 fetchHeroRelations(selectedHero.apiId, heroes, heroApiIdMap)
             ]);
             
-            // After all API calls are successful, update the cache state
-            if (!heroDetailsCacheRef.current[selectedHero.apiId]) {
-                setHeroDetailsCache(prev => ({...prev, [selectedHero.apiId]: heroToAnalyzeDetails}));
-            }
+            if (session?.user) await fetchUserProfile(session.user);
 
             const { strategy, tacticalCounters: aiCounters, perfectLaneCounters: aiLaneCounters } = analysisResult;
             const validItemNames = GAME_ITEMS.map(item => item.nome);
@@ -588,7 +582,6 @@ const App: React.FC = () => {
 
             setSynergyRelations(relationsData);
 
-            if (session?.user) await fetchUserProfile(session.user);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : "Erro na análise estratégica da IA.";
             setStrategicAnalysisError(errorMessage);
@@ -782,6 +775,7 @@ const App: React.FC = () => {
     
     const runDraftAnalysis = useCallback(async () => {
         if (!checkAnalysisLimit()) return;
+        
         const pickedAllyHeroes = draftAllyPicks.map(id => id ? heroes[id] : null).filter((h): h is Hero => h !== null);
         const pickedEnemyHeroes = draftEnemyPicks.map(id => id ? heroes[id] : null).filter((h): h is Hero => h !== null);
     
@@ -794,12 +788,12 @@ const App: React.FC = () => {
     
         setIsDraftAnalysisLoading(true);
         setDraftAnalysisError(null);
-    
+        
         try {
             const allPickedHeroes = [...pickedAllyHeroes, ...pickedEnemyHeroes];
             const detailsToFetch = allPickedHeroes.filter(h => h.apiId && !heroDetailsCacheRef.current[h.apiId]);
-            const newCacheEntries: Record<number, HeroDetails> = {};
     
+            // Etapa 1: Buscar todos os detalhes ausentes de uma vez.
             if (detailsToFetch.length > 0) {
                 const fetchedDetails = await Promise.all(
                     detailsToFetch.map(h => 
@@ -807,34 +801,36 @@ const App: React.FC = () => {
                             .then(details => ({ apiId: h.apiId, details }))
                             .catch(err => {
                                 console.error(`Falha ao buscar detalhes para o draft de ${h.name}:`, err);
-                                return null; 
+                                return null;
                             })
                     )
                 );
-                fetchedDetails.forEach(item => {
-                    if (item) newCacheEntries[item.apiId] = item.details;
-                });
+                
+                const newCacheEntries = fetchedDetails.reduce((acc, item) => {
+                    if (item) acc[item.apiId] = item.details;
+                    return acc;
+                }, {} as Record<number, HeroDetails>);
+
+                // Atualiza o cache de uma vez para acionar uma única re-renderização, se necessário.
+                setHeroDetailsCache(prev => ({ ...prev, ...newCacheEntries }));
+                return; // Aguarda a próxima renderização para continuar
             }
-    
-            const currentCache = { ...heroDetailsCacheRef.current, ...newCacheEntries };
+            
+            // Etapa 2: Se todos os detalhes estiverem no cache, prossiga com a análise da IA.
+            const currentCache = heroDetailsCacheRef.current;
             const allyDetails = pickedAllyHeroes.map(h => currentCache[h.apiId]).filter((d): d is HeroDetails => !!d);
             const enemyDetails = pickedEnemyHeroes.map(h => currentCache[h.apiId]).filter((d): d is HeroDetails => !!d);
     
-            // Validação para garantir que todos os detalhes necessários foram carregados antes de chamar a IA
             if (allyDetails.length !== pickedAllyHeroes.length || enemyDetails.length !== pickedEnemyHeroes.length) {
-                throw new Error("Falha ao carregar detalhes de um ou mais heróis selecionados. Tente novamente.");
+                // Isso pode acontecer se o cache ainda não foi atualizado, então aguarde a próxima renderização.
+                return;
             }
-    
+            
             const pickedHeroIds = new Set(allPickedHeroes.map((h: Hero) => h.id));
             const availableHeroes = (Object.values(heroes) as Hero[]).filter((h: Hero) => !pickedHeroIds.has(h.id));
             
             const analysisFromAI = await getDraftAnalysis(allyDetails, enemyDetails, availableHeroes);
-    
-            // Atualiza o estado do cache somente após a conclusão bem-sucedida da chamada principal da API
-            if (Object.keys(newCacheEntries).length > 0) {
-                setHeroDetailsCache(prev => ({ ...prev, ...newCacheEntries }));
-            }
-    
+            
             if (session?.user) await fetchUserProfile(session.user);
     
             setCounterBanSuggestions(processAIBanSuggestions(analysisFromAI.banSuggestions));
@@ -871,22 +867,21 @@ const App: React.FC = () => {
             });
     
         } catch (error) {
-            if (error instanceof Error && error.name === 'AbortError') {
-                console.log("Análise de draft cancelada."); // Não define estado de erro para abortos
-                return;
-            }
             setDraftAnalysisError(error instanceof Error ? error.message : "Erro desconhecido ao analisar o draft.");
         } finally {
             setIsDraftAnalysisLoading(false);
         }
     }, [draftAllyPicks, draftEnemyPicks, heroes, checkAnalysisLimit, session, fetchUserProfile]);
 
-
     useEffect(() => {
         if (gameMode !== '5v5' || Object.keys(heroes).length === 0) return;
-        const debounceTimeout = setTimeout(runDraftAnalysis, 500);
-        return () => clearTimeout(debounceTimeout);
-    }, [draftAllyPicks, draftEnemyPicks, gameMode, heroes, runDraftAnalysis]);
+        
+        // Esta função agora é acionada por mudanças nos heróis ou no cache de detalhes.
+        // A lógica interna garante que a chamada da IA só aconteça quando todos os dados estiverem prontos.
+        runDraftAnalysis();
+
+    }, [draftAllyPicks, draftEnemyPicks, gameMode, heroes, heroDetailsCache, runDraftAnalysis]);
+
 
     const handleSlotClick = useCallback((team: Team | 'synergy', index: number) => {
         if (!session) {
