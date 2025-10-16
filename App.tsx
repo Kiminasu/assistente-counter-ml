@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Session } from '@supabase/supabase-js';
-import { Hero, Lane, AnalysisResult, LANES, ROLES, Role, HeroSuggestion, BanSuggestion, MatchupData, ItemSuggestion, RankCategory, RankDays, SortField, HeroRankInfo, Team, DraftAnalysisResult, NextPickSuggestion, StrategicItemSuggestion, LaneOrNone, HeroDetails, HeroRelation, HeroStrategy, UserSignupRank, GameMode, AITacticalCounter, HeroStrategicAnalysis, UserProfile, AILaneRecommendation } from './types';
+// FIX: Imported `SpellSuggestion` to resolve a "Cannot find name" error.
+import { Hero, Lane, AnalysisResult, LANES, ROLES, Role, HeroSuggestion, BanSuggestion, MatchupData, ItemSuggestion, RankCategory, RankDays, SortField, HeroRankInfo, Team, DraftAnalysisResult, NextPickSuggestion, StrategicItemSuggestion, LaneOrNone, HeroDetails, HeroRelation, HeroStrategy, UserSignupRank, GameMode, AITacticalCounter, HeroStrategicAnalysis, UserProfile, AILaneRecommendation, SpellSuggestion } from './types';
 import { fetchHeroes, fetchHeroCounterStats, fetchHeroDetails, fetchHeroRankings, ApiHeroRankData, fetchHeroRelations, fetchHeroPositionsData } from './services/heroService';
 import { getCombined1v1Analysis, getDraftAnalysis, getHeroStrategicAnalysis } from './services/geminiService';
 import { findClosestString } from './utils';
@@ -654,11 +655,14 @@ const App: React.FC = () => {
                 winRate
             );
             
-            // Defensive check for the entire AI response and its critical parts
-            if (!combinedAnalysis || !combinedAnalysis.strategicAnalysis || !combinedAnalysis.banSuggestions) {
+            // CORREÇÃO: Validação de dados da IA ultra robusta para prevenir crashes.
+            if (!combinedAnalysis || !combinedAnalysis.strategicAnalysis || 
+                !Array.isArray(combinedAnalysis.strategicAnalysis.sugestoesHerois) ||
+                !Array.isArray(combinedAnalysis.strategicAnalysis.sugestoesItens) ||
+                !Array.isArray(combinedAnalysis.banSuggestions)) {
                 throw new Error("A resposta da IA está incompleta ou em formato inválido. Por favor, tente novamente.");
             }
-
+    
             if (session?.user) await fetchUserProfile(session.user);
     
             const { counters: counterData } = await fetchHeroCounterStats(enemyHero.apiId);
@@ -666,7 +670,7 @@ const App: React.FC = () => {
                 .map(c => ({ hero: heroApiIdMap[c.heroid], increase_win_rate: c.increase_win_rate }))
                 .filter((item): item is { hero: Hero; increase_win_rate: number } => !!item.hero)
                 .sort((a, b) => b.increase_win_rate - a.increase_win_rate);
-
+    
             const { strategicAnalysis, matchupAnalysis, banSuggestions } = combinedAnalysis;
     
             setCounterBanSuggestions(processAIBanSuggestions(banSuggestions));
@@ -674,42 +678,57 @@ const App: React.FC = () => {
             const validItemNames = GAME_ITEMS.map(item => item.nome);
             const validSpellNames = Object.keys(SPELL_ICONS);
     
-            // strategicAnalysis is guaranteed to exist here due to the check above
-            const aiHeroSuggestions = strategicAnalysis.sugestoesHerois || [];
-            const aiItemSuggestions = strategicAnalysis.sugestoesItens || [];
-
-            const heroSuggestions: HeroSuggestion[] = aiHeroSuggestions.map((aiSuggestion): HeroSuggestion => {
-                const heroData = (Object.values(heroes) as Hero[]).find((h: Hero) => h.name === aiSuggestion.nome);
-                const stat = allStatCounters.find(c => c.hero.name === aiSuggestion.nome);
-                const winRateIncrease = stat?.increase_win_rate || 0;
-                const classificacao: 'ANULA' | 'VANTAGEM' = (winRateIncrease > 0.04 && activeLane !== 'NENHUMA' ? 'ANULA' : 'VANTAGEM');
-                const correctedSpells = (aiSuggestion.spells || []).map(spell => ({ ...spell, nome: findClosestString(spell.nome, validSpellNames) }));
-                return {
-                    nome: aiSuggestion.nome,
-                    motivo: aiSuggestion.motivo,
-                    avisos: aiSuggestion.avisos || [],
-                    spells: correctedSpells,
-                    imageUrl: heroData?.imageUrl || '',
-                    classificacao,
-                    estatistica: !stat ? 'Análise Tática' : `+${(winRateIncrease * 100).toFixed(1)}% vs. ${enemyHero.name}`
-                };
-            });
+            const aiHeroSuggestions = strategicAnalysis.sugestoesHerois;
+            const aiItemSuggestions = strategicAnalysis.sugestoesItens;
     
-            const correctedItems: ItemSuggestion[] = aiItemSuggestions.map(item => {
-                const correctedName = findClosestString(item.nome, validItemNames);
-                const gameItem = GAME_ITEMS.find(i => i.nome === correctedName);
-                return { nome: correctedName, motivo: item.motivo, preco: gameItem?.preco || 0 };
-            });
+            const heroSuggestions: HeroSuggestion[] = aiHeroSuggestions
+                .map((aiSuggestion): HeroSuggestion | null => {
+                    if (!aiSuggestion || !aiSuggestion.nome) return null;
+                    
+                    const heroData = (Object.values(heroes) as Hero[]).find((h: Hero) => h.name === aiSuggestion.nome);
+                    const stat = allStatCounters.find(c => c.hero.name === aiSuggestion.nome);
+                    const winRateIncrease = stat?.increase_win_rate || 0;
+                    const classificacao: 'ANULA' | 'VANTAGEM' = (winRateIncrease > 0.04 && activeLane !== 'NENHUMA' ? 'ANULA' : 'VANTAGEM');
+                    
+                    const correctedSpells = (aiSuggestion.spells || []).map(spell => {
+                        if (!spell || !spell.nome) return null;
+                        return { ...spell, nome: findClosestString(spell.nome, validSpellNames), motivo: spell.motivo || '' };
+                    }).filter((s): s is SpellSuggestion => s !== null);
+    
+                    return {
+                        nome: aiSuggestion.nome,
+                        motivo: aiSuggestion.motivo || 'Motivo não fornecido pela IA.',
+                        avisos: aiSuggestion.avisos || [],
+                        spells: correctedSpells,
+                        imageUrl: heroData?.imageUrl || '',
+                        classificacao,
+                        estatistica: !stat ? 'Análise Tática' : `+${(winRateIncrease * 100).toFixed(1)}% vs. ${enemyHero.name}`
+                    };
+                })
+                .filter((s): s is HeroSuggestion => s !== null);
+    
+            const correctedItems: ItemSuggestion[] = aiItemSuggestions
+                .map(item => {
+                    if (!item || !item.nome) return null;
+                    const correctedName = findClosestString(item.nome, validItemNames);
+                    const gameItem = GAME_ITEMS.find(i => i.nome === correctedName);
+                    return { 
+                        nome: correctedName, 
+                        motivo: item.motivo || 'Motivo não fornecido pela IA.',
+                        preco: gameItem?.preco || 0 
+                    };
+                })
+                .filter((i): i is ItemSuggestion => i !== null);
             
             setAnalysisResult({ sugestoesHerois: heroSuggestions, sugestoesItens: correctedItems });
     
-            // Defensive check for matchup analysis content
             if (matchupAnalysis && yourHero && winRate != null && matchupAnalysis.classification && matchupAnalysis.detailedAnalysis) {
-                const correctedSpell = matchupAnalysis.recommendedSpell ? { 
+                const correctedSpell = (matchupAnalysis.recommendedSpell && matchupAnalysis.recommendedSpell.nome) ? { 
                     ...matchupAnalysis.recommendedSpell, 
-                    nome: findClosestString(matchupAnalysis.recommendedSpell.nome, validSpellNames) 
+                    nome: findClosestString(matchupAnalysis.recommendedSpell.nome, validSpellNames),
+                    motivo: matchupAnalysis.recommendedSpell.motivo || ''
                 } : null;
-
+    
                 setMatchupData({ 
                     yourHero, 
                     enemyHero, 
@@ -719,7 +738,6 @@ const App: React.FC = () => {
                     recommendedSpell: correctedSpell
                 });
             } else {
-                // Clear matchup data if the analysis is partial or doesn't apply
                 setMatchupData(null);
             }
     
