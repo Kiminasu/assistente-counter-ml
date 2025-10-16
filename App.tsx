@@ -125,6 +125,11 @@ const App: React.FC = () => {
         }
     });
 
+    const heroDetailsCacheRef = useRef(heroDetailsCache);
+    useEffect(() => {
+        heroDetailsCacheRef.current = heroDetailsCache;
+    }, [heroDetailsCache]);
+
     const fetchUserProfile = useCallback(async (user: { id: string }) => {
         if (!supabase) return;
         const { data, error } = await supabase
@@ -777,7 +782,7 @@ const App: React.FC = () => {
 
         try {
             const allPickedHeroes = [...pickedAllyHeroes, ...pickedEnemyHeroes];
-            const detailsToFetch = allPickedHeroes.filter(h => h.apiId && !heroDetailsCache[h.apiId]);
+            const detailsToFetch = allPickedHeroes.filter(h => h.apiId && !heroDetailsCacheRef.current[h.apiId]);
             let newCacheEntries: Record<number, HeroDetails> = {};
             
             if (detailsToFetch.length > 0) {
@@ -788,7 +793,7 @@ const App: React.FC = () => {
                 setHeroDetailsCache(prev => ({ ...prev, ...newCacheEntries }));
             }
             
-            const currentCache = { ...heroDetailsCache, ...newCacheEntries };
+            const currentCache = { ...heroDetailsCacheRef.current, ...newCacheEntries };
             const allyDetails = pickedAllyHeroes.map(h => currentCache[h.apiId]).filter((d): d is HeroDetails => !!d);
             const enemyDetails = pickedEnemyHeroes.map(h => currentCache[h.apiId]).filter((d): d is HeroDetails => !!d);
 
@@ -836,7 +841,7 @@ const App: React.FC = () => {
         } finally {
             setIsDraftAnalysisLoading(false);
         }
-    }, [draftAllyPicks, draftEnemyPicks, heroes, heroDetailsCache, checkAnalysisLimit, session, fetchUserProfile]);
+    }, [draftAllyPicks, draftEnemyPicks, heroes, checkAnalysisLimit, session, fetchUserProfile]);
 
 
     useEffect(() => {

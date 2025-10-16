@@ -69,21 +69,13 @@ const BanSuggestions: React.FC<BanSuggestionsProps> = ({
 
         const isCounterTab = activeTab === 'counter';
         const suggestionsToShow = suggestions;
-
-        const containerClasses = isCounterTab
-            ? "grid grid-cols-3 sm:grid-cols-6 gap-4 py-2"
-            : "grid grid-cols-4 md:grid-cols-8 gap-4 py-2";
-
-        const imageClasses = isCounterTab
-            ? "w-16 h-16 sm:w-20 sm:h-20"
-            : "w-14 h-14 sm:w-16 sm:h-16";
         
         return (
-             <div className={containerClasses}>
+             <div className="flex flex-wrap justify-center gap-4 py-2">
                 {suggestionsToShow.map(({ hero, reason }, index) => {
                     const isPriority = index < 3;
                     return (
-                        <div key={hero.id} className="group relative flex flex-col items-center text-center">
+                        <div key={hero.id} className="group relative flex flex-col items-center text-center w-20">
                             {isPriority && activeTab === 'meta' && (
                                 <div className="absolute -top-1.5 right-0 bg-yellow-400 text-black text-[9px] font-bold px-1.5 py-0.5 rounded-full z-10 shadow-lg">
                                     PRIORIDADE
@@ -93,7 +85,7 @@ const BanSuggestions: React.FC<BanSuggestionsProps> = ({
                                 loading="lazy"
                                 src={hero.imageUrl}
                                 alt={hero.name}
-                                className={`${imageClasses} rounded-full object-cover border-2 group-hover:scale-110 transition-transform ${isPriority && activeTab === 'meta' ? 'border-yellow-400' : 'border-red-800'}`}
+                                className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-2 group-hover:scale-110 transition-transform ${isPriority && activeTab === 'meta' ? 'border-yellow-400' : 'border-red-800'}`}
                                 onError={(e) => {
                                     const target = e.target as HTMLImageElement;
                                     target.onerror = null; 
@@ -115,7 +107,7 @@ const BanSuggestions: React.FC<BanSuggestionsProps> = ({
 
     return (
         <div className="glassmorphism p-4 rounded-2xl animated-entry min-h-[9rem] border-2 panel-glow-primary flex flex-col" style={{ animationDelay: '300ms' }}>
-            <div className="flex-shrink-0 flex items-center justify-between mb-2">
+            <div className="flex-shrink-0 flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-2 mb-2">
                  <h2 className="text-lg font-bold text-red-300">SUGESTÕES DE BANIMENTO</h2>
                  <div className="flex bg-black/30 p-0.5 rounded-lg">
                     <button 

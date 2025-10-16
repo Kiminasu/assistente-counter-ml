@@ -99,9 +99,9 @@ async function handle1v1Analysis(payload: any) {
 
     let banInstructions = '';
     if (yourHeroDetails) {
-        banInstructions = `**Parte 3: Sugestões de Banimento (banSuggestions)**\nCom base nas fraquezas do meu herói (${yourHeroDetails.name}) contra o inimigo (${enemyHeroDetails.name}), sugira 3 bans táticos para protegê-lo. A razão ('reason') deve explicar interações de habilidades específicas e o counterType deve ser 'HARD' ou 'SOFT'.`;
+        banInstructions = `**Parte 3: Sugestões de Banimento (banSuggestions)**\nCom base nas fraquezas do meu herói (${yourHeroDetails.name}) contra o inimigo (${enemyHeroDetails.name}), sugira 5 bans táticos para protegê-lo. A razão ('reason') deve explicar interações de habilidades específicas e o counterType deve ser 'HARD' ou 'SOFT'.`;
     } else {
-        banInstructions = `**Parte 3: Sugestões de Banimento (banSuggestions)**\nCom base nas forças do herói inimigo (${enemyHeroDetails.name}), sugira 3 bans táticos para counterá-lo. A razão ('reason') deve explicar interações de habilidades específicas e o counterType deve ser 'HARD' ou 'SOFT'.`;
+        banInstructions = `**Parte 3: Sugestões de Banimento (banSuggestions)**\nCom base nas forças do herói inimigo (${enemyHeroDetails.name}), sugira 5 bans táticos para counterá-lo. A razão ('reason') deve explicar interações de habilidades específicas e o counterType deve ser 'HARD' ou 'SOFT'.`;
     }
 
     const userQuery = `${strategicInstructions}\n\n${matchupInstructions}\n\n${banInstructions}\n\n${!matchupInstructions ? 'O campo "matchupAnalysis" deve ser nulo.' : ''}`;
@@ -152,7 +152,7 @@ async function handleHeroStrategicAnalysis(payload: any): Promise<HeroStrategicA
     const systemPrompt = "Você é um analista Mítico de Mobile Legends. Sua análise é tática, precisa e direta. Responda APENAS com um objeto JSON válido que siga o schema.";
     
     // FIX: Updated prompt to request 'perfectLaneCounters' information.
-    const userQuery = `ANÁLISE ESTRATÉGICA PROFUNDA\nHERÓI: ${heroToAnalyzePrompt}\nItens Disponíveis: [${itemNames}]\nFeitiços Disponíveis: [${spellList}]\nINSTRUÇÕES:\n1. Para 'strategy': sugira 3 'coreItems' e 3 'situationalItems', um 'playstyle' detalhado e os 'powerSpikes' (momentos de força) do herói.\n2. Para 'tacticalCounters': Forneça uma lista de 3 a 5 dos melhores counters táticos gerais CONTRA ${heroToAnalyzeDetails.name}. A 'reason' deve ser de nível profissional. Classifique cada um como 'HARD' ou 'SOFT' counter.\n3. Para 'perfectLaneCounters': Forneça um array com exatamente 5 recomendações de counter, uma para cada lane: 'EXP', 'SELVA', 'MEIO', 'OURO', 'ROTAÇÃO'. Para cada recomendação, forneça 'lane', 'heroName', 'reason' detalhada explicando por que ele é o counter perfeito naquela lane específica contra ${heroToAnalyzeDetails.name}, 'warnings' sobre o matchup, e 'spells' recomendados da lista.`;
+    const userQuery = `ANÁLISE ESTRATÉGICA PROFUNDA\nHERÓI: ${heroToAnalyzePrompt}\nItens Disponíveis: [${itemNames}]\nFeitiços Disponíveis: [${spellList}]\nINSTRUÇÕES:\n1. Para 'strategy': sugira 3 'coreItems' e 3 'situationalItems', um 'playstyle' detalhado e os 'powerSpikes' (momentos de força) do herói.\n2. Para 'tacticalCounters': Forneça uma lista de 5 dos melhores counters táticos gerais CONTRA ${heroToAnalyzeDetails.name}. A 'reason' deve ser de nível profissional. Classifique cada um como 'HARD' ou 'SOFT' counter.\n3. Para 'perfectLaneCounters': Forneça um array com exatamente 5 recomendações de counter, uma para cada lane: 'EXP', 'SELVA', 'MEIO', 'OURO', 'ROTAÇÃO'. Para cada recomendação, forneça 'lane', 'heroName', 'reason' detalhada explicando por que ele é o counter perfeito naquela lane específica contra ${heroToAnalyzeDetails.name}, 'warnings' sobre o matchup, e 'spells' recomendados da lista.`;
     
     const response = await ai.models.generateContent({
         model: "gemini-2.5-flash",
