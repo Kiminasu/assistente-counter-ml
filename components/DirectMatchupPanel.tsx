@@ -96,7 +96,7 @@ const DirectMatchupPanel: React.FC<DirectMatchupPanelProps> = ({ isLoading, data
         }
 
         const { yourHero, enemyHero, classification, winRate, detailedAnalysis, recommendedSpell } = data;
-        const styles = RATING_STYLES[classification];
+        const styles = RATING_STYLES[classification] || RATING_STYLES['NEUTRO'];
         const winRateSign = winRate > 0 ? '+' : '';
         const winRateText = `${winRateSign}${(winRate * 100).toFixed(1)}%`;
         const isTheoretical = winRate === 0;

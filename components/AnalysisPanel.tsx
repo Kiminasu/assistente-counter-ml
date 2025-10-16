@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { AnalysisResult, ItemSuggestion, HeroSuggestion, LaneOrNone } from '../types';
 import { RATING_STYLES, ITEM_ICONS, SPELL_ICONS } from '../constants';
@@ -135,7 +134,7 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
         };
 
         const renderHeroDetailCard = (suggestion: HeroSuggestion) => {
-            const styles = RATING_STYLES[suggestion.classificacao] || { text: 'text-gray-300', border: 'border-gray-400' };
+            const styles = RATING_STYLES[suggestion.classificacao] || RATING_STYLES['NEUTRO'];
             return (
                 <div className={`p-3 my-4 bg-black bg-opacity-30 rounded-xl animated-entry border-l-4 ${styles.border}`} style={{ animationDelay: '50ms'}}>
                     <div className="flex-grow mb-2">
@@ -195,7 +194,7 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
                             <div className="flex justify-center flex-wrap gap-3">
                                 {suggestionsInGroup.map((suggestion) => {
                                     const isSelected = selectedSuggestion?.nome === suggestion.nome;
-                                    const styles = RATING_STYLES[suggestion.classificacao];
+                                    const styles = RATING_STYLES[suggestion.classificacao] || RATING_STYLES['NEUTRO'];
                                     const heroImageSize = 'w-14 h-14';
                                     return (
                                         <div 
