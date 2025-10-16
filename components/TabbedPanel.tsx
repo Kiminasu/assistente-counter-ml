@@ -21,7 +21,7 @@ const TabbedPanel: React.FC<TabbedPanelProps> = ({ tabs }) => {
                         onClick={() => setActiveTab(index)}
                         className={`${
                             activeTab === index
-                                ? 'bg-violet-600 text-white'
+                                ? 'bg-sky-600 text-white'
                                 : 'bg-black bg-opacity-20 text-gray-400 hover:bg-gray-800 hover:text-white'
                         } flex-1 text-center whitespace-nowrap py-3 px-1 font-bold text-sm sm:text-base transition-colors first:rounded-tl-2xl last:rounded-tr-2xl`}
                     >

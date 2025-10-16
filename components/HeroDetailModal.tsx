@@ -128,7 +128,7 @@ const HeroDetailModal: React.FC<HeroDetailModalProps> = ({ heroId, heroes, onClo
 
         return (
             <div key={skill.skillname} className="p-3 bg-black bg-opacity-20 rounded-xl">
-                <p className="font-bold text-violet-300">{label}: <span className="text-white">{skill.skillname}</span></p>
+                <p className="font-bold text-sky-300">{label}: <span className="text-white">{skill.skillname}</span></p>
                 <p className="text-sm text-gray-300 mt-1">{skill.skilldesc}</p>
             </div>
         );
@@ -174,12 +174,12 @@ const HeroDetailModal: React.FC<HeroDetailModalProps> = ({ heroId, heroes, onClo
             onClick={onClose}
         >
             <div 
-                className="glassmorphism rounded-2xl shadow-xl max-w-4xl w-full flex flex-col border border-violet-500 modal-animation max-h-[85vh]"
+                className="glassmorphism rounded-2xl shadow-xl max-w-4xl w-full flex flex-col border border-sky-500 modal-animation max-h-[85vh]"
                 onClick={e => e.stopPropagation()}
             >
                 <div className="p-4 border-b border-gray-700 flex justify-between items-center flex-shrink-0">
                     <div className="flex items-center gap-4">
-                        <img src={hero.imageUrl} alt={hero.name} className="w-12 h-12 sm:w-16 sm:h-16 rounded-full border-2 border-violet-400" />
+                        <img src={hero.imageUrl} alt={hero.name} className="w-12 h-12 sm:w-16 sm:h-16 rounded-full border-2 border-sky-400" />
                         <div>
                             <h2 className="text-xl sm:text-2xl font-bold text-amber-300">{hero.name}</h2>
                             <p className="text-sm text-gray-400">{hero.roles.join(' / ')}</p>
@@ -189,10 +189,10 @@ const HeroDetailModal: React.FC<HeroDetailModalProps> = ({ heroId, heroes, onClo
                 </div>
                 
                 <nav className="flex-shrink-0 flex border-b border-gray-700" aria-label="Tabs">
-                    <button onClick={() => setActiveTab('habilidades')} className={`flex-1 text-center py-3 px-1 font-bold text-sm sm:text-base transition-colors ${activeTab === 'habilidades' ? 'bg-violet-600 text-white' : 'text-gray-400 hover:bg-gray-800'}`}>
+                    <button onClick={() => setActiveTab('habilidades')} className={`flex-1 text-center py-3 px-1 font-bold text-sm sm:text-base transition-colors ${activeTab === 'habilidades' ? 'bg-sky-600 text-white' : 'text-gray-400 hover:bg-gray-800'}`}>
                         Habilidades e Combos
                     </button>
-                    <button onClick={() => setActiveTab('estatisticas')} className={`flex-1 text-center py-3 px-1 font-bold text-sm sm:text-base transition-colors ${activeTab === 'estatisticas' ? 'bg-violet-600 text-white' : 'text-gray-400 hover:bg-gray-800'}`}>
+                    <button onClick={() => setActiveTab('estatisticas')} className={`flex-1 text-center py-3 px-1 font-bold text-sm sm:text-base transition-colors ${activeTab === 'estatisticas' ? 'bg-sky-600 text-white' : 'text-gray-400 hover:bg-gray-800'}`}>
                         Estatísticas e Sinergias
                     </button>
                 </nav>
@@ -203,7 +203,7 @@ const HeroDetailModal: React.FC<HeroDetailModalProps> = ({ heroId, heroes, onClo
                         <>
                             {isLoading && (
                                 <div className="flex flex-col items-center justify-center h-full py-16">
-                                    <div className="w-10 h-10 border-2 border-dashed rounded-full animate-spin border-violet-400"></div>
+                                    <div className="w-10 h-10 border-2 border-dashed rounded-full animate-spin border-sky-400"></div>
                                 </div>
                             )}
                             {error && (
@@ -241,7 +241,7 @@ const HeroDetailModal: React.FC<HeroDetailModalProps> = ({ heroId, heroes, onClo
                         <div className="animated-entry">
                              {(isStatsLoading && !stats) && (
                                 <div className="flex flex-col items-center justify-center h-full py-16">
-                                    <div className="w-10 h-10 border-2 border-dashed rounded-full animate-spin border-violet-400"></div>
+                                    <div className="w-10 h-10 border-2 border-dashed rounded-full animate-spin border-sky-400"></div>
                                     <p className="mt-2 text-sm text-gray-400">A carregar estatísticas do meta...</p>
                                 </div>
                             )}
@@ -269,7 +269,7 @@ const HeroDetailModal: React.FC<HeroDetailModalProps> = ({ heroId, heroes, onClo
                                                 <button
                                                     key={days}
                                                     onClick={() => setPastDays(days as 7 | 15 | 30)}
-                                                    className={`font-semibold text-xs py-1 px-3 rounded-lg transition-colors duration-200 ${pastDays === days ? 'bg-violet-600 text-white' : 'bg-slate-800 hover:bg-slate-700'}`}
+                                                    className={`font-semibold text-xs py-1 px-3 rounded-lg transition-colors duration-200 ${pastDays === days ? 'bg-sky-600 text-white' : 'bg-slate-800 hover:bg-slate-700'}`}
                                                 >
                                                     {days} Dias
                                                 </button>
@@ -277,7 +277,7 @@ const HeroDetailModal: React.FC<HeroDetailModalProps> = ({ heroId, heroes, onClo
                                         </div>
                                         {isRatesLoading && (
                                             <div className="flex flex-col items-center justify-center h-48 bg-black/20 rounded-lg">
-                                                <div className="w-8 h-8 border-2 border-dashed rounded-full animate-spin border-violet-400"></div>
+                                                <div className="w-8 h-8 border-2 border-dashed rounded-full animate-spin border-sky-400"></div>
                                             </div>
                                         )}
                                         {ratesError && <p className="text-center text-xs text-yellow-400">{ratesError}</p>}

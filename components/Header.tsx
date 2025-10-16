@@ -4,8 +4,6 @@ import { UserProfile } from '../types';
 import { GameMode } from '../types';
 
 interface HeaderProps {
-    activeMode: GameMode;
-    onSetMode: (mode: GameMode) => void;
     session: Session | null;
     userProfile: UserProfile | null;
     onLogout: () => void;
@@ -13,6 +11,11 @@ interface HeaderProps {
     onUpgradeClick: () => void;
     analysisLimit: number;
     effectiveSubscriptionStatus: 'free' | 'premium';
+    activeMode: GameMode;
+    onSetMode: (mode: GameMode) => void;
+    onLoginClick: () => void;
+    onGoBackToLanding: (sectionId?: string) => void;
+    onNavigateToFeatures: () => void;
 }
 
 const UserPanel: React.FC<Pick<HeaderProps, 'userProfile' | 'onLogout' | 'onEditProfile' | 'onUpgradeClick' | 'analysisLimit' | 'effectiveSubscriptionStatus'>> = 
@@ -45,7 +48,7 @@ const UserPanel: React.FC<Pick<HeaderProps, 'userProfile' | 'onLogout' | 'onEdit
     if (!userProfile) return null;
 
     return (
-        <div ref={menuRef} className="absolute top-4 right-0 text-right z-20">
+        <div ref={menuRef} className="relative z-20">
             <div className="flex items-center gap-3">
                 {effectiveSubscriptionStatus === 'premium' ? (
                     <div className="flex items-center gap-2 bg-gradient-to-r from-amber-500 to-yellow-600 p-1.5 rounded-full border border-amber-400/50 shadow-lg shadow-amber-500/20">
@@ -59,7 +62,7 @@ const UserPanel: React.FC<Pick<HeaderProps, 'userProfile' | 'onLogout' | 'onEdit
                 ) : (
                     <div className="flex items-center gap-2 bg-slate-900/50 backdrop-blur-sm p-1.5 rounded-full border border-slate-700">
                          <span className="text-xs font-mono text-slate-300 px-3 flex items-center gap-1.5 whitespace-nowrap" title="Análises restantes">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-violet-400" viewBox="0 0 20 20" fill="currentColor">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-sky-400" viewBox="0 0 20 20" fill="currentColor">
                               <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
                             </svg>
                             <span className="font-semibold">{analysesRemaining}/{analysisLimit}</span>
@@ -71,7 +74,7 @@ const UserPanel: React.FC<Pick<HeaderProps, 'userProfile' | 'onLogout' | 'onEdit
                     </div>
                 )}
                 <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="flex-shrink-0">
-                    <div className="w-10 h-10 rounded-full bg-violet-800 flex items-center justify-center font-bold text-violet-300 border-2 border-violet-600">
+                    <div className="w-10 h-10 rounded-full bg-sky-800 flex items-center justify-center font-bold text-sky-300 border-2 border-sky-600">
                         {getInitials(userProfile.username)}
                     </div>
                 </button>
@@ -81,7 +84,7 @@ const UserPanel: React.FC<Pick<HeaderProps, 'userProfile' | 'onLogout' | 'onEdit
             {isMenuOpen && (
                 <div className="absolute top-full right-0 mt-2 w-64 bg-slate-900/80 backdrop-blur-md rounded-lg shadow-lg border border-slate-700 p-3 modal-animation">
                     <div className="flex items-center gap-3 border-b border-slate-700 pb-3 mb-3">
-                         <div className="w-12 h-12 rounded-full bg-violet-800 flex items-center justify-center font-bold text-violet-300 border-2 border-violet-600 flex-shrink-0">
+                         <div className="w-12 h-12 rounded-full bg-sky-800 flex items-center justify-center font-bold text-sky-300 border-2 border-sky-600 flex-shrink-0">
                             {getInitials(userProfile.username)}
                         </div>
                         <div>
@@ -106,8 +109,79 @@ const UserPanel: React.FC<Pick<HeaderProps, 'userProfile' | 'onLogout' | 'onEdit
     );
 };
 
+interface AppNavigationBarProps {
+    activeMode: GameMode;
+    onSetMode: (mode: GameMode) => void;
+    effectiveSubscriptionStatus: 'free' | 'premium';
+}
 
-const Header: React.FC<HeaderProps> = ({ activeMode, onSetMode, session, userProfile, onLogout, onEditProfile, onUpgradeClick, analysisLimit, effectiveSubscriptionStatus }) => {
+const AppNavigationBar: React.FC<AppNavigationBarProps> = ({ activeMode, onSetMode, effectiveSubscriptionStatus }) => {
+    const modes: { id: GameMode; label: string; icon: React.ReactNode; isPro?: boolean }[] = [
+        { id: '1v1', label: 'Análise 1v1', icon: <span className="font-black text-xl tracking-tighter">1vs1</span> },
+        { id: 'synergy', label: 'Análise de Herói', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" /></svg> },
+        { id: '5v5', label: 'Draft 5vs5', icon: <span className="font-black text-xl tracking-tighter">5vs5</span>, isPro: true },
+        { id: 'dashboard', label: 'Painel', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" viewBox="0 0 20 20" fill="currentColor"><path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg> },
+        { id: 'heroes', label: 'Heróis', icon: <span className="font-black text-2xl">H</span> },
+        { id: 'item', label: 'Itens', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 24 24" fill="currentColor"><path d="M19.5,6H17V4.5A1.5,1.5 0 0,0 15.5,3H8.5A1.5,1.5 0 0,0 7,4.5V6H4.5A1.5,1.5 0 0,0 3,7.5V11.25L5,13V19.5A1.5,1.5 0 0,0 6.5,21H17.5A1.5,1.5 0 0,0 19,19.5V13L21,11.25V7.5A1.5,1.5 0 0,0 19.5,6M15,6H9V4.5C9,4.22 9.22,4 9.5,4H14.5C14.78,4 15,4.22 15,4.5V6M12,17A2,2 0 0,1 10,15A2,2 0 0,1 12,13A2,2 0 0,1 14,15A2,2 0 0,1 12,17Z" /></svg> },
+        { id: 'ranking', label: 'Ranking', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" /></svg> },
+    ];
+    
+    const centerIndex = 3;
+    const leftModes = modes.slice(0, centerIndex);
+    const centerMode = modes[centerIndex];
+    const rightModes = modes.slice(centerIndex + 1);
+
+    const renderButton = (mode: typeof modes[0], isCenter: boolean) => {
+        const isActive = activeMode === mode.id;
+        return (
+            <button
+                key={mode.id}
+                onClick={() => onSetMode(mode.id)}
+                className={`relative group focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:rounded-full p-1 transition-transform duration-300 ${isCenter ? 'my-[-20px]' : ''}`}
+                aria-current={isActive ? 'page' : undefined}
+            >
+                <div className={`flex flex-col items-center justify-center rounded-full transition-all duration-300
+                    ${isCenter 
+                        ? `h-24 w-24 border-2 shadow-lg shadow-black/50 group-hover:border-sky-400 group-hover:shadow-[var(--glow-primary)] ${isActive ? 'bg-sky-600 border-sky-400' : 'bg-[#1f1d31] border-slate-600'}`
+                        : `h-14 w-28 ${isActive ? 'bg-sky-600 shadow-sm shadow-sky-500/30' : 'group-hover:bg-slate-700'}`
+                    }`}
+                >
+                    <div className={`flex items-center justify-center transition-colors ${isCenter ? '' : 'h-7'} ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-white'}`}>
+                        {mode.icon}
+                    </div>
+                    <div className={`text-center text-[10px] font-semibold mt-0.5 transition-colors ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-white'} ${isCenter ? 'leading-tight px-1' : 'whitespace-nowrap'}`}>
+                        {mode.label}
+                    </div>
+                </div>
+
+                {mode.isPro && !isCenter && effectiveSubscriptionStatus !== 'premium' && (
+                    <span className="absolute -top-0 -right-0 bg-gradient-to-br from-amber-400 to-yellow-500 text-black text-[8px] font-bold px-1 py-0.5 rounded-full shadow-md animate-soft-blink">
+                        PRO
+                    </span>
+                )}
+            </button>
+        );
+    };
+
+    return (
+        <nav className="relative flex justify-center animated-entry z-10">
+            <div className="grid grid-cols-[1fr_auto_1fr] items-center bg-[#13121d] rounded-[32px] p-2 border border-slate-700 shadow-lg shadow-black/30 gap-5">
+                <div className="flex justify-end gap-5">
+                    {leftModes.map(mode => renderButton(mode, false))}
+                </div>
+                <div className="flex-shrink-0">
+                    {renderButton(centerMode, true)}
+                </div>
+                <div className="flex justify-start gap-5">
+                    {rightModes.map(mode => renderButton(mode, false))}
+                </div>
+            </div>
+        </nav>
+    );
+};
+
+
+const Header: React.FC<HeaderProps> = ({ activeMode, onSetMode, session, userProfile, onLogout, onEditProfile, onUpgradeClick, analysisLimit, effectiveSubscriptionStatus, onLoginClick, onGoBackToLanding, onNavigateToFeatures }) => {
     const descriptions: Record<GameMode, string> = {
         'dashboard': 'Seu centro de comando estratégico com insights do meta, desafios diários e acesso rápido às principais ferramentas.',
         'synergy': 'Selecione um herói para ver sugestões de ban, sinergias e uma análise estratégica completa da IA com build e estilo de jogo.',
@@ -119,85 +193,73 @@ const Header: React.FC<HeaderProps> = ({ activeMode, onSetMode, session, userPro
         'premium': 'Conheça os planos e desbloqueie o acesso ilimitado a todas as ferramentas da Mítica Estratégia.'
     };
 
-    const modes: { id: GameMode; label: string, isPro?: boolean }[] = [
-        { id: 'dashboard', label: 'Painel' },
-        { id: 'synergy', label: 'Análise de Herói' },
-        { id: '1v1', label: 'Análise 1vs1' },
-        { id: '5v5', label: 'Draft 5vs5', isPro: true },
-        { id: 'heroes', label: 'Heróis' },
-        { id: 'item', label: 'Itens' },
-        { id: 'ranking', label: 'Ranking' },
-    ];
-    
-    // Não mostra a barra de navegação na tela premium
-    const showNavBar = activeMode !== 'premium';
-
     return (
-        <header className="relative text-center mb-8 animated-entry">
-            {activeMode === 'premium' && (
-                 <button 
-                    onClick={() => onSetMode('dashboard')} 
-                    className="absolute top-4 left-0 text-slate-300 hover:text-white font-semibold transition-colors text-lg p-2 rounded-lg flex items-center gap-2 z-30"
-                    aria-label="Voltar"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                    </svg>
-                    Voltar
-                </button>
-            )}
-            {session && (
-                 <UserPanel 
-                    userProfile={userProfile} 
-                    onLogout={onLogout} 
-                    onEditProfile={onEditProfile}
-                    onUpgradeClick={onUpgradeClick}
-                    analysisLimit={analysisLimit}
-                    effectiveSubscriptionStatus={effectiveSubscriptionStatus}
-                />
-            )}
+        <>
+            <header className="sticky top-0 z-30 bg-black/50 backdrop-blur-md border-b border-slate-700/50 animated-entry">
+                <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="relative flex justify-between items-center h-16">
+                        
+                        {activeMode === 'premium' ? (
+                             <button 
+                                onClick={() => onSetMode('dashboard')} 
+                                className="text-slate-300 hover:text-white font-semibold transition-colors text-lg p-2 rounded-lg flex items-center gap-2"
+                                aria-label="Voltar"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                                </svg>
+                                <span className="hidden sm:block">Voltar</span>
+                            </button>
+                        ) : (
+                            <button onClick={() => onSetMode('dashboard')} className="flex items-center gap-2 cursor-pointer group">
+                                <img src="https://i.postimg.cc/ZK4nFyHG/mitica-logo-Photoroom.png" alt="Logo" className="h-10 w-10 transition-transform group-hover:scale-110" />
+                                <span className="font-bold text-lg text-white hidden sm:block transition-all group-hover:brightness-110 relative top-[2px]" style={{ fontFamily: "'Inter', sans-serif" }}>Mítica Estratégia MLBB</span>
+                            </button>
+                        )}
 
-            <img src="https://i.postimg.cc/ZK4nFyHG/mitica-logo-Photoroom.png" alt="Mítica Estratégia MLBB Logo" className={`h-56 sm:h-80 lg:h-[27rem] mx-auto -mt-4 sm:-mt-10 lg:-mt-12 ${activeMode !== 'premium' ? 'animated-logo' : ''}`} />
-            <h1 className={`text-4xl sm:text-7xl lg:text-8xl font-black tracking-tight title-main -mt-12 sm:-mt-20 lg:-mt-24 relative max-w-sm sm:max-w-none mx-auto ${activeMode !== 'premium' ? 'animated-logo' : ''}`}>
-                MÍTICA ESTRATÉGIA MLBB
-            </h1>
-            
-            {showNavBar && (
-                <>
-                    <p className="text-base sm:text-lg text-slate-300 mt-4 max-w-3xl mx-auto tracking-wide">
-                        Seu Guia de Counters, Builds e Estratégias para Mobile Legends: Bang Bang.
-                    </p>
-                    <div className="mt-8">
-                        <div className="inline-flex flex-wrap justify-center bg-black bg-opacity-30 p-1 rounded-xl gap-1">
-                            {modes.map((mode) => {
-                                const isPremiumFeature = mode.isPro;
-                                return (
-                                    <button
-                                        key={mode.id}
-                                        onClick={() => onSetMode(mode.id)}
-                                        className={`relative px-3 sm:px-4 py-2 text-sm font-semibold rounded-lg transition-colors duration-200 ${
-                                            activeMode === mode.id
-                                                ? 'bg-violet-600 text-white shadow-lg shadow-violet-500/30'
-                                                : 'text-slate-300 hover:bg-slate-800/60 hover:text-white'
-                                        }`}
-                                    >
-                                        {mode.label}
-                                        {isPremiumFeature && effectiveSubscriptionStatus !== 'premium' && (
-                                             <span className="absolute -top-1.5 -right-1.5 bg-gradient-to-br from-amber-400 to-yellow-500 text-black text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow-lg animate-soft-blink">
-                                                PREMIUM
-                                            </span>
-                                        )}
-                                    </button>
-                                );
-                            })}
+                        <nav className="hidden md:flex gap-6 items-center absolute left-1/2 -translate-x-1/2">
+                            <button onClick={onNavigateToFeatures} className="text-sm font-semibold text-slate-300 hover:text-white transition-colors">Funcionalidades</button>
+                            <button onClick={() => onGoBackToLanding('testimonials')} className="text-sm font-semibold text-slate-300 hover:text-white transition-colors">Depoimentos</button>
+                            <button onClick={onUpgradeClick} className="text-sm font-semibold text-slate-300 hover:text-white transition-colors">Planos</button>
+                        </nav>
+                        
+                        <div className="flex items-center">
+                            {session ? (
+                                <UserPanel 
+                                    userProfile={userProfile} 
+                                    onLogout={onLogout} 
+                                    onEditProfile={onEditProfile}
+                                    onUpgradeClick={onUpgradeClick}
+                                    analysisLimit={analysisLimit}
+                                    effectiveSubscriptionStatus={effectiveSubscriptionStatus}
+                                />
+                            ) : (
+                                <button
+                                    onClick={onLoginClick}
+                                    className="bg-gradient-to-r from-sky-500 to-cyan-500 text-white font-bold py-2 px-5 rounded-lg text-sm hover:from-sky-600 hover:to-cyan-600 transition-all duration-300 transform hover:scale-105"
+                                >
+                                    Login / Cadastrar
+                                </button>
+                            )}
                         </div>
-                        <p className="text-sm text-slate-400 mt-4 max-w-xl mx-auto h-10 flex items-center justify-center transition-opacity duration-300">
-                            {descriptions[activeMode]}
-                        </p>
                     </div>
-                </>
+                </div>
+            </header>
+            
+            {activeMode !== 'premium' && (
+                <div className="text-center mt-8 mb-4 animated-entry">
+                     <AppNavigationBar
+                        activeMode={activeMode}
+                        onSetMode={onSetMode}
+                        effectiveSubscriptionStatus={effectiveSubscriptionStatus}
+                    />
+                    
+                    <p className="text-sm text-slate-400 mt-4 max-w-xl mx-auto flex items-center justify-center transition-opacity duration-300 min-h-[40px]">
+                        {descriptions[activeMode]}
+                    </p>
+                </div>
             )}
-        </header>
+        </>
     );
 };
 

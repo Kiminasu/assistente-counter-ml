@@ -1,15 +1,12 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Session } from '@supabase/supabase-js';
-// FIX: Import AILaneRecommendation to handle the new analysis object.
 import { Hero, Lane, AnalysisResult, LANES, ROLES, Role, HeroSuggestion, BanSuggestion, MatchupData, ItemSuggestion, RankCategory, RankDays, SortField, HeroRankInfo, Team, DraftAnalysisResult, NextPickSuggestion, StrategicItemSuggestion, LaneOrNone, HeroDetails, HeroRelation, HeroStrategy, UserSignupRank, GameMode, AITacticalCounter, HeroStrategicAnalysis, UserProfile, AILaneRecommendation } from './types';
 import { fetchHeroes, fetchHeroCounterStats, fetchHeroDetails, fetchHeroRankings, ApiHeroRankData, fetchHeroRelations, fetchHeroPositionsData } from './services/heroService';
 import { getCombined1v1Analysis, getDraftAnalysis, getHeroStrategicAnalysis } from './services/geminiService';
 import { findClosestString } from './utils';
 import { SPELL_ICONS } from './constants';
-import { HERO_EXPERT_RANK } from './components/data/heroData';
 import { GAME_ITEMS } from './components/data/items';
 import { MANUAL_HERO_DATA } from './components/data/manualHeroData';
-import { MANUAL_SYNERGY_DATA } from './components/data/synergyData';
 import LoadingOverlay from './components/LoadingOverlay';
 import AnalysisPanel from './components/AnalysisPanel';
 import LaneSelector from './components/LaneSelector';
@@ -33,6 +30,8 @@ import UpgradeModal from './components/UpgradeModal';
 import PremiumScreen from './components/PremiumScreen';
 import DashboardScreen from './components/DashboardScreen';
 import { supabase } from './supabaseClient';
+import LandingPage from './components/LandingPage';
+import FeaturesPage from './components/FeaturesPage';
 
 const DAILY_ANALYSIS_LIMIT = 5;
 
@@ -62,6 +61,8 @@ const App: React.FC = () => {
         );
     }
 
+    const [view, setView] = useState<'landing' | 'app' | 'login' | 'features'>('landing');
+
     const [session, setSession] = useState<Session | null>(null);
     const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
     const [isProfileChecked, setIsProfileChecked] = useState(false);
@@ -74,7 +75,6 @@ const App: React.FC = () => {
 
     const [gameMode, setGameMode] = useState<GameMode>('dashboard');
     const [paymentStatusMessage, setPaymentStatusMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
-
 
     // State for 1v1 mode
     const [matchupAllyPick, setMatchupAllyPick] = useState<string | null>(null);
@@ -93,7 +93,6 @@ const App: React.FC = () => {
     const [synergyRelations, setSynergyRelations] = useState<HeroRelation | null>(null);
     const [synergyError, setSynergyError] = useState<string | null>(null);
     const [isSynergyAnalysisLoading, setIsSynergyAnalysisLoading] = useState(false);
-    // FIX: Add state for perfect lane counters feature.
     const [perfectLaneCounters, setPerfectLaneCounters] = useState<HeroSuggestion[]>([]);
     const [perfectLaneCountersError, setPerfectLaneCountersError] = useState<string | null>(null);
 
@@ -156,6 +155,9 @@ const App: React.FC = () => {
             setSession(session);
             if (session?.user) {
                 await fetchUserProfile(session.user);
+                if (view === 'login') {
+                    setView('app');
+                }
             } else {
                 setUserProfile(null);
             }
@@ -173,7 +175,7 @@ const App: React.FC = () => {
     
             return () => subscription.unsubscribe();
         }
-    }, [fetchUserProfile]);
+    }, [fetchUserProfile, view]);
 
      useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
@@ -181,17 +183,14 @@ const App: React.FC = () => {
         if (paymentStatus) {
             if (paymentStatus === 'success') {
                 setPaymentStatusMessage({ type: 'success', text: 'Pagamento bem-sucedido! Sua conta foi atualizada para Premium.' });
-                // Refetch user profile to get updated subscription status
                 if (session?.user) {
                     fetchUserProfile(session.user);
                 }
             } else if (paymentStatus === 'failure') {
                 setPaymentStatusMessage({ type: 'error', text: 'O pagamento falhou. Por favor, tente novamente.' });
             }
-            // Clean up the URL
             window.history.replaceState(null, '', window.location.pathname);
             
-            // Hide message after a few seconds
             setTimeout(() => setPaymentStatusMessage(null), 7000);
         }
     }, [session, fetchUserProfile]);
@@ -204,7 +203,7 @@ const App: React.FC = () => {
             console.error("Erro ao escrever o cache de detalhes do herói no localStorage", error);
         }
     }, [heroDetailsCache]);
-
+    
 
     const [heroRankings, setHeroRankings] = useState<HeroRankInfo[]>([]);
     const [isRankingsLoading, setIsRankingsLoading] = useState(false);
@@ -222,6 +221,41 @@ const App: React.FC = () => {
     const [draftAnalysisError, setDraftAnalysisError] = useState<string | null>(null);
 
     const analysisSectionRef = useRef<HTMLDivElement>(null);
+
+    const handleSetGameMode = useCallback((mode: GameMode) => {
+        setGameMode(mode);
+        window.scrollTo(0, 0);
+    }, []);
+
+    const handleLaunchApp = useCallback(() => {
+        setView('app');
+    }, []);
+
+    const handleSeePlans = useCallback(() => {
+        setView('app');
+        setGameMode('premium');
+    }, []);
+
+    const handleNavigateToFeatures = () => setView('features');
+    
+    const handleGoBackToLanding = (sectionId?: string) => {
+        const doScroll = () => {
+            if (sectionId) {
+                document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth' });
+            } else {
+                window.scrollTo(0, 0);
+            }
+        };
+
+        if (view !== 'landing') {
+            setView('landing');
+            setTimeout(doScroll, 100); // Aguarda a mudança de view para rolar
+        } else {
+            doScroll(); // Se já estiver na landing page, apenas rola
+        }
+    };
+    
+    const handleLoginClick = () => setView('login');
 
     const laneToRoleMap: Record<Lane, Role> = useMemo(() => ({
         'EXP': 'Soldado',
@@ -337,29 +371,23 @@ const App: React.FC = () => {
             }
         };
 
-        fetchRankings();
-    }, [rankDays, rankCategory, sortField, heroes, heroApiIdMap]);
+        if (view === 'app' && gameMode === 'ranking') {
+            fetchRankings();
+        }
+    }, [rankDays, rankCategory, sortField, heroes, heroApiIdMap, view, gameMode]);
     
     useEffect(() => {
-        // Only set the initial rank for meta bans.
         if (metaBanRankCategory !== null) return;
-    
-        // Wait until we have checked for a profile.
         if (!isProfileChecked) return;
     
-        if (session) { // User is logged in.
-            if (userProfile) { // And profile exists.
-                const lowerRanks = ['Guerreiro', 'Elite', 'Mestre', 'Grão-Mestre'];
-                if (lowerRanks.includes(userProfile.rank)) {
-                    setMetaBanRankCategory('mythic');
-                } else {
-                    setMetaBanRankCategory('glory');
-                }
+        if (session && userProfile) {
+            const lowerRanks = ['Guerreiro', 'Elite', 'Mestre', 'Grão-Mestre'];
+            if (lowerRanks.includes(userProfile.rank)) {
+                setMetaBanRankCategory('mythic');
             } else {
-                // User is logged in, but no profile was found. Default to 'glory'.
                 setMetaBanRankCategory('glory');
             }
-        } else { // User is logged out.
+        } else {
             setMetaBanRankCategory('glory');
         }
     }, [userProfile, session, metaBanRankCategory, isProfileChecked]);
@@ -396,11 +424,12 @@ const App: React.FC = () => {
                 setIsMetaBansLoading(false);
             }
         };
+        
+        if (view === 'app' && (gameMode === '1v1' || gameMode === '5v5' || gameMode === 'synergy')) {
+            fetchAndSetMetaBans();
+        }
+    }, [heroes, heroApiIdMap, metaBanRankCategory, view, gameMode]);
 
-        fetchAndSetMetaBans();
-    }, [heroes, heroApiIdMap, metaBanRankCategory]);
-
-    // Reseta sugestões de ban de counter ao mudar de modo para evitar mostrar sugestões incorretas
     useEffect(() => {
         setCounterBanSuggestions([]);
     }, [gameMode]);
@@ -436,7 +465,6 @@ const App: React.FC = () => {
         fetchSynergyData();
     }, [matchupAllyPick, gameMode, heroes, heroApiIdMap]);
 
-    // FIX: Consolidate state resets for strategic analysis.
     useEffect(() => {
         if (!synergyHeroPick) {
             setHeroStrategicAnalysis(null);
@@ -451,6 +479,10 @@ const App: React.FC = () => {
     }, [synergyHeroPick]);
     
     const checkAnalysisLimit = useCallback(() => {
+        if (!session) {
+            setView('login');
+            return false;
+        }
         if (!userProfile) return false;
         if (effectiveSubscriptionStatus === 'premium') return true;
 
@@ -462,7 +494,7 @@ const App: React.FC = () => {
             return false;
         }
         return true;
-    }, [userProfile, effectiveSubscriptionStatus]);
+    }, [userProfile, effectiveSubscriptionStatus, session]);
 
     const processAIBanSuggestions = (suggestions: AITacticalCounter[]): BanSuggestion[] => {
         return suggestions.map(suggestion => {
@@ -471,7 +503,6 @@ const App: React.FC = () => {
         }).filter((s): s is BanSuggestion => s !== null);
     };
 
-
     const handleSynergyAnalysis = useCallback(async () => {
         if (!checkAnalysisLimit() || !synergyHeroPick) return;
     
@@ -479,7 +510,6 @@ const App: React.FC = () => {
         if (!selectedHero || !selectedHero.apiId) return;
     
         setIsSynergyAnalysisLoading(true);
-        // FIX: Reset consolidated state objects.
         setHeroStrategicAnalysis(null);
         setStrategicAnalysisError(null);
         setSynergyRelations(null);
@@ -488,7 +518,6 @@ const App: React.FC = () => {
         setPerfectLaneCounters([]);
         setPerfectLaneCountersError(null);
         
-        // Fetch hero details (only for the selected hero)
         const getDetails = async (hero: Hero): Promise<HeroDetails> => {
             if (heroDetailsCache[hero.apiId]) return heroDetailsCache[hero.apiId];
             if (!hero.apiId) throw new Error(`API ID for ${hero.name} not found.`);
@@ -497,7 +526,6 @@ const App: React.FC = () => {
             return details;
         };
     
-        // Parallel fetching: AI analysis and statistical relations
         try {
             const heroToAnalyzeDetails = await getDetails(selectedHero);
 
@@ -506,7 +534,6 @@ const App: React.FC = () => {
                 fetchHeroRelations(selectedHero.apiId, heroes, heroApiIdMap)
             ]);
     
-            // FIX: Process and set the entire strategic analysis object.
             const { strategy, tacticalCounters: aiCounters, perfectLaneCounters: aiLaneCounters } = analysisResult;
             const validItemNames = GAME_ITEMS.map(item => item.nome);
             const correctedCoreItems = strategy.coreItems.map(item => ({ ...item, nome: findClosestString(item.nome, validItemNames) }));
@@ -520,7 +547,6 @@ const App: React.FC = () => {
             
             setCounterBanSuggestions(processAIBanSuggestions(aiCounters));
             
-            // FIX: Process the new perfectLaneCounters array
             if (aiLaneCounters) {
                 const validSpellNames = Object.keys(SPELL_ICONS);
                 const laneCounters: HeroSuggestion[] = aiLaneCounters.map(rec => {
@@ -541,13 +567,11 @@ const App: React.FC = () => {
                 setPerfectLaneCounters(laneCounters);
             }
 
-            // Process statistical synergy result
             setSynergyRelations(relationsData);
 
             if (session?.user) await fetchUserProfile(session.user);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : "Erro na análise estratégica da IA.";
-            // FIX: Set a single error state for all parts of the analysis.
             setStrategicAnalysisError(errorMessage);
             setSynergyError(errorMessage);
             setPerfectLaneCountersError(errorMessage);
@@ -588,7 +612,6 @@ const App: React.FC = () => {
             const isAnyLane = activeLane === 'NENHUMA';
             const roleForAnalysis: Role | 'Qualquer' = isAnyLane ? 'Qualquer' : laneToRoleMap[activeLane as Lane];
     
-            // Otimização: Buscar detalhes apenas dos heróis necessários
             const heroesForDetails = [enemyHero, yourHero].filter((h): h is Hero => h !== null);
             const detailsToFetch = heroesForDetails.filter(h => h.apiId && !heroDetailsCache[h.apiId]);
             let newCacheEntries: Record<number, HeroDetails> = {};
@@ -609,7 +632,6 @@ const App: React.FC = () => {
                 throw new Error("Falha ao carregar detalhes do herói inimigo para a análise.");
             }
             
-            // Otimização: Buscar winrate em paralelo com a chamada da IA (se possível)
             let winRate: number | null = null;
             if (yourHero && yourHero.apiId && enemyHero.apiId) {
                  const enemyCounterStats = await fetchHeroCounterStats(enemyHero.apiId);
@@ -623,7 +645,6 @@ const App: React.FC = () => {
                  winRate = wr;
             }
     
-            // Otimização: Chamar IA com dados mínimos
             const combinedAnalysis = await getCombined1v1Analysis(
                 enemyHeroDetails,
                 activeLane,
@@ -634,7 +655,6 @@ const App: React.FC = () => {
             );
             if (session?.user) await fetchUserProfile(session.user);
     
-            // Após a resposta da IA, buscar dados estatísticos para enriquecer a UI
             const { counters: counterData } = await fetchHeroCounterStats(enemyHero.apiId);
             const allStatCounters = counterData
                 .map(c => ({ hero: heroApiIdMap[c.heroid], increase_win_rate: c.increase_win_rate }))
@@ -783,9 +803,13 @@ const App: React.FC = () => {
     }, [draftAllyPicks, draftEnemyPicks, gameMode, heroes, runDraftAnalysis]);
 
     const handleSlotClick = useCallback((team: Team | 'synergy', index: number) => {
+        if (!session) {
+            setView('login');
+            return;
+        }
         setActiveSlot({ team, index });
         setIsModalOpen(true);
-    }, []);
+    }, [session]);
 
     const handleHeroSelect = useCallback((heroId: string) => {
         if (!activeSlot) return;
@@ -851,10 +875,6 @@ const App: React.FC = () => {
         }
     }, [draftAllyPicks, draftEnemyPicks]);
 
-    const handleSetGameMode = useCallback((mode: GameMode) => {
-        setGameMode(mode);
-    }, []);
-
     const tabs = useMemo(() => [
         {
             label: "Confronto Direto",
@@ -872,11 +892,8 @@ const App: React.FC = () => {
             />
         }
     ], [is1v1AnalysisLoading, matchupData, matchupError, isSynergyLoading1v1, synergyError1v1, synergyRelations1v1, heroApiIdMap, heroes]);
-
-    if (isLoadingApp) {
-        return <LoadingOverlay message={'CARREGANDO DADOS...'} />;
-    }
-
+    
+    if (isLoadingApp) return <LoadingOverlay message={'CARREGANDO DADOS...'} />;
     if (heroLoadingError) {
         return (
             <div className="fixed inset-0 bg-gray-900 bg-opacity-90 flex flex-col items-center justify-center z-50 text-center">
@@ -884,239 +901,258 @@ const App: React.FC = () => {
             </div>
         );
     }
-    
-    if (!session) {
-        return <AuthScreen />;
-    }
 
     const renderContent = () => {
-        if (gameMode === 'dashboard') {
-            return <DashboardScreen 
-                heroes={heroes}
-                heroApiIdMap={heroApiIdMap}
-                onNavigateToHeroAnalysis={handleNavigateToHeroAnalysis}
-                onSetMode={handleSetGameMode}
-                userProfile={userProfile}
-                effectiveSubscriptionStatus={effectiveSubscriptionStatus}
-            />
-        }
-        if (gameMode === '1v1') {
-            return (
-                 <div className="flex flex-col gap-6">
-                    <CollapsibleTutorial title="Como Analisar um Confronto">
-                        <ol className="list-decimal list-inside space-y-1 text-xs sm:text-sm text-gray-300">
-                           <li>Selecione o <strong className="text-red-300">herói inimigo</strong>. (Obrigatório)</li>
-                           <li>Selecione <strong className="text-blue-300">seu herói</strong>. (Opcional, para análise direta e sinergias).</li>
-                           <li>Escolha a <strong className="text-amber-300">lane</strong> do confronto abaixo. (Selecione "NENHUMA" para sugestões gerais).</li>
-                           <li>Clique em <strong className="text-violet-500">"Analisar Confronto"</strong> para a IA gerar as sugestões.</li>
-                       </ol>
-                    </CollapsibleTutorial>
+        switch (gameMode) {
+            case 'dashboard':
+                return <DashboardScreen 
+                    heroes={heroes}
+                    heroApiIdMap={heroApiIdMap}
+                    onNavigateToHeroAnalysis={handleNavigateToHeroAnalysis}
+                    onSetMode={handleSetGameMode}
+                    userProfile={userProfile}
+                    effectiveSubscriptionStatus={effectiveSubscriptionStatus}
+                />;
+            case '1v1':
+                return (
+                    <div className="flex flex-col gap-6">
+                        <CollapsibleTutorial title="Como Analisar um Confronto">
+                            <ol className="list-decimal list-inside space-y-1 text-xs sm:text-sm text-gray-300">
+                            <li>Selecione o <strong className="text-red-300">herói inimigo</strong>. (Obrigatório)</li>
+                            <li>Selecione <strong className="text-blue-300">seu herói</strong>. (Opcional, para análise direta e sinergias).</li>
+                            <li>Escolha a <strong className="text-amber-300">lane</strong> do confronto abaixo. (Selecione "NENHUMA" para sugestões gerais).</li>
+                            <li>Clique em <strong className="text-sky-500">"Analisar Confronto"</strong> para a IA gerar as sugestões.</li>
+                        </ol>
+                        </CollapsibleTutorial>
 
-                    <div className="grid grid-cols-2 gap-4 items-start">
-                        <div className="col-span-1 flex flex-col gap-2 glassmorphism p-3 rounded-2xl border-2 panel-glow-blue">
-                            <h2 className="text-xl font-black text-center text-blue-300 tracking-wider">SEU HERÓI</h2>
-                            <HeroSlot 
-                                type="ally" 
-                                heroId={matchupAllyPick} 
-                                heroes={heroes} 
-                                onClick={() => handleSlotClick('ally', 0)}
-                                onClear={() => handleClear1v1Slot('ally')}
-                                label="Opcional"
-                            />
+                        <div className="grid grid-cols-2 gap-4 items-start">
+                            <div className="col-span-1 flex flex-col gap-2 glassmorphism p-3 rounded-2xl border-2 panel-glow-blue">
+                                <h2 className="text-xl font-black text-center text-blue-300 tracking-wider">SEU HERÓI</h2>
+                                <HeroSlot 
+                                    type="ally" 
+                                    heroId={matchupAllyPick} 
+                                    heroes={heroes} 
+                                    onClick={() => handleSlotClick('ally', 0)}
+                                    onClear={() => handleClear1v1Slot('ally')}
+                                    label="Opcional"
+                                />
+                            </div>
+
+                            <div className="col-span-1 flex flex-col gap-2 glassmorphism p-3 rounded-2xl border-2 panel-glow-red">
+                                <h2 className="text-xl font-black text-center text-red-300 tracking-wider">INIMIGO</h2>
+                                <HeroSlot 
+                                    type="enemy" 
+                                    heroId={matchupEnemyPick} 
+                                    heroes={heroes} 
+                                    onClick={() => handleSlotClick('enemy', 0)}
+                                    onClear={() => handleClear1v1Slot('enemy')}
+                                    label="Selecione"
+                                />
+                            </div>
                         </div>
 
-                        <div className="col-span-1 flex flex-col gap-2 glassmorphism p-3 rounded-2xl border-2 panel-glow-red">
-                            <h2 className="text-xl font-black text-center text-red-300 tracking-wider">INIMIGO</h2>
-                            <HeroSlot 
-                                type="enemy" 
-                                heroId={matchupEnemyPick} 
-                                heroes={heroes} 
-                                onClick={() => handleSlotClick('enemy', 0)}
-                                onClear={() => handleClear1v1Slot('enemy')}
-                                label="Selecione"
+                        <div className="glassmorphism p-4 rounded-2xl animated-entry border-2 panel-glow-primary flex flex-col gap-4">
+                            <LaneSelector 
+                                activeLane={activeLane} 
+                                onSelectLane={setActiveLane} 
+                                isDisabled={is1v1AnalysisLoading}
                             />
+                            <button
+                                onClick={handleAnalysis}
+                                disabled={!matchupEnemyPick || is1v1AnalysisLoading}
+                                className="w-full bg-gradient-to-r from-sky-500 to-cyan-500 text-white font-bold py-3 px-4 rounded-xl text-lg hover:from-sky-400 hover:to-cyan-400 transition-all duration-300 disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed flex items-center justify-center shadow-lg shadow-sky-500/40 disabled:shadow-none transform hover:scale-105"
+                            >
+                                {is1v1AnalysisLoading ? (
+                                    <>
+                                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                                            <circle className="opacity-25" cx="10" cy="10" r="8" stroke="currentColor" strokeWidth="4"></circle>
+                                            <path className="opacity-75" fill="currentColor" d="M4 10a6 6 0 016-6v2a4 4 0 00-4 4H4z"></path>
+                                        </svg>
+                                        Analisando...
+                                    </>
+                                ) : (
+                                    'Analisar Confronto'
+                                )}
+                            </button>
                         </div>
-                    </div>
 
-                    <div className="glassmorphism p-4 rounded-2xl animated-entry border-2 panel-glow-primary flex flex-col gap-4">
-                        <LaneSelector 
-                            activeLane={activeLane} 
-                            onSelectLane={setActiveLane} 
-                            isDisabled={is1v1AnalysisLoading}
+                        <BanSuggestions
+                            counterSuggestions={counterBanSuggestions}
+                            metaSuggestions={metaBanSuggestions}
+                            isLoading={isMetaBansLoading}
+                            variant="1v1"
+                            activeMetaRank={metaBanRankCategory}
+                            onMetaRankChange={setMetaBanRankCategory}
                         />
-                         <button
-                            onClick={handleAnalysis}
-                            disabled={!matchupEnemyPick || is1v1AnalysisLoading}
-                            className="w-full bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white font-bold py-3 px-4 rounded-xl text-lg hover:from-violet-400 hover:to-fuchsia-400 transition-all duration-300 disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed flex items-center justify-center shadow-lg shadow-violet-500/40 disabled:shadow-none transform hover:scale-105"
-                        >
-                            {is1v1AnalysisLoading ? (
-                                <>
-                                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
-                                        <circle className="opacity-25" cx="10" cy="10" r="8" stroke="currentColor" strokeWidth="4"></circle>
-                                        <path className="opacity-75" fill="currentColor" d="M4 10a6 6 0 016-6v2a4 4 0 00-4 4H4z"></path>
-                                    </svg>
-                                    Analisando...
-                                </>
-                            ) : (
-                                'Analisar Confronto'
-                            )}
-                        </button>
-                    </div>
 
-                    <BanSuggestions
-                        counterSuggestions={counterBanSuggestions}
-                        metaSuggestions={metaBanSuggestions}
-                        isLoading={isMetaBansLoading}
-                        variant="1v1"
+                        <div ref={analysisSectionRef} className="flex flex-col lg:grid lg:grid-cols-2 gap-6">
+                            <div className="order-1 lg:order-2">
+                                <TabbedPanel tabs={tabs} />
+                            </div>
+                            <div className="order-2 lg:order-1">
+                                <AnalysisPanel 
+                                    isLoading={is1v1AnalysisLoading}
+                                    loadingMessage={loadingMessage}
+                                    result={analysisResult}
+                                    error={analysisError}
+                                    activeLane={activeLane}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                );
+            case '5v5':
+                return (
+                    <DraftScreen
+                        allyPicks={draftAllyPicks}
+                        enemyPicks={draftEnemyPicks}
+                        heroes={heroes}
+                        onSlotClick={handleSlotClick}
+                        onClearSlot={handleClearDraftSlot}
+                        counterBanSuggestions={counterBanSuggestions}
+                        metaBanSuggestions={metaBanSuggestions}
+                        isBanLoading={isMetaBansLoading}
+                        draftAnalysis={draftAnalysis}
+                        isDraftAnalysisLoading={isDraftAnalysisLoading}
+                        draftAnalysisError={draftAnalysisError}
+                        onClearDraft={handleClearDraft}
                         activeMetaRank={metaBanRankCategory}
                         onMetaRankChange={setMetaBanRankCategory}
+                        userProfile={userProfile}
+                        onUpgradeClick={() => setIsUpgradeModalOpen(true)}
+                        effectiveSubscriptionStatus={effectiveSubscriptionStatus}
                     />
-
-                    <div ref={analysisSectionRef} className="flex flex-col lg:grid lg:grid-cols-2 gap-6">
-                        <div className="order-1 lg:order-2">
-                            <TabbedPanel tabs={tabs} />
-                        </div>
-                        <div className="order-2 lg:order-1">
-                             <AnalysisPanel 
-                                isLoading={is1v1AnalysisLoading}
-                                loadingMessage={loadingMessage}
-                                result={analysisResult}
-                                error={analysisError}
-                                activeLane={activeLane}
+                );
+            case 'ranking':
+                return (
+                    <div className="w-full max-w-4xl mx-auto animated-entry">
+                        <div className="glassmorphism p-4 sm:p-6 rounded-2xl border-2 panel-glow-primary">
+                            <HeroRankings 
+                                isLoading={isRankingsLoading}
+                                rankings={heroRankings}
+                                error={rankingsError}
+                                activeDays={rankDays}
+                                onDaysChange={setRankDays}
+                                activeRank={rankCategory}
+                                onRankChange={setRankCategory}
+                                activeSort={sortField}
+                                onSortChange={setSortField}
                             />
                         </div>
                     </div>
-                </div>
-            );
-        }
-        if (gameMode === '5v5') {
-            return (
-                <DraftScreen
-                    allyPicks={draftAllyPicks}
-                    enemyPicks={draftEnemyPicks}
+                );
+            case 'item': return <ItemDatabaseScreen />;
+            case 'synergy':
+                return <SynergyExplorerScreen 
+                    selectedHeroId={synergyHeroPick}
                     heroes={heroes}
-                    onSlotClick={handleSlotClick}
-                    onClearSlot={handleClearDraftSlot}
+                    heroApiIdMap={heroApiIdMap}
+                    onHeroSelectClick={() => handleSlotClick('synergy', 0)}
+                    onClearHero={() => setSynergyHeroPick(null)}
                     counterBanSuggestions={counterBanSuggestions}
                     metaBanSuggestions={metaBanSuggestions}
-                    isBanLoading={isMetaBansLoading}
-                    draftAnalysis={draftAnalysis}
-                    isDraftAnalysisLoading={isDraftAnalysisLoading}
-                    draftAnalysisError={draftAnalysisError}
-                    onClearDraft={handleClearDraft}
+                    isMetaBansLoading={isMetaBansLoading}
                     activeMetaRank={metaBanRankCategory}
                     onMetaRankChange={setMetaBanRankCategory}
-                    userProfile={userProfile}
-                    onUpgradeClick={() => setIsUpgradeModalOpen(true)}
-                    effectiveSubscriptionStatus={effectiveSubscriptionStatus}
-                />
-            );
+                    onAnalyze={handleSynergyAnalysis}
+                    isAnalysisLoading={isSynergyAnalysisLoading}
+                    strategyAnalysis={heroStrategicAnalysis}
+                    strategyAnalysisError={strategicAnalysisError}
+                    synergyRelations={synergyRelations}
+                    synergyError={synergyError}
+                    perfectLaneCounters={perfectLaneCounters}
+                    perfectLaneCountersError={perfectLaneCountersError}
+                />;
+            case 'heroes': return <HeroDatabaseScreen heroes={heroes} heroLanes={heroLanes} />;
+            case 'premium': return <PremiumScreen userProfile={userProfile} />;
+            default: return null;
         }
-        if (gameMode === 'ranking') {
-            return (
-                <div className="w-full max-w-4xl mx-auto animated-entry">
-                    <div className="glassmorphism p-4 sm:p-6 rounded-2xl border-2 panel-glow-primary">
-                        <HeroRankings 
-                            isLoading={isRankingsLoading}
-                            rankings={heroRankings}
-                            error={rankingsError}
-                            activeDays={rankDays}
-                            onDaysChange={setRankDays}
-                            activeRank={rankCategory}
-                            onRankChange={setRankCategory}
-                            activeSort={sortField}
-                            onSortChange={setSortField}
-                        />
-                    </div>
-                </div>
-            );
-        }
-        if (gameMode === 'item') {
-            return <ItemDatabaseScreen />;
-        }
-        if (gameMode === 'synergy') {
-            return <SynergyExplorerScreen 
-                selectedHeroId={synergyHeroPick}
-                heroes={heroes}
-                heroApiIdMap={heroApiIdMap}
-                onHeroSelectClick={() => handleSlotClick('synergy', 0)}
-                onClearHero={() => setSynergyHeroPick(null)}
-                counterBanSuggestions={counterBanSuggestions}
-                metaBanSuggestions={metaBanSuggestions}
-                isMetaBansLoading={isMetaBansLoading}
-                // FIX: Pass metaBanRankCategory state variable instead of undefined 'activeMetaRank'
-                activeMetaRank={metaBanRankCategory}
-                onMetaRankChange={setMetaBanRankCategory}
-                onAnalyze={handleSynergyAnalysis}
-                isAnalysisLoading={isSynergyAnalysisLoading}
-                strategyAnalysis={heroStrategicAnalysis}
-                strategyAnalysisError={strategicAnalysisError}
-                synergyRelations={synergyRelations}
-                synergyError={synergyError}
-                perfectLaneCounters={perfectLaneCounters}
-                perfectLaneCountersError={perfectLaneCountersError}
-            />;
-        }
-        if (gameMode === 'heroes') {
-            return <HeroDatabaseScreen heroes={heroes} heroLanes={heroLanes} />;
-        }
-        if (gameMode === 'premium') {
-            return <PremiumScreen userProfile={userProfile} />;
-        }
-        return null;
     };
 
-
-    return (
-        <div className="flex flex-col min-h-screen p-4 sm:p-6 lg:p-8">
-            {paymentStatusMessage && (
-                <div className={`fixed top-5 right-5 z-[100] p-4 rounded-lg shadow-lg text-white animated-entry ${paymentStatusMessage.type === 'success' ? 'bg-green-600' : 'bg-red-600'}`}>
-                    {paymentStatusMessage.text}
+    switch (view) {
+        case 'landing':
+            return (
+                <div className="flex flex-col min-h-screen">
+                    <LandingPage 
+                        onLaunchApp={handleLaunchApp} 
+                        onSeePlans={handleSeePlans} 
+                        heroes={heroes} 
+                        onLoginClick={handleLoginClick}
+                        onNavigateToFeatures={handleNavigateToFeatures}
+                        onGoBackToLanding={handleGoBackToLanding}
+                    />
+                    <Footer />
                 </div>
-            )}
-            <Header 
-                activeMode={gameMode} 
-                onSetMode={handleSetGameMode}
-                session={session}
-                userProfile={userProfile}
-                onLogout={() => supabase && supabase.auth.signOut()}
-                onEditProfile={() => setIsProfileModalOpen(true)}
-                onUpgradeClick={() => setGameMode('premium')}
-                analysisLimit={DAILY_ANALYSIS_LIMIT}
-                effectiveSubscriptionStatus={effectiveSubscriptionStatus}
-            />
+            );
+        case 'features':
+            return (
+                <div className="flex flex-col min-h-screen">
+                    <FeaturesPage
+                        onGoBack={() => setView('landing')}
+                        onLaunchApp={handleLaunchApp}
+                        onSeePlans={handleSeePlans}
+                    />
+                    <Footer />
+                </div>
+            );
+        case 'login':
+            return <AuthScreen onGoBack={() => handleGoBackToLanding()} />;
+        case 'app':
+        default:
+            return (
+                <div className="flex flex-col min-h-screen">
+                    {paymentStatusMessage && (
+                        <div className={`fixed top-20 right-5 z-[100] p-4 rounded-lg shadow-lg text-white animated-entry ${paymentStatusMessage.type === 'success' ? 'bg-green-600' : 'bg-red-600'}`}>
+                            {paymentStatusMessage.text}
+                        </div>
+                    )}
+                    <Header 
+                        session={session}
+                        userProfile={userProfile}
+                        onLogout={() => { if (supabase) { supabase.auth.signOut(); setView('landing'); } }}
+                        onEditProfile={() => setIsProfileModalOpen(true)}
+                        onUpgradeClick={() => handleSetGameMode('premium')}
+                        analysisLimit={DAILY_ANALYSIS_LIMIT}
+                        effectiveSubscriptionStatus={effectiveSubscriptionStatus}
+                        activeMode={gameMode} 
+                        onSetMode={handleSetGameMode}
+                        onLoginClick={handleLoginClick}
+                        onNavigateToFeatures={handleNavigateToFeatures}
+                        onGoBackToLanding={handleGoBackToLanding}
+                    />
 
-            <main className="w-full max-w-7xl mx-auto flex-grow">
-                {renderContent()}
-            </main>
-
-            <HeroSelectionModal 
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                onHeroSelect={handleHeroSelect}
-                heroes={heroes}
-                heroLanes={heroLanes}
-            />
-            {isProfileModalOpen && userProfile && session?.user && (
-                 <UserProfileModal
-                    isOpen={isProfileModalOpen}
-                    onClose={() => setIsProfileModalOpen(false)}
-                    userProfile={userProfile}
-                    userId={session.user.id}
-                    onProfileUpdate={() => fetchUserProfile(session.user!)}
-                />
-            )}
-            <UpgradeModal
-                isOpen={isUpgradeModalOpen}
-                onClose={() => setIsUpgradeModalOpen(false)}
-                onUpgradeClick={() => {
-                    setIsUpgradeModalOpen(false);
-                    setGameMode('premium');
-                }}
-            />
-            <Footer />
-        </div>
-    );
+                    <main className="w-full max-w-7xl mx-auto flex-grow px-4 sm:px-6 lg:px-8 mb-16">
+                        {renderContent()}
+                    </main>
+                    
+                    <HeroSelectionModal 
+                        isOpen={isModalOpen}
+                        onClose={() => setIsModalOpen(false)}
+                        onHeroSelect={handleHeroSelect}
+                        heroes={heroes}
+                        heroLanes={heroLanes}
+                    />
+                    {isProfileModalOpen && userProfile && session?.user && (
+                        <UserProfileModal
+                            isOpen={isProfileModalOpen}
+                            onClose={() => setIsProfileModalOpen(false)}
+                            userProfile={userProfile}
+                            userId={session.user.id}
+                            onProfileUpdate={() => fetchUserProfile(session.user!)}
+                        />
+                    )}
+                    <UpgradeModal
+                        isOpen={isUpgradeModalOpen}
+                        onClose={() => setIsUpgradeModalOpen(false)}
+                        onUpgradeClick={() => {
+                            setIsUpgradeModalOpen(false);
+                            handleSetGameMode('premium');
+                        }}
+                    />
+                    <Footer />
+                </div>
+            );
+    }
 };
 
 export default App;

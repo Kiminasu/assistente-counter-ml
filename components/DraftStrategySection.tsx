@@ -50,7 +50,7 @@ const DraftStrategySection: React.FC<DraftStrategySectionProps> = ({ analysis, i
 
                 {nextPickSuggestion && (
                     <div className="p-3 bg-black bg-opacity-20 rounded-xl md:col-span-2">
-                        <h3 className="font-bold text-violet-300 mb-2 border-b-2 border-violet-300/50 pb-1">Sugestão de Pick</h3>
+                        <h3 className="font-bold text-sky-300 mb-2 border-b-2 border-sky-300/50 pb-1">Sugestão de Pick</h3>
                         <div className="p-2 bg-gray-900/50 rounded-xl">
                             <div className="flex items-center gap-3">
                                 <img loading="lazy" src={nextPickSuggestion.imageUrl} alt={nextPickSuggestion.heroName} className="w-12 h-12 rounded-full flex-shrink-0" />
@@ -84,10 +84,10 @@ const DraftStrategySection: React.FC<DraftStrategySectionProps> = ({ analysis, i
     }
     
     return (
-        <div className="relative glassmorphism p-4 rounded-2xl border-2 panel-glow-purple animated-entry">
+        <div className="relative glassmorphism p-4 rounded-2xl border-2 panel-glow-primary animated-entry">
             {isLoading && (
                 <div className="absolute inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center rounded-2xl z-10">
-                    <div className="w-8 h-8 border-2 border-dashed rounded-full animate-spin border-purple-400"></div>
+                    <div className="w-8 h-8 border-2 border-dashed rounded-full animate-spin border-sky-400"></div>
                 </div>
             )}
             <div className={`transition-opacity duration-300 ${isLoading && hasExistingAnalysis ? 'opacity-20' : 'opacity-100'}`}>

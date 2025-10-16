@@ -30,52 +30,73 @@ OU ATO ILÍCITO (INCLUINDO NEGLIGÊNCIA OU OUTRO) DECORRENTE DE QUALQUER FORMA D
 DESTE SOFTWARE, MESMO QUE AVISADO DA POSSIBILIDADE DE TAIS DANOS.
 `;
 
+// SVG Icons for social links
+const InstagramIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+        <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+        <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+    </svg>
+);
+
+const FacebookIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+        <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
+    </svg>
+);
+
+
 const Footer: React.FC = () => {
     const [isLicenseVisible, setIsLicenseVisible] = useState(false);
 
     return (
-        <footer className="w-full max-w-7xl mx-auto mt-16 text-gray-400 text-sm">
+        <footer className="w-full max-w-7xl mx-auto text-gray-400 text-sm mt-auto px-4 sm:px-0">
             <div 
-                className="glassmorphism rounded-t-2xl p-6"
-                style={{
-                    borderTop: '2px solid',
-                    borderImageSource: 'linear-gradient(to right, var(--color-primary-accent), var(--color-secondary-accent))',
-                    borderImageSlice: 1,
-                    borderBottom: 0,
-                    borderLeft: 0,
-                    borderRight: 0,
-                }}
+                className="glassmorphism rounded-t-2xl p-6 relative"
             >
-                <div className="flex flex-col md:flex-row justify-between items-center gap-6 text-center md:text-left">
-                    <div className="flex items-center gap-3">
-                        <img src="https://i.postimg.cc/ZK4nFyHG/mitica-logo-Photoroom.png" alt="Logo" className="h-12 w-12" />
-                        <div>
-                            <h4 className="font-bold text-white text-base">Mítica Estratégia MLBB</h4>
-                            <p className="text-xs text-slate-400">Análises de IA para Mobile Legends</p>
+                {/* Top glow effect */}
+                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-sky-500 to-transparent" style={{ filter: 'blur(10px)' }}></div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center text-center md:text-left">
+                    {/* Logo & Title */}
+                    <div className="flex flex-col items-center md:items-start gap-4">
+                        <div className="flex items-center gap-3">
+                            <img src="https://i.postimg.cc/ZK4nFyHG/mitica-logo-Photoroom.png" alt="Logo" className="h-12 w-12" />
+                            <div>
+                                <h4 className="font-bold text-white text-base">Mítica Estratégia MLBB</h4>
+                                <p className="text-xs text-slate-400">Análises de IA para Mobile Legends</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-5">
+                            <a href="#" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-sky-400 transition-colors" aria-label="Instagram">
+                                <InstagramIcon />
+                            </a>
+                             <a href="#" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-sky-400 transition-colors" aria-label="Facebook">
+                                <FacebookIcon />
+                            </a>
                         </div>
                     </div>
-                    <div className="flex flex-col gap-1">
-                         <p>
+
+                    {/* Credits */}
+                    <div className="flex flex-col items-center gap-2">
+                        <p>
                             Desenvolvido por <a href="https://github.com/Kiminasu" target="_blank" rel="noopener noreferrer" className="font-semibold text-amber-400 hover:underline">Lucas Kimi</a>
                         </p>
                         <p>
                             Dados da API por{' '}
-                            <a 
-                                href="https://github.com/ridwaanhall" 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="font-semibold text-amber-400 hover:underline"
-                            >
+                            <a href="https://github.com/ridwaanhall" target="_blank" rel="noopener noreferrer" className="font-semibold text-amber-400 hover:underline">
                                 ridwaanhall
                             </a>
                         </p>
                     </div>
-                     <div>
+
+                    {/* Legal */}
+                    <div className="flex flex-col items-center md:items-end gap-2">
                         <button 
                             onClick={() => setIsLicenseVisible(!isLicenseVisible)}
                             className="font-semibold text-slate-300 hover:text-white transition-colors"
                         >
-                            Ver Licença da API
+                            {isLicenseVisible ? 'Ocultar Licença da API' : 'Ver Licença da API'}
                         </button>
                     </div>
                 </div>
@@ -86,7 +107,8 @@ const Footer: React.FC = () => {
                     </pre>
                 </div>
 
-                <div className="text-center text-xs text-gray-500 mt-6 pt-4 border-t border-slate-700/50">
+                <div className="mt-8 pt-6 border-t border-slate-700/50 text-center text-xs text-gray-500 space-y-2">
+                     <p>Mítica Estratégia é um projeto de fã e não é afiliado, endossado ou patrocinado pela Moonton. Mobile Legends: Bang Bang e todos os ativos relacionados são marcas comerciais e direitos autorais da Moonton.</p>
                     <p>&copy; {new Date().getFullYear()} Mítica Estratégia. Todos os direitos reservados.</p>
                 </div>
             </div>

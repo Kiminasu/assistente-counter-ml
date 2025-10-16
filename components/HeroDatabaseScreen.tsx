@@ -64,7 +64,7 @@ const HeroDatabaseScreen: React.FC<HeroDatabaseScreenProps> = ({ heroes, heroLan
                                 ref={searchInputRef}
                                 type="text"
                                 placeholder="Procurar herói..."
-                                className="w-full p-2 pl-8 rounded-xl bg-gray-800 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                                className="w-full p-2 pl-8 rounded-xl bg-gray-800 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-sky-500"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
@@ -75,7 +75,7 @@ const HeroDatabaseScreen: React.FC<HeroDatabaseScreenProps> = ({ heroes, heroLan
                                 <button
                                     key={lane}
                                     onClick={() => setSelectedLane(lane)}
-                                    className={`flex items-center justify-center gap-2 font-semibold py-1 px-3 rounded-lg text-xs sm:text-sm transition-colors duration-200 ${selectedLane === lane ? 'bg-violet-600 text-white' : 'bg-gray-700 hover:bg-gray-600'}`}
+                                    className={`flex items-center justify-center gap-2 font-semibold py-1 px-3 rounded-lg text-xs sm:text-sm transition-colors duration-200 ${selectedLane === lane ? 'bg-sky-600 text-white' : 'bg-gray-700 hover:bg-gray-600'}`}
                                 >
                                     {lane !== 'Todas' && <img src={LANE_ICONS[lane as Lane]} alt={lane} className="w-4 h-4" />}
                                     {lane}
@@ -101,7 +101,7 @@ const HeroDatabaseScreen: React.FC<HeroDatabaseScreenProps> = ({ heroes, heroLan
                                     loading="lazy"
                                     src={hero.imageUrl} 
                                     alt={hero.name} 
-                                    className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-2 group-hover:border-violet-500 group-hover:scale-110 transition-all ${isSelected ? 'border-amber-300 ring-2 ring-amber-300/80' : 'border-slate-700'}`} 
+                                    className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-2 group-hover:border-sky-500 group-hover:scale-110 transition-all ${isSelected ? 'border-amber-300 ring-2 ring-amber-300/80' : 'border-slate-700'}`} 
                                 />
                                 <span className={`text-xs sm:text-sm mt-2 font-medium transition-colors ${isSelected ? 'text-amber-300' : 'text-slate-300'}`}>{hero.name}</span>
                             </div>

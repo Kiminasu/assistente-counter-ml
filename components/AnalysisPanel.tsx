@@ -70,8 +70,8 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
                         </div>
                     </div>
                     <div className="mt-8 text-center">
-                        <div className="w-10 h-10 border-2 border-dashed rounded-full animate-spin border-violet-400 mx-auto"></div>
-                        <p className="mt-3 text-sm text-violet-300 transition-all duration-300">{loadingMessage}</p>
+                        <div className="w-10 h-10 border-2 border-dashed rounded-full animate-spin border-sky-400 mx-auto"></div>
+                        <p className="mt-3 text-sm text-sky-300 transition-all duration-300">{loadingMessage}</p>
                     </div>
                 </div>
             );
@@ -164,10 +164,10 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
                         <div className="mt-3">
                             <p className="text-xs uppercase font-bold text-gray-400 mb-2">Feitiços Recomendados</p>
                             {suggestion.spells.map(spell => (
-                                <div key={spell.nome} className="mt-2 pl-3 border-l-2 border-violet-400 flex items-start gap-3">
+                                <div key={spell.nome} className="mt-2 pl-3 border-l-2 border-sky-400 flex items-start gap-3">
                                     <img loading="lazy" src={SPELL_ICONS[spell.nome] || SPELL_ICONS.default} alt={spell.nome} className="w-8 h-8 rounded-md mt-1 flex-shrink-0" />
                                     <div>
-                                        <p className="text-sm font-semibold text-violet-300">{spell.nome}</p>
+                                        <p className="text-sm font-semibold text-sky-300">{spell.nome}</p>
                                         <p className="text-xs text-gray-400">{spell.motivo}</p>
                                     </div>
                                 </div>
@@ -248,7 +248,7 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
                                     loading="lazy"
                                     src={ITEM_ICONS[item.nome] || ITEM_ICONS.default} 
                                     alt={item.nome} 
-                                    className={`w-14 h-14 rounded-lg object-cover border-4 transition-all duration-200 group-hover:scale-110 border-violet-500 ${isSelected ? 'ring-4 ring-white/80 ring-offset-2 ring-offset-slate-900' : ''}`}
+                                    className={`w-14 h-14 rounded-lg object-cover border-4 transition-all duration-200 group-hover:scale-110 border-sky-500 ${isSelected ? 'ring-4 ring-white/80 ring-offset-2 ring-offset-slate-900' : ''}`}
                                 />
                                 <span className={`text-xs mt-2 font-medium transition-colors flex items-center justify-center gap-1 w-full ${isSelected ? 'text-white' : 'text-gray-400'}`}>
                                     <span className="break-words text-center">{item.nome}</span>
@@ -262,7 +262,7 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
                 </div>
 
                 {selectedItem && (
-                    <div className="p-3 my-4 bg-black bg-opacity-30 rounded-xl animated-entry border-l-4 border-violet-500" style={{ animationDelay: '50ms'}}>
+                    <div className="p-3 my-4 bg-black bg-opacity-30 rounded-xl animated-entry border-l-4 border-sky-500" style={{ animationDelay: '50ms'}}>
                         <div className="flex items-center gap-4">
                              <img 
                                 loading="lazy"

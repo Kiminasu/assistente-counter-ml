@@ -232,7 +232,7 @@ const Tools: React.FC<{ onSetMode: (mode: GameMode) => void; effectiveSubscripti
         { label: "Análise de Herói", mode: 'synergy', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" /></svg> },
         { label: "Análise 1vs1", mode: '1v1', icon: <span className="font-black text-xl tracking-tighter">1vs1</span> },
         { label: "Draft 5vs5", mode: '5v5', icon: <span className="font-black text-xl tracking-tighter">5vs5</span>, isPremium: true },
-        { label: "Heróis", mode: 'heroes', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zm-1.5 5.5a3 3 0 00-3 0V13a1 1 0 00-1 1v1a1 1 0 001 1h3a1 1 0 001-1v-1a1 1 0 00-1-1v-.5zM16.5 8.5a3 3 0 100-6 3 3 0 000 6zm-3 5.5a3 3 0 00-3 0V15a1 1 0 00-1 1v1a1 1 0 001 1h6a1 1 0 001-1v-1a1 1 0 00-1-1v-.5z" /></svg> },
+        { label: "Heróis", mode: 'heroes', icon: <span className="font-black text-2xl">H</span> },
         { label: "Itens", mode: 'item', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v2h2a2 2 0 012 2v5a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h2V4zm2 0v2h6V4H7zm2 4a1 1 0 011 1v1h-2V9a1 1 0 011-1z" /></svg> },
         { label: "Ranking", mode: 'ranking', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 24 24" fill="currentColor"><path d="M18,21H6V18H18M11,12V17H13V12H11M7,14V17H9V14H7M15,13V17H17V13H15M22,8H17.8L15,4H9L6.2,8H2V6H22V8Z" /></svg> },
     ];

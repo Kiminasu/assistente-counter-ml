@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Session } from '@supabase/supabase-js';
-import { GameMode, UserProfile } from './types';
+import { UserProfile } from '../types'; 
+import { GameMode } from '../types';
 
 interface HeaderProps {
-    activeMode: GameMode;
-    onSetMode: (mode: GameMode) => void;
     session: Session | null;
     userProfile: UserProfile | null;
     onLogout: () => void;
@@ -12,6 +11,8 @@ interface HeaderProps {
     onUpgradeClick: () => void;
     analysisLimit: number;
     effectiveSubscriptionStatus: 'free' | 'premium';
+    activeMode: GameMode;
+    onSetMode: (mode: GameMode) => void;
 }
 
 const UserPanel: React.FC<Pick<HeaderProps, 'userProfile' | 'onLogout' | 'onEditProfile' | 'onUpgradeClick' | 'analysisLimit' | 'effectiveSubscriptionStatus'>> = 
@@ -58,7 +59,7 @@ const UserPanel: React.FC<Pick<HeaderProps, 'userProfile' | 'onLogout' | 'onEdit
                 ) : (
                     <div className="flex items-center gap-2 bg-slate-900/50 backdrop-blur-sm p-1.5 rounded-full border border-slate-700">
                          <span className="text-xs font-mono text-slate-300 px-3 flex items-center gap-1.5 whitespace-nowrap" title="Análises restantes">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-violet-400" viewBox="0 0 20 20" fill="currentColor">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-sky-400" viewBox="0 0 20 20" fill="currentColor">
                               <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
                             </svg>
                             <span className="font-semibold">{analysesRemaining}/{analysisLimit}</span>
@@ -70,7 +71,7 @@ const UserPanel: React.FC<Pick<HeaderProps, 'userProfile' | 'onLogout' | 'onEdit
                     </div>
                 )}
                 <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="flex-shrink-0">
-                    <div className="w-10 h-10 rounded-full bg-violet-800 flex items-center justify-center font-bold text-violet-300 border-2 border-violet-600">
+                    <div className="w-10 h-10 rounded-full bg-sky-800 flex items-center justify-center font-bold text-sky-300 border-2 border-sky-600">
                         {getInitials(userProfile.username)}
                     </div>
                 </button>
@@ -80,7 +81,7 @@ const UserPanel: React.FC<Pick<HeaderProps, 'userProfile' | 'onLogout' | 'onEdit
             {isMenuOpen && (
                 <div className="absolute top-full right-0 mt-2 w-64 bg-slate-900/80 backdrop-blur-md rounded-lg shadow-lg border border-slate-700 p-3 modal-animation">
                     <div className="flex items-center gap-3 border-b border-slate-700 pb-3 mb-3">
-                         <div className="w-12 h-12 rounded-full bg-violet-800 flex items-center justify-center font-bold text-violet-300 border-2 border-violet-600 flex-shrink-0">
+                         <div className="w-12 h-12 rounded-full bg-sky-800 flex items-center justify-center font-bold text-sky-300 border-2 border-sky-600 flex-shrink-0">
                             {getInitials(userProfile.username)}
                         </div>
                         <div>
@@ -97,6 +98,7 @@ const UserPanel: React.FC<Pick<HeaderProps, 'userProfile' | 'onLogout' | 'onEdit
                     )}
                     
                     <button onClick={onEditProfile} className="w-full text-left px-3 py-2 text-sm text-slate-200 hover:bg-slate-700 rounded-md transition-colors">Editar Perfil</button>
+                    <button onClick={onUpgradeClick} className="w-full text-left px-3 py-2 text-sm text-slate-200 hover:bg-slate-700 rounded-md transition-colors">Meus Planos</button>
                     <button onClick={onLogout} className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-slate-700 rounded-md transition-colors">Sair</button>
                 </div>
             )}
@@ -106,29 +108,8 @@ const UserPanel: React.FC<Pick<HeaderProps, 'userProfile' | 'onLogout' | 'onEdit
 
 
 const Header: React.FC<HeaderProps> = ({ activeMode, onSetMode, session, userProfile, onLogout, onEditProfile, onUpgradeClick, analysisLimit, effectiveSubscriptionStatus }) => {
-    const descriptions: Record<GameMode, string> = {
-        'dashboard': 'Seu centro de comando estratégico com insights do meta, desafios diários e acesso rápido às principais ferramentas.',
-        'synergy': 'Selecione um herói para ver sugestões de ban, sinergias e uma análise estratégica completa da IA com build e estilo de jogo.',
-        '1v1': 'Analise confrontos, descubra os melhores counters e domine sua lane com sugestões táticas baseadas em dados.',
-        '5v5': 'Planeje o draft da sua equipe, selecione heróis para cada time e visualize a composição completa da partida.',
-        'heroes': 'Explore a enciclopédia de heróis, visualize suas habilidades, e encontre o personagem perfeito para seu estilo de jogo.',
-        'item': 'Navegue por todos os itens do jogo, filtrados por categoria, para entender seus atributos e habilidades.',
-        'ranking': 'Explore as estatísticas de heróis, filtre por elo e período para descobrir os heróis mais fortes do meta atual.',
-        'premium': 'Conheça os planos e desbloqueie o acesso ilimitado a todas as ferramentas da Mítica Estratégia.'
-    };
-
-    const modes: { id: GameMode; label: string, isPro?: boolean }[] = [
-        { id: 'dashboard', label: 'Painel' },
-        { id: 'synergy', label: 'Análise de Herói' },
-        { id: '1v1', label: 'Análise 1vs1' },
-        { id: '5v5', label: 'Draft 5vs5', isPro: true },
-        { id: 'heroes', label: 'Heróis' },
-        { id: 'item', label: 'Itens' },
-        { id: 'ranking', label: 'Ranking' },
-    ];
     
-    // Não mostra a barra de navegação na tela premium
-    const showNavBar = activeMode !== 'premium';
+    const showHeaderContent = activeMode !== 'premium';
 
     return (
         <header className="relative text-center mb-8 animated-entry">
@@ -154,47 +135,23 @@ const Header: React.FC<HeaderProps> = ({ activeMode, onSetMode, session, userPro
                     effectiveSubscriptionStatus={effectiveSubscriptionStatus}
                 />
             )}
-
-            <img src="https://i.postimg.cc/ZK4nFyHG/mitica-logo-Photoroom.png" alt="Mítica Estratégia MLBB Logo" className={`h-56 sm:h-80 lg:h-[27rem] mx-auto -mt-4 sm:-mt-10 lg:-mt-12 ${activeMode !== 'premium' ? 'animated-logo' : ''}`} />
-            <h1 className={`text-4xl sm:text-7xl lg:text-8xl font-black tracking-tight title-main -mt-12 sm:-mt-20 lg:-mt-24 relative max-w-sm sm:max-w-none mx-auto ${activeMode !== 'premium' ? 'animated-logo' : ''}`}>
-                MÍTICA ESTRATÉGIA MLBB
-            </h1>
             
-            {showNavBar && (
+            {showHeaderContent ? (
                 <>
-                    <p className="text-base sm:text-lg text-slate-300 mt-4 max-w-3xl mx-auto tracking-wide">
-                        Seu Guia de Counters, Builds e Estratégias para Mobile Legends: Bang Bang.
-                    </p>
-                    <div className="mt-8">
-                        <div className="inline-flex flex-wrap justify-center bg-black bg-opacity-30 p-1 rounded-xl gap-1">
-                            {modes.map((mode) => {
-                                const isPremiumFeature = mode.isPro;
-                                return (
-                                    <button
-                                        key={mode.id}
-                                        onClick={() => onSetMode(mode.id)}
-                                        className={`relative px-3 sm:px-4 py-2 text-sm font-semibold rounded-lg transition-colors duration-200 ${
-                                            activeMode === mode.id
-                                                ? 'bg-violet-600 text-white shadow-lg shadow-violet-500/30'
-                                                : 'text-gray-300 hover:bg-gray-700/50'
-                                        }`}
-                                    >
-                                        {mode.label}
-                                        {isPremiumFeature && effectiveSubscriptionStatus !== 'premium' && (
-                                             <span className="absolute -top-1.5 -right-1.5 bg-gradient-to-br from-amber-400 to-yellow-500 text-black text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow-lg animate-soft-blink">
-                                                PREMIUM
-                                            </span>
-                                        )}
-                                    </button>
-                                );
-                            })}
-                        </div>
-                        <p className="text-sm text-slate-400 mt-4 max-w-xl mx-auto h-10 flex items-center justify-center transition-opacity duration-300">
-                            {descriptions[activeMode]}
-                        </p>
-                    </div>
+                    <img src="https://i.postimg.cc/ZK4nFyHG/mitica-logo-Photoroom.png" alt="Mítica Estratégia MLBB Logo" className="h-24 sm:h-32 mx-auto -mb-4 sm:-mb-6" />
+                    <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-white relative max-w-sm sm:max-w-none mx-auto" style={{ fontFamily: "'Inter', sans-serif" }}>
+                        Mítica Estratégia MLBB
+                    </h1>
+                </>
+            ) : (
+                <>
+                    <img src="https://i.postimg.cc/ZK4nFyHG/mitica-logo-Photoroom.png" alt="Mítica Estratégia MLBB Logo" className="h-40 sm:h-48 mx-auto -mb-6 sm:-mb-8" />
+                     <h1 className="text-5xl sm:text-7xl font-bold tracking-tight text-white relative max-w-sm sm:max-w-none mx-auto" style={{ fontFamily: "'Inter', sans-serif" }}>
+                        Mítica Estratégia MLBB
+                    </h1>
                 </>
             )}
+
         </header>
     );
 };

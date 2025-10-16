@@ -98,7 +98,7 @@ const PerfectLaneCountersPanel: React.FC<{ suggestions: HeroSuggestion[], isLoad
                                             <div key={spell.nome} className="mt-1 flex items-start gap-2">
                                                 <img loading="lazy" src={SPELL_ICONS[spell.nome] || SPELL_ICONS.default} alt={spell.nome} className="w-6 h-6 rounded-md flex-shrink-0" />
                                                 <div>
-                                                    <p className="text-sm font-semibold text-violet-300">{spell.nome}</p>
+                                                    <p className="text-sm font-semibold text-sky-300">{spell.nome}</p>
                                                     <p className="text-xs text-gray-400">{spell.motivo}</p>
                                                 </div>
                                             </div>
@@ -152,11 +152,11 @@ const SynergyExplorerScreen: React.FC<SynergyExplorerScreenProps> = ({
                 <CollapsibleTutorial title="Como Usar o Painel Estratégico">
                      <ol className="list-decimal list-inside space-y-1 text-xs sm:text-sm text-gray-300">
                         <li>Clique abaixo para selecionar um herói para uma análise aprofundada.</li>
-                        <li>Clique em <strong className="text-violet-500">"Analisar"</strong> para a IA gerar a build, as táticas de jogo, sinergias e os counters perfeitos para cada lane.</li>
+                        <li>Clique em <strong className="text-sky-500">"Analisar"</strong> para a IA gerar a build, as táticas de jogo, sinergias e os counters perfeitos para cada lane.</li>
                     </ol>
                 </CollapsibleTutorial>
                 
-                <div className="w-full max-w-md glassmorphism p-4 rounded-2xl border-2 panel-glow-purple flex flex-col gap-4">
+                <div className="w-full max-w-md glassmorphism p-4 rounded-2xl border-2 panel-glow-primary flex flex-col gap-4">
                     <h2 className="text-xl font-black text-center text-amber-300 tracking-wider">SELECIONE O HERÓI PARA ANÁLISE</h2>
                     
                     {selectedHero ? (
@@ -175,10 +175,10 @@ const SynergyExplorerScreen: React.FC<SynergyExplorerScreenProps> = ({
                                 onClick={onHeroSelectClick}
                                 aria-label="Trocar herói"
                             >
-                                <img src={selectedHero.imageUrl} alt={selectedHero.name} className="w-24 h-24 rounded-full border-4 border-violet-400 object-cover flex-shrink-0" />
+                                <img src={selectedHero.imageUrl} alt={selectedHero.name} className="w-24 h-24 rounded-full border-4 border-sky-400 object-cover flex-shrink-0" />
                                 <div className="flex-grow text-center sm:text-left">
                                     <h3 className="text-2xl font-bold text-white">{selectedHero.name}</h3>
-                                    <p className="font-semibold text-violet-300">{selectedHero.roles.join(' / ')}</p>
+                                    <p className="font-semibold text-sky-300">{selectedHero.roles.join(' / ')}</p>
                                     <div className="flex flex-wrap justify-center sm:justify-start gap-1 mt-2">
                                         {(selectedHero.roles.flatMap(role => ROLE_TAGS[role as Role] || [])).slice(0, 3).map(tag => (
                                             <span key={tag} className="text-xs bg-slate-700 text-slate-300 px-2 py-0.5 rounded-full">
@@ -203,7 +203,7 @@ const SynergyExplorerScreen: React.FC<SynergyExplorerScreenProps> = ({
                     <button
                         onClick={onAnalyze}
                         disabled={!selectedHeroId || isAnalysisLoading}
-                        className="w-full bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white font-bold py-2 px-4 rounded-xl text-md hover:from-violet-400 hover:to-fuchsia-400 transition-all duration-300 disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed flex items-center justify-center shadow-lg shadow-violet-500/40 disabled:shadow-none transform hover:scale-105"
+                        className="w-full bg-gradient-to-r from-sky-500 to-cyan-500 text-white font-bold py-2 px-4 rounded-xl text-md hover:from-sky-400 hover:to-cyan-400 transition-all duration-300 disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed flex items-center justify-center shadow-lg shadow-sky-500/40 disabled:shadow-none transform hover:scale-105"
                     >
                          {isAnalysisLoading ? (
                             <>

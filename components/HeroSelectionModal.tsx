@@ -57,14 +57,14 @@ const HeroSelectionModal: React.FC<HeroSelectionModalProps> = ({ isOpen, onClose
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center p-4 z-50">
-            <div className="glassmorphism rounded-lg shadow-xl max-w-3xl w-full max-h-[80vh] flex flex-col border border-violet-500 modal-animation">
+            <div className="glassmorphism rounded-lg shadow-xl max-w-3xl w-full max-h-[80vh] flex flex-col border border-sky-500 modal-animation">
                 <div className="p-4 border-b border-gray-700 flex justify-between items-center">
                     <div className="relative flex-grow mr-4">
                         <input
                             ref={searchInputRef}
                             type="text"
                             placeholder="Procurar herói..."
-                            className="w-full p-2 pl-8 rounded-md bg-gray-800 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                            className="w-full p-2 pl-8 rounded-md bg-gray-800 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-sky-500"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
@@ -78,7 +78,7 @@ const HeroSelectionModal: React.FC<HeroSelectionModalProps> = ({ isOpen, onClose
                             <button
                                 key={lane}
                                 onClick={() => setSelectedLane(lane)}
-                                className={`flex items-center justify-center gap-2 font-semibold py-1 px-3 rounded text-xs sm:text-sm transition-colors duration-200 ${selectedLane === lane ? 'bg-violet-600 text-white' : 'bg-gray-700 hover:bg-gray-600'}`}
+                                className={`flex items-center justify-center gap-2 font-semibold py-1 px-3 rounded text-xs sm:text-sm transition-colors duration-200 ${selectedLane === lane ? 'bg-sky-600 text-white' : 'bg-gray-700 hover:bg-gray-600'}`}
                             >
                                 {lane !== 'Todas' && <img src={LANE_ICONS[lane as Lane]} alt={lane} className="w-4 h-4" />}
                                 {lane}
@@ -94,7 +94,7 @@ const HeroSelectionModal: React.FC<HeroSelectionModalProps> = ({ isOpen, onClose
                                     loading="lazy"
                                     src={hero.imageUrl} 
                                     alt={hero.name} 
-                                    className="w-16 h-16 rounded-full object-cover border-2 border-transparent group-hover:border-violet-500 group-hover:scale-110 transition-all" 
+                                    className="w-16 h-16 rounded-full object-cover border-2 border-transparent group-hover:border-sky-500 group-hover:scale-110 transition-all" 
                                     onError={(e) => {
                                         const target = e.target as HTMLImageElement;
                                         target.onerror = null; 

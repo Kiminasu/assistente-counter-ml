@@ -36,7 +36,7 @@ const HeroRankings: React.FC<HeroRankingsProps> = ({
         if (isLoading) {
             return (
                 <div className="flex flex-col items-center justify-center h-full py-16">
-                    <div className="w-10 h-10 border-2 border-dashed rounded-full animate-spin border-violet-400"></div>
+                    <div className="w-10 h-10 border-2 border-dashed rounded-full animate-spin border-sky-400"></div>
                     <p className="mt-3 text-sm text-gray-300">A carregar o ranking...</p>
                 </div>
             );
@@ -123,7 +123,7 @@ const HeroRankings: React.FC<HeroRankingsProps> = ({
                     <label className="text-xs font-bold text-gray-400">ELO</label>
                     <div className="grid grid-cols-3 gap-1 mt-1">
                         {RANKS.map(rank => (
-                            <button key={rank} onClick={() => onRankChange(rank)} className={`text-xs py-1 px-2 rounded-lg transition-colors ${activeRank === rank ? 'bg-violet-500 text-white' : 'bg-gray-700 hover:bg-gray-600'}`}>{RANK_LABELS[rank]}</button>
+                            <button key={rank} onClick={() => onRankChange(rank)} className={`text-xs py-1 px-2 rounded-lg transition-colors ${activeRank === rank ? 'bg-sky-500 text-white' : 'bg-gray-700 hover:bg-gray-600'}`}>{RANK_LABELS[rank]}</button>
                         ))}
                     </div>
                 </div>
@@ -131,7 +131,7 @@ const HeroRankings: React.FC<HeroRankingsProps> = ({
                     <label className="text-xs font-bold text-gray-400">PERÍODO (DIAS)</label>
                     <div className="flex gap-1 mt-1">
                         {RANK_DAYS.map(days => (
-                            <button key={days} onClick={() => onDaysChange(days)} className={`flex-1 text-xs py-1 px-2 rounded-lg transition-colors ${activeDays === days ? 'bg-violet-500 text-white' : 'bg-gray-700 hover:bg-gray-600'}`}>{days}</button>
+                            <button key={days} onClick={() => onDaysChange(days)} className={`flex-1 text-xs py-1 px-2 rounded-lg transition-colors ${activeDays === days ? 'bg-sky-500 text-white' : 'bg-gray-700 hover:bg-gray-600'}`}>{days}</button>
                         ))}
                     </div>
                 </div>
@@ -139,7 +139,7 @@ const HeroRankings: React.FC<HeroRankingsProps> = ({
                     <label className="text-xs font-bold text-gray-400">ORDENAR POR</label>
                     <div className="flex gap-1 mt-1">
                         {(Object.keys(SORT_FIELDS) as SortField[]).map(field => (
-                            <button key={field} onClick={() => onSortChange(field)} className={`flex-1 text-xs py-1 px-2 rounded-lg transition-colors ${activeSort === field ? 'bg-violet-500 text-white' : 'bg-gray-700 hover:bg-gray-600'}`}>{SORT_FIELD_LABELS[field]}</button>
+                            <button key={field} onClick={() => onSortChange(field)} className={`flex-1 text-xs py-1 px-2 rounded-lg transition-colors ${activeSort === field ? 'bg-sky-500 text-white' : 'bg-gray-700 hover:bg-gray-600'}`}>{SORT_FIELD_LABELS[field]}</button>
                         ))}
                     </div>
                 </div>

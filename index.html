@@ -6,6 +6,9 @@
     <title>Mítica Estratégia MLBB</title>
     <link rel="icon" type="image/png" href="https://i.postimg.cc/ZK4nFyHG/mitica-logo-Photoroom.png">
 
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Suba de elo no MLBB com a Mítica Estratégia. Análises de IA para counter, builds, draft 5v5 e estratégias de herói para dominar cada partida no Mobile Legends.">
+
     <!-- Open Graph / Facebook / WhatsApp -->
     <meta property="og:type" content="website">
     <meta property="og:title" content="Mítica Estratégia MLBB">
@@ -30,28 +33,29 @@
             --border-color: #3a3755;
             --text-light: #f0f0f5;
             --text-dark: #94a3b8;
-            --color-primary-accent: #8b5cf6;
+            --color-primary-accent: #38b6ff;
             --color-secondary-accent: #f59e0b;
             
-            --glow-primary: 0 0 15px rgba(139, 92, 246, 0.5), 0 0 30px rgba(139, 92, 246, 0.3);
+            --glow-primary: 0 0 15px rgba(56, 182, 255, 0.5), 0 0 30px rgba(56, 182, 255, 0.3);
             --glow-secondary: 0 0 15px rgba(245, 158, 11, 0.5), 0 0 30px rgba(245, 158, 11, 0.3);
-            --glow-blue: 0 0 15px rgba(59, 130, 246, 0.6), 0 0 30px rgba(59, 130, 246, 0.4);
+            --glow-blue: var(--glow-primary);
             --glow-red: 0 0 15px rgba(239, 68, 68, 0.6), 0 0 30px rgba(239, 68, 68, 0.4);
-            --glow-purple: var(--glow-primary);
+            --glow-purple: 0 0 15px rgba(192, 132, 252, 0.5), 0 0 30px rgba(192, 132, 252, 0.3);
         }
 
         html {
             overflow-x: hidden;
+            scroll-behavior: smooth;
         }
 
         body {
             font-family: 'Inter', sans-serif;
             background-color: var(--bg-dark);
             color: var(--text-light);
-            background-image: 
-                radial-gradient(circle at 15% 50%, rgba(139, 92, 246, 0.15), transparent 40%),
-                radial-gradient(circle at 85% 30%, rgba(59, 130, 246, 0.1), transparent 40%),
-                radial-gradient(var(--bg-medium) 1px, transparent 1px);
+            background-image:
+                radial-gradient(ellipse 80% 50% at 10% 10%, rgba(56, 182, 255, 0.2), transparent),
+                radial-gradient(ellipse 80% 50% at 90% 90%, rgba(239, 68, 68, 0.15), transparent),
+                radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.05) 1px, transparent 0);
             background-size: cover, cover, 30px 30px;
             background-attachment: fixed;
             overflow-x: hidden;
@@ -87,13 +91,43 @@
             box-shadow: 0 4px 30px rgba(0,0,0,0.1);
         }
 
+        .login-panel-solid {
+            background-color: var(--bg-medium);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 30px rgba(0,0,0,0.1);
+        }
+
+        @property --angle {
+            syntax: "<angle>";
+            initial-value: 0deg;
+            inherits: false;
+        }
+
+        @keyframes spin-border {
+            to { --angle: 360deg; }
+        }
+
+        .animated-border-glow {
+            padding: 2px; /* Controla a espessura da borda */
+            background: conic-gradient(
+                from var(--angle),
+                var(--color-secondary-accent),
+                var(--color-primary-accent) 25%,
+                var(--color-primary-accent) 75%,
+                var(--color-secondary-accent) 100%
+            );
+            animation: spin-border 4s linear infinite;
+        }
+
+
         .panel-glow-primary { border-color: var(--color-primary-accent); box-shadow: var(--glow-primary); }
         .panel-glow-secondary { border-color: var(--color-secondary-accent); box-shadow: var(--glow-secondary); }
-        .panel-glow-blue { border-color: #3b82f6; box-shadow: var(--glow-blue); }
+        .panel-glow-blue { border-color: #3b82f6; box-shadow: var(--glow-primary); }
         .panel-glow-red { border-color: #ef4444; box-shadow: var(--glow-red); }
+        .panel-glow-purple { border-color: #c084fc; box-shadow: var(--glow-purple); }
 
         .hero-slot { border: 2px solid var(--border-color); transition: all 0.3s ease; min-height: 92px; background: rgba(0,0,0,0.2); }
-        .hero-slot.empty:hover { border-color: var(--color-primary-accent); background-color: rgba(139, 92, 246, 0.1); }
+        .hero-slot.empty:hover { border-color: var(--color-primary-accent); background-color: rgba(56, 182, 255, 0.1); }
         .hero-slot.ally.filled { box-shadow: var(--glow-blue); border-color: #3b82f6;}
         .hero-slot.enemy.filled { box-shadow: var(--glow-red); border-color: #ef4444; }
 
@@ -102,7 +136,7 @@
             background: var(--color-primary-accent);
             border-color: var(--color-primary-accent);
             color: white;
-            box-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
+            box-shadow: 0 0 10px rgba(56, 182, 255, 0.5);
         }
 
         .title-main {

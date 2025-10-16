@@ -34,7 +34,7 @@ const DirectMatchupPanel: React.FC<DirectMatchupPanelProps> = ({ isLoading, data
         if (isLoading) {
             return (
                 <div className="flex flex-col items-center justify-center h-full">
-                    <div className="w-10 h-10 border-2 border-dashed rounded-full animate-spin border-violet-400"></div>
+                    <div className="w-10 h-10 border-2 border-dashed rounded-full animate-spin border-sky-400"></div>
                     <p className="mt-3 text-sm text-gray-300">CARREGANDO CONFRONTO...</p>
                 </div>
             );
@@ -67,7 +67,7 @@ const DirectMatchupPanel: React.FC<DirectMatchupPanelProps> = ({ isLoading, data
                              <ul className="list-disc list-inside space-y-2 text-xs text-gray-300">
                                 <li><strong className="text-amber-300">Classificação:</strong> Avaliação da IA sobre quem tem a vantagem tática no confronto direto.</li>
                                 <li><strong className="text-gray-300">Dados Estatísticos:</strong> Variação na taxa de vitória com base em milhares de partidas reais.</li>
-                                <li><strong className="text-violet-300">Análise e Feitiço:</strong> Dicas de como as habilidades interagem e o feitiço ideal para a vitória.</li>
+                                <li><strong className="text-sky-300">Análise e Feitiço:</strong> Dicas de como as habilidades interagem e o feitiço ideal para a vitória.</li>
                             </ul>
                         </CollapsibleTutorial>
                     </div>
@@ -108,7 +108,7 @@ const DirectMatchupPanel: React.FC<DirectMatchupPanelProps> = ({ isLoading, data
                         <ul className="list-disc list-inside space-y-2 text-xs text-gray-300">
                             <li><strong className="text-amber-300">Classificação:</strong> Avaliação da IA sobre quem tem a vantagem tática no confronto direto.</li>
                             <li><strong className="text-gray-300">Dados Estatísticos:</strong> Variação na taxa de vitória com base em milhares de partidas reais.</li>
-                            <li><strong className="text-violet-300">Análise e Feitiço:</strong> Dicas de como as habilidades interagem e o feitiço ideal para a vitória.</li>
+                            <li><strong className="text-sky-300">Análise e Feitiço:</strong> Dicas de como as habilidades interagem e o feitiço ideal para a vitória.</li>
                         </ul>
                     </CollapsibleTutorial>
                 </div>
@@ -139,10 +139,10 @@ const DirectMatchupPanel: React.FC<DirectMatchupPanelProps> = ({ isLoading, data
                 {recommendedSpell && (
                     <div className="mt-4 pt-4 border-t border-gray-700">
                         <h3 className="text-sm uppercase font-bold text-gray-400 mb-2">Feitiço Recomendado</h3>
-                         <div className="p-2 bg-black bg-opacity-20 rounded-xl border-l-4 border-violet-400 flex items-start gap-3">
+                         <div className="p-2 bg-black bg-opacity-20 rounded-xl border-l-4 border-sky-400 flex items-start gap-3">
                             <img loading="lazy" src={SPELL_ICONS[recommendedSpell.nome] || SPELL_ICONS.default} alt={recommendedSpell.nome} className="w-10 h-10 rounded-md flex-shrink-0" />
                             <div>
-                                <p className="font-bold text-violet-300">{recommendedSpell.nome}</p>
+                                <p className="font-bold text-sky-300">{recommendedSpell.nome}</p>
                                 <p className="text-xs text-gray-400 mt-1">{recommendedSpell.motivo}</p>
                             </div>
                         </div>
