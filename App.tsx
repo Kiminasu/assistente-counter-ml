@@ -510,10 +510,10 @@ const App: React.FC = () => {
 
     const handleSynergyAnalysis = useCallback(async () => {
         if (!checkAnalysisLimit() || !synergyHeroPick) return;
-    
+
         const selectedHero = heroes[synergyHeroPick];
         if (!selectedHero || !selectedHero.apiId) return;
-    
+
         setIsSynergyAnalysisLoading(true);
         setHeroStrategicAnalysis(null);
         setStrategicAnalysisError(null);
@@ -522,23 +522,37 @@ const App: React.FC = () => {
         setCounterBanSuggestions([]);
         setPerfectLaneCounters([]);
         setPerfectLaneCountersError(null);
-        
-        const getDetails = async (hero: Hero): Promise<HeroDetails> => {
-            if (heroDetailsCache[hero.apiId]) return heroDetailsCache[hero.apiId];
-            if (!hero.apiId) throw new Error(`API ID for ${hero.name} not found.`);
-            const details = await fetchHeroDetails(hero.apiId);
-            setHeroDetailsCache(prev => ({...prev, [hero.apiId]: details}));
-            return details;
+
+        const getDetailsForAnalysis = async (hero: Hero): Promise<HeroDetails | null> => {
+            if (heroDetailsCacheRef.current[hero.apiId]) {
+                return heroDetailsCacheRef.current[hero.apiId];
+            }
+            if (!hero.apiId) return null;
+            try {
+                // Fetch new details but don't set state yet
+                return await fetchHeroDetails(hero.apiId);
+            } catch (e) {
+                console.error(`Falha ao buscar detalhes para ${hero.name}`, e);
+                return null;
+            }
         };
-    
+
         try {
-            const heroToAnalyzeDetails = await getDetails(selectedHero);
+            const heroToAnalyzeDetails = await getDetailsForAnalysis(selectedHero);
+            if (!heroToAnalyzeDetails) {
+                throw new Error(`Não foi possível carregar os detalhes para ${selectedHero.name}.`);
+            }
 
             const [analysisResult, relationsData] = await Promise.all([
                 getHeroStrategicAnalysis(heroToAnalyzeDetails),
                 fetchHeroRelations(selectedHero.apiId, heroes, heroApiIdMap)
             ]);
-    
+            
+            // After all API calls are successful, update the cache state
+            if (!heroDetailsCacheRef.current[selectedHero.apiId]) {
+                setHeroDetailsCache(prev => ({...prev, [selectedHero.apiId]: heroToAnalyzeDetails}));
+            }
+
             const { strategy, tacticalCounters: aiCounters, perfectLaneCounters: aiLaneCounters } = analysisResult;
             const validItemNames = GAME_ITEMS.map(item => item.nome);
             const correctedCoreItems = strategy.coreItems.map(item => ({ ...item, nome: findClosestString(item.nome, validItemNames) }));
@@ -583,7 +597,8 @@ const App: React.FC = () => {
         } finally {
             setIsSynergyAnalysisLoading(false);
         }
-    }, [synergyHeroPick, heroes, heroApiIdMap, heroDetailsCache, checkAnalysisLimit, session, fetchUserProfile]);
+    }, [synergyHeroPick, heroes, heroApiIdMap, checkAnalysisLimit, session, fetchUserProfile]);
+
 
     const handleNavigateToHeroAnalysis = useCallback((heroId: string) => {
         setSynergyHeroPick(heroId);
@@ -769,42 +784,61 @@ const App: React.FC = () => {
         if (!checkAnalysisLimit()) return;
         const pickedAllyHeroes = draftAllyPicks.map(id => id ? heroes[id] : null).filter((h): h is Hero => h !== null);
         const pickedEnemyHeroes = draftEnemyPicks.map(id => id ? heroes[id] : null).filter((h): h is Hero => h !== null);
-
+    
         if (pickedAllyHeroes.length === 0 && pickedEnemyHeroes.length === 0) {
             setDraftAnalysis(null);
             setDraftAnalysisError(null);
             setCounterBanSuggestions([]);
             return;
         }
-
+    
         setIsDraftAnalysisLoading(true);
         setDraftAnalysisError(null);
-
+    
         try {
             const allPickedHeroes = [...pickedAllyHeroes, ...pickedEnemyHeroes];
             const detailsToFetch = allPickedHeroes.filter(h => h.apiId && !heroDetailsCacheRef.current[h.apiId]);
-            let newCacheEntries: Record<number, HeroDetails> = {};
-            
+            const newCacheEntries: Record<number, HeroDetails> = {};
+    
             if (detailsToFetch.length > 0) {
                 const fetchedDetails = await Promise.all(
-                    detailsToFetch.map(h => fetchHeroDetails(h.apiId).then(details => ({ apiId: h.apiId, details })))
+                    detailsToFetch.map(h => 
+                        fetchHeroDetails(h.apiId)
+                            .then(details => ({ apiId: h.apiId, details }))
+                            .catch(err => {
+                                console.error(`Falha ao buscar detalhes para o draft de ${h.name}:`, err);
+                                return null; 
+                            })
+                    )
                 );
-                fetchedDetails.forEach(item => { newCacheEntries[item.apiId] = item.details; });
-                setHeroDetailsCache(prev => ({ ...prev, ...newCacheEntries }));
+                fetchedDetails.forEach(item => {
+                    if (item) newCacheEntries[item.apiId] = item.details;
+                });
             }
-            
+    
             const currentCache = { ...heroDetailsCacheRef.current, ...newCacheEntries };
             const allyDetails = pickedAllyHeroes.map(h => currentCache[h.apiId]).filter((d): d is HeroDetails => !!d);
             const enemyDetails = pickedEnemyHeroes.map(h => currentCache[h.apiId]).filter((d): d is HeroDetails => !!d);
-
+    
+            // Validação para garantir que todos os detalhes necessários foram carregados antes de chamar a IA
+            if (allyDetails.length !== pickedAllyHeroes.length || enemyDetails.length !== pickedEnemyHeroes.length) {
+                throw new Error("Falha ao carregar detalhes de um ou mais heróis selecionados. Tente novamente.");
+            }
+    
             const pickedHeroIds = new Set(allPickedHeroes.map((h: Hero) => h.id));
             const availableHeroes = (Object.values(heroes) as Hero[]).filter((h: Hero) => !pickedHeroIds.has(h.id));
             
             const analysisFromAI = await getDraftAnalysis(allyDetails, enemyDetails, availableHeroes);
-             if (session?.user) await fetchUserProfile(session.user);
-
+    
+            // Atualiza o estado do cache somente após a conclusão bem-sucedida da chamada principal da API
+            if (Object.keys(newCacheEntries).length > 0) {
+                setHeroDetailsCache(prev => ({ ...prev, ...newCacheEntries }));
+            }
+    
+            if (session?.user) await fetchUserProfile(session.user);
+    
             setCounterBanSuggestions(processAIBanSuggestions(analysisFromAI.banSuggestions));
-
+    
             let nextPick: NextPickSuggestion | null = null;
             if (analysisFromAI.nextPickSuggestion) {
                 const heroData = (Object.values(heroes) as Hero[]).find((h: Hero) => h.name === analysisFromAI.nextPickSuggestion?.heroName);
@@ -818,7 +852,7 @@ const App: React.FC = () => {
                     };
                 }
             }
-
+    
             const validItemNames = GAME_ITEMS.map(item => item.nome);
             const strategicItems: StrategicItemSuggestion[] = analysisFromAI.strategicItems.map(item => {
                 const correctedName = findClosestString(item.name, validItemNames);
@@ -835,8 +869,12 @@ const App: React.FC = () => {
                 nextPickSuggestion: nextPick,
                 strategicItems: strategicItems,
             });
-
+    
         } catch (error) {
+            if (error instanceof Error && error.name === 'AbortError') {
+                console.log("Análise de draft cancelada."); // Não define estado de erro para abortos
+                return;
+            }
             setDraftAnalysisError(error instanceof Error ? error.message : "Erro desconhecido ao analisar o draft.");
         } finally {
             setIsDraftAnalysisLoading(false);
