@@ -654,8 +654,9 @@ const App: React.FC = () => {
                 winRate
             );
             
-            if (!combinedAnalysis) {
-                throw new Error("A resposta da IA veio vazia ou em formato inválido.");
+            // Defensive check for the entire AI response and its critical parts
+            if (!combinedAnalysis || !combinedAnalysis.strategicAnalysis || !combinedAnalysis.banSuggestions) {
+                throw new Error("A resposta da IA está incompleta ou em formato inválido. Por favor, tente novamente.");
             }
 
             if (session?.user) await fetchUserProfile(session.user);
@@ -673,8 +674,9 @@ const App: React.FC = () => {
             const validItemNames = GAME_ITEMS.map(item => item.nome);
             const validSpellNames = Object.keys(SPELL_ICONS);
     
-            const aiHeroSuggestions = strategicAnalysis?.sugestoesHerois || [];
-            const aiItemSuggestions = strategicAnalysis?.sugestoesItens || [];
+            // strategicAnalysis is guaranteed to exist here due to the check above
+            const aiHeroSuggestions = strategicAnalysis.sugestoesHerois || [];
+            const aiItemSuggestions = strategicAnalysis.sugestoesItens || [];
 
             const heroSuggestions: HeroSuggestion[] = aiHeroSuggestions.map((aiSuggestion): HeroSuggestion => {
                 const heroData = (Object.values(heroes) as Hero[]).find((h: Hero) => h.name === aiSuggestion.nome);
@@ -701,7 +703,8 @@ const App: React.FC = () => {
             
             setAnalysisResult({ sugestoesHerois: heroSuggestions, sugestoesItens: correctedItems });
     
-            if (matchupAnalysis && yourHero && winRate != null) {
+            // Defensive check for matchup analysis content
+            if (matchupAnalysis && yourHero && winRate != null && matchupAnalysis.classification && matchupAnalysis.detailedAnalysis) {
                 const correctedSpell = matchupAnalysis.recommendedSpell ? { 
                     ...matchupAnalysis.recommendedSpell, 
                     nome: findClosestString(matchupAnalysis.recommendedSpell.nome, validSpellNames) 
@@ -715,6 +718,9 @@ const App: React.FC = () => {
                     detailedAnalysis: matchupAnalysis.detailedAnalysis, 
                     recommendedSpell: correctedSpell
                 });
+            } else {
+                // Clear matchup data if the analysis is partial or doesn't apply
+                setMatchupData(null);
             }
     
         } catch (error) {
