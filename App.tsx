@@ -497,7 +497,7 @@ const App: React.FC = () => {
     }, [userProfile, effectiveSubscriptionStatus, session]);
 
     const processAIBanSuggestions = (suggestions: AITacticalCounter[]): BanSuggestion[] => {
-        return suggestions.map(suggestion => {
+        return (suggestions || []).map(suggestion => {
             const heroData = Object.values(heroes).find((h: Hero) => h.name === suggestion.heroName);
             return heroData ? { hero: heroData, reason: suggestion.reason } : null;
         }).filter((s): s is BanSuggestion => s !== null);

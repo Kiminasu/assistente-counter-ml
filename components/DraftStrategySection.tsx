@@ -9,13 +9,21 @@ interface DraftStrategySectionProps {
 }
 
 const DraftStrategySection: React.FC<DraftStrategySectionProps> = ({ analysis, isLoading, error }) => {
-    const hasExistingAnalysis = !!analysis;
 
-    const renderContent = () => {
-        if (error && !hasExistingAnalysis) {
+    const renderBody = () => {
+        if (isLoading) {
             return (
-                <div className="text-center p-4 text-red-400">
-                    <p className="mt-2 text-sm">{error}</p>
+                <div className="flex flex-col items-center justify-center min-h-[15rem]">
+                    <div className="w-8 h-8 border-2 border-dashed rounded-full animate-spin border-sky-400"></div>
+                    <p className="mt-3 text-sm text-slate-300">Analisando estratégia...</p>
+                </div>
+            );
+        }
+
+        if (error) {
+            return (
+                <div className="text-center p-4 text-red-400 min-h-[15rem] flex items-center justify-center">
+                    <p className="text-sm">{error}</p>
                 </div>
             );
         }
@@ -31,7 +39,7 @@ const DraftStrategySection: React.FC<DraftStrategySectionProps> = ({ analysis, i
                 </div>
             );
         }
-
+        
         const { teamStrengths, teamWeaknesses, nextPickSuggestion, strategicItems } = analysis;
 
         return (
@@ -86,16 +94,9 @@ const DraftStrategySection: React.FC<DraftStrategySectionProps> = ({ analysis, i
     }
     
     return (
-        <div className="relative glassmorphism p-4 rounded-2xl border-2 panel-glow-primary animated-entry">
-            {isLoading && (
-                <div className="absolute inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center rounded-2xl z-10">
-                    <div className="w-8 h-8 border-2 border-dashed rounded-full animate-spin border-sky-400"></div>
-                </div>
-            )}
-            <div className={`transition-opacity duration-300 ${isLoading && hasExistingAnalysis ? 'opacity-20' : 'opacity-100'}`}>
-                <h2 className="text-xl font-black text-center mb-4 text-amber-300 tracking-wider">ESTRATÉGIA DE JOGO</h2>
-                {renderContent()}
-            </div>
+        <div className="glassmorphism p-4 rounded-2xl border-2 panel-glow-primary animated-entry">
+            <h2 className="text-xl font-black text-center mb-4 text-amber-300 tracking-wider">ESTRATÉGIA DE JOGO</h2>
+            {renderBody()}
         </div>
     );
 };
