@@ -60,6 +60,9 @@ async function callBackendApi<T>(analysisType: string, payload: any): Promise<T>
         throw new Error('Você não está autenticado. Por favor, faça login para usar a análise de IA.');
     }
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 45000); // 45 segundos de timeout
+
     try {
         const response = await fetch('/api/gemini', {
             method: 'POST',
@@ -67,7 +70,8 @@ async function callBackendApi<T>(analysisType: string, payload: any): Promise<T>
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${session.access_token}`
             },
-            body: JSON.stringify({ analysisType, payload })
+            body: JSON.stringify({ analysisType, payload }),
+            signal: controller.signal
         });
 
         if (!response.ok) {
@@ -78,8 +82,15 @@ async function callBackendApi<T>(analysisType: string, payload: any): Promise<T>
         return response.json() as T;
     } catch (error) {
         console.error(`Erro ao chamar a API backend para ${analysisType}:`, error);
+        
+        if (error instanceof Error && error.name === 'AbortError') {
+            throw new Error('A análise da IA demorou muito para responder (timeout). Por favor, tente novamente.');
+        }
+
         const errorMessage = error instanceof Error ? error.message : "Não foi possível gerar a análise da IA.";
         throw new Error(errorMessage);
+    } finally {
+        clearTimeout(timeoutId);
     }
 }
 

@@ -702,14 +702,18 @@ const App: React.FC = () => {
             setAnalysisResult({ sugestoesHerois: heroSuggestions, sugestoesItens: correctedItems });
     
             if (matchupAnalysis && yourHero && winRate != null) {
-                const correctedSpell = { ...matchupAnalysis.recommendedSpell, nome: findClosestString(matchupAnalysis.recommendedSpell.nome, validSpellNames) };
+                const correctedSpell = matchupAnalysis.recommendedSpell ? { 
+                    ...matchupAnalysis.recommendedSpell, 
+                    nome: findClosestString(matchupAnalysis.recommendedSpell.nome, validSpellNames) 
+                } : null;
+
                 setMatchupData({ 
                     yourHero, 
                     enemyHero, 
                     winRate, 
                     classification: matchupAnalysis.classification, 
                     detailedAnalysis: matchupAnalysis.detailedAnalysis, 
-                    recommendedSpell: correctedSpell 
+                    recommendedSpell: correctedSpell
                 });
             }
     
