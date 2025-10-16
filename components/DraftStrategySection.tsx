@@ -10,11 +10,6 @@ interface DraftStrategySectionProps {
 
 const DraftStrategySection: React.FC<DraftStrategySectionProps> = ({ analysis, isLoading, error }) => {
     const hasExistingAnalysis = !!analysis;
-    
-    // Não renderiza nada se nunca houve uma análise e não está carregando
-    if (!hasExistingAnalysis && !isLoading && !error) {
-        return null;
-    }
 
     const renderContent = () => {
         if (error && !hasExistingAnalysis) {
@@ -26,8 +21,15 @@ const DraftStrategySection: React.FC<DraftStrategySectionProps> = ({ analysis, i
         }
 
         if (!analysis) {
-            // Mostra um placeholder para manter o espaço, mas só se estiver carregando
-            return isLoading ? <div className="h-24"></div> : null;
+            return (
+                <div className="text-center text-gray-400 flex flex-col items-center justify-center h-full p-4 min-h-[15rem]">
+                    <svg className="w-12 h-12 mx-auto mb-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                    <h3 className="text-lg font-bold">Estratégia de Jogo</h3>
+                    <p className="mt-2 text-sm">Selecione heróis para receber insights estratégicos da IA.</p>
+                </div>
+            );
         }
 
         const { teamStrengths, teamWeaknesses, nextPickSuggestion, strategicItems } = analysis;

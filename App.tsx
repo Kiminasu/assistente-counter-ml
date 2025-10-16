@@ -653,6 +653,11 @@ const App: React.FC = () => {
                 yourHeroDetails,
                 winRate
             );
+            
+            if (!combinedAnalysis) {
+                throw new Error("A resposta da IA veio vazia ou em formato inválido.");
+            }
+
             if (session?.user) await fetchUserProfile(session.user);
     
             const { counters: counterData } = await fetchHeroCounterStats(enemyHero.apiId);
