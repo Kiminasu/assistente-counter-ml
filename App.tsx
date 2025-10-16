@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Session } from '@supabase/supabase-js';
-// FIX: Imported `SpellSuggestion` to resolve a "Cannot find name" error.
 import { Hero, Lane, AnalysisResult, LANES, ROLES, Role, HeroSuggestion, BanSuggestion, MatchupData, ItemSuggestion, RankCategory, RankDays, SortField, HeroRankInfo, Team, DraftAnalysisResult, NextPickSuggestion, StrategicItemSuggestion, LaneOrNone, HeroDetails, HeroRelation, HeroStrategy, UserSignupRank, GameMode, AITacticalCounter, HeroStrategicAnalysis, UserProfile, AILaneRecommendation, SpellSuggestion } from './types';
 import { fetchHeroes, fetchHeroCounterStats, fetchHeroDetails, fetchHeroRankings, ApiHeroRankData, fetchHeroRelations, fetchHeroPositionsData } from './services/heroService';
 import { getCombined1v1Analysis, getDraftAnalysis, getHeroStrategicAnalysis } from './services/geminiService';
@@ -655,14 +654,17 @@ const App: React.FC = () => {
                 winRate
             );
             
-            // CORREÇÃO: Validação de dados da IA ultra robusta para prevenir crashes.
-            if (!combinedAnalysis || !combinedAnalysis.strategicAnalysis || 
-                !Array.isArray(combinedAnalysis.strategicAnalysis.sugestoesHerois) ||
-                !Array.isArray(combinedAnalysis.strategicAnalysis.sugestoesItens) ||
-                !Array.isArray(combinedAnalysis.banSuggestions)) {
-                throw new Error("A resposta da IA está incompleta ou em formato inválido. Por favor, tente novamente.");
+            // Validação de dados da IA ultra robusta para prevenir crashes.
+            if (!combinedAnalysis || typeof combinedAnalysis !== 'object') {
+                throw new Error("A resposta da IA está em um formato inválido. Por favor, tente novamente.");
             }
     
+            const { strategicAnalysis, matchupAnalysis, banSuggestions } = combinedAnalysis;
+    
+            if (!strategicAnalysis || typeof strategicAnalysis !== 'object' || !Array.isArray(strategicAnalysis.sugestoesHerois) || !Array.isArray(strategicAnalysis.sugestoesItens) || !Array.isArray(banSuggestions)) {
+                throw new Error("A resposta da IA está incompleta ou malformada. Por favor, tente novamente.");
+            }
+            
             if (session?.user) await fetchUserProfile(session.user);
     
             const { counters: counterData } = await fetchHeroCounterStats(enemyHero.apiId);
@@ -671,34 +673,37 @@ const App: React.FC = () => {
                 .filter((item): item is { hero: Hero; increase_win_rate: number } => !!item.hero)
                 .sort((a, b) => b.increase_win_rate - a.increase_win_rate);
     
-            const { strategicAnalysis, matchupAnalysis, banSuggestions } = combinedAnalysis;
-    
             setCounterBanSuggestions(processAIBanSuggestions(banSuggestions));
             
             const validItemNames = GAME_ITEMS.map(item => item.nome);
             const validSpellNames = Object.keys(SPELL_ICONS);
     
-            const aiHeroSuggestions = strategicAnalysis.sugestoesHerois;
-            const aiItemSuggestions = strategicAnalysis.sugestoesItens;
-    
-            const heroSuggestions: HeroSuggestion[] = aiHeroSuggestions
+            const heroSuggestions: HeroSuggestion[] = strategicAnalysis.sugestoesHerois
                 .map((aiSuggestion): HeroSuggestion | null => {
-                    if (!aiSuggestion || !aiSuggestion.nome) return null;
+                    if (!aiSuggestion || typeof aiSuggestion.nome !== 'string' || typeof aiSuggestion.motivo !== 'string') {
+                        console.warn("Sugestão de herói da IA inválida e foi descartada:", aiSuggestion);
+                        return null;
+                    }
                     
                     const heroData = (Object.values(heroes) as Hero[]).find((h: Hero) => h.name === aiSuggestion.nome);
                     const stat = allStatCounters.find(c => c.hero.name === aiSuggestion.nome);
                     const winRateIncrease = stat?.increase_win_rate || 0;
                     const classificacao: 'ANULA' | 'VANTAGEM' = (winRateIncrease > 0.04 && activeLane !== 'NENHUMA' ? 'ANULA' : 'VANTAGEM');
                     
-                    const correctedSpells = (aiSuggestion.spells || []).map(spell => {
-                        if (!spell || !spell.nome) return null;
-                        return { ...spell, nome: findClosestString(spell.nome, validSpellNames), motivo: spell.motivo || '' };
-                    }).filter((s): s is SpellSuggestion => s !== null);
+                    const correctedSpells = (aiSuggestion.spells || [])
+                        .map(spell => {
+                            if (!spell || typeof spell.nome !== 'string') {
+                                console.warn("Sugestão de feitiço da IA inválida e foi descartada:", spell);
+                                return null;
+                            }
+                            return { ...spell, nome: findClosestString(spell.nome, validSpellNames), motivo: spell.motivo || '' };
+                        })
+                        .filter((s): s is SpellSuggestion => s !== null);
     
                     return {
                         nome: aiSuggestion.nome,
-                        motivo: aiSuggestion.motivo || 'Motivo não fornecido pela IA.',
-                        avisos: aiSuggestion.avisos || [],
+                        motivo: aiSuggestion.motivo,
+                        avisos: Array.isArray(aiSuggestion.avisos) ? aiSuggestion.avisos : [],
                         spells: correctedSpells,
                         imageUrl: heroData?.imageUrl || '',
                         classificacao,
@@ -707,9 +712,12 @@ const App: React.FC = () => {
                 })
                 .filter((s): s is HeroSuggestion => s !== null);
     
-            const correctedItems: ItemSuggestion[] = aiItemSuggestions
+            const correctedItems: ItemSuggestion[] = strategicAnalysis.sugestoesItens
                 .map(item => {
-                    if (!item || !item.nome) return null;
+                    if (!item || typeof item.nome !== 'string') {
+                        console.warn("Sugestão de item da IA inválida e foi descartada:", item);
+                        return null;
+                    }
                     const correctedName = findClosestString(item.nome, validItemNames);
                     const gameItem = GAME_ITEMS.find(i => i.nome === correctedName);
                     return { 
@@ -722,12 +730,14 @@ const App: React.FC = () => {
             
             setAnalysisResult({ sugestoesHerois: heroSuggestions, sugestoesItens: correctedItems });
     
-            if (matchupAnalysis && yourHero && winRate != null && matchupAnalysis.classification && matchupAnalysis.detailedAnalysis) {
-                const correctedSpell = (matchupAnalysis.recommendedSpell && matchupAnalysis.recommendedSpell.nome) ? { 
-                    ...matchupAnalysis.recommendedSpell, 
-                    nome: findClosestString(matchupAnalysis.recommendedSpell.nome, validSpellNames),
-                    motivo: matchupAnalysis.recommendedSpell.motivo || ''
-                } : null;
+            if (yourHero && matchupAnalysis && winRate != null && typeof matchupAnalysis.classification === 'string' && typeof matchupAnalysis.detailedAnalysis === 'string') {
+                const correctedSpell = (matchupAnalysis.recommendedSpell && typeof matchupAnalysis.recommendedSpell.nome === 'string') 
+                    ? { 
+                        ...matchupAnalysis.recommendedSpell, 
+                        nome: findClosestString(matchupAnalysis.recommendedSpell.nome, validSpellNames),
+                        motivo: matchupAnalysis.recommendedSpell.motivo || ''
+                    } 
+                    : null;
     
                 setMatchupData({ 
                     yourHero, 
