@@ -545,8 +545,6 @@ const App: React.FC = () => {
                 fetchHeroRelations(selectedHero.apiId, heroes, heroApiIdMap)
             ]);
             
-            if (session?.user) await fetchUserProfile(session.user);
-
             const { strategy, tacticalCounters: aiCounters, perfectLaneCounters: aiLaneCounters } = analysisResult;
             const validItemNames = GAME_ITEMS.map(item => item.nome);
             const correctedCoreItems = strategy.coreItems.map(item => ({ ...item, nome: findClosestString(item.nome, validItemNames) }));
@@ -590,7 +588,7 @@ const App: React.FC = () => {
         } finally {
             setIsSynergyAnalysisLoading(false);
         }
-    }, [synergyHeroPick, heroes, heroApiIdMap, checkAnalysisLimit, session, fetchUserProfile]);
+    }, [synergyHeroPick, heroes, heroApiIdMap, checkAnalysisLimit]);
 
 
     const handleNavigateToHeroAnalysis = useCallback((heroId: string) => {
@@ -667,7 +665,6 @@ const App: React.FC = () => {
                 winRate
             );
             
-            // Validação de dados da IA ultra robusta para prevenir crashes.
             if (!combinedAnalysis || typeof combinedAnalysis !== 'object') {
                 throw new Error("A resposta da IA está em um formato inválido. Por favor, tente novamente.");
             }
@@ -677,8 +674,6 @@ const App: React.FC = () => {
             if (!strategicAnalysis || typeof strategicAnalysis !== 'object' || !Array.isArray(strategicAnalysis.sugestoesHerois) || !Array.isArray(strategicAnalysis.sugestoesItens) || !Array.isArray(banSuggestions)) {
                 throw new Error("A resposta da IA está incompleta ou malformada. Por favor, tente novamente.");
             }
-            
-            if (session?.user) await fetchUserProfile(session.user);
     
             const { counters: counterData } = await fetchHeroCounterStats(enemyHero.apiId);
             const allStatCounters = counterData
@@ -771,116 +766,113 @@ const App: React.FC = () => {
         } finally {
             setIs1v1AnalysisLoading(false);
         }
-    }, [matchupEnemyPick, matchupAllyPick, heroes, activeLane, heroDetailsCache, heroApiIdMap, laneToRoleMap, checkAnalysisLimit, session, fetchUserProfile]);
+    }, [matchupEnemyPick, matchupAllyPick, heroes, activeLane, heroDetailsCache, heroApiIdMap, laneToRoleMap, checkAnalysisLimit]);
     
-    const runDraftAnalysis = useCallback(async () => {
-        if (!checkAnalysisLimit()) return;
-        
-        const pickedAllyHeroes = draftAllyPicks.map(id => id ? heroes[id] : null).filter((h): h is Hero => h !== null);
-        const pickedEnemyHeroes = draftEnemyPicks.map(id => id ? heroes[id] : null).filter((h): h is Hero => h !== null);
-    
-        if (pickedAllyHeroes.length === 0 && pickedEnemyHeroes.length === 0) {
+    useEffect(() => {
+        if (gameMode !== '5v5' || Object.keys(heroes).length === 0) {
             setDraftAnalysis(null);
             setDraftAnalysisError(null);
             setCounterBanSuggestions([]);
             return;
         }
     
-        setIsDraftAnalysisLoading(true);
-        setDraftAnalysisError(null);
-        
-        try {
-            const allPickedHeroes = [...pickedAllyHeroes, ...pickedEnemyHeroes];
-            const detailsToFetch = allPickedHeroes.filter(h => h.apiId && !heroDetailsCacheRef.current[h.apiId]);
+        const analyzeDraft = async () => {
+            if (!checkAnalysisLimit()) return;
     
-            // Etapa 1: Buscar todos os detalhes ausentes de uma vez.
-            if (detailsToFetch.length > 0) {
-                const fetchedDetails = await Promise.all(
-                    detailsToFetch.map(h => 
-                        fetchHeroDetails(h.apiId)
-                            .then(details => ({ apiId: h.apiId, details }))
-                            .catch(err => {
-                                console.error(`Falha ao buscar detalhes para o draft de ${h.name}:`, err);
-                                return null;
-                            })
-                    )
-                );
-                
-                const newCacheEntries = fetchedDetails.reduce((acc, item) => {
-                    if (item) acc[item.apiId] = item.details;
-                    return acc;
-                }, {} as Record<number, HeroDetails>);
-
-                // Atualiza o cache de uma vez para acionar uma única re-renderização, se necessário.
-                setHeroDetailsCache(prev => ({ ...prev, ...newCacheEntries }));
-                return; // Aguarda a próxima renderização para continuar
-            }
-            
-            // Etapa 2: Se todos os detalhes estiverem no cache, prossiga com a análise da IA.
-            const currentCache = heroDetailsCacheRef.current;
-            const allyDetails = pickedAllyHeroes.map(h => currentCache[h.apiId]).filter((d): d is HeroDetails => !!d);
-            const enemyDetails = pickedEnemyHeroes.map(h => currentCache[h.apiId]).filter((d): d is HeroDetails => !!d);
+            const pickedAllyHeroes = draftAllyPicks.map(id => id ? heroes[id] : null).filter((h): h is Hero => h !== null);
+            const pickedEnemyHeroes = draftEnemyPicks.map(id => id ? heroes[id] : null).filter((h): h is Hero => h !== null);
     
-            if (allyDetails.length !== pickedAllyHeroes.length || enemyDetails.length !== pickedEnemyHeroes.length) {
-                // Isso pode acontecer se o cache ainda não foi atualizado, então aguarde a próxima renderização.
+            if (pickedAllyHeroes.length === 0 && pickedEnemyHeroes.length === 0) {
+                setDraftAnalysis(null);
+                setDraftAnalysisError(null);
+                setCounterBanSuggestions([]);
                 return;
             }
-            
-            const pickedHeroIds = new Set(allPickedHeroes.map((h: Hero) => h.id));
-            const availableHeroes = (Object.values(heroes) as Hero[]).filter((h: Hero) => !pickedHeroIds.has(h.id));
-            
-            const analysisFromAI = await getDraftAnalysis(allyDetails, enemyDetails, availableHeroes);
-            
-            if (session?.user) await fetchUserProfile(session.user);
     
-            setCounterBanSuggestions(processAIBanSuggestions(analysisFromAI.banSuggestions));
+            setIsDraftAnalysisLoading(true);
+            setDraftAnalysisError(null);
     
-            let nextPick: NextPickSuggestion | null = null;
-            if (analysisFromAI.nextPickSuggestion) {
-                const heroData = (Object.values(heroes) as Hero[]).find((h: Hero) => h.name === analysisFromAI.nextPickSuggestion?.heroName);
-                const role = findClosestString(analysisFromAI.nextPickSuggestion.role, ROLES as any) as Role;
-                if (heroData) {
-                    nextPick = {
-                        heroName: heroData.name,
-                        imageUrl: heroData.imageUrl,
-                        role: role || heroData.roles[0] || 'Soldado',
-                        reason: analysisFromAI.nextPickSuggestion.reason,
-                    };
+            try {
+                const allPickedHeroes = [...pickedAllyHeroes, ...pickedEnemyHeroes];
+                const detailsToFetch = allPickedHeroes.filter(h => h.apiId && !heroDetailsCacheRef.current[h.apiId]);
+                let currentCache = { ...heroDetailsCacheRef.current };
+    
+                if (detailsToFetch.length > 0) {
+                    const fetchedDetails = await Promise.all(
+                        detailsToFetch.map(h => 
+                            fetchHeroDetails(h.apiId)
+                                .then(details => ({ apiId: h.apiId, details }))
+                                .catch(err => {
+                                    console.error(`Falha ao buscar detalhes para o draft de ${h.name}:`, err);
+                                    return null;
+                                })
+                        )
+                    );
+                    
+                    const newCacheEntries = fetchedDetails.reduce((acc, item) => {
+                        if (item) acc[item.apiId] = item.details;
+                        return acc;
+                    }, {} as Record<number, HeroDetails>);
+    
+                    setHeroDetailsCache(prev => ({ ...prev, ...newCacheEntries }));
+                    currentCache = { ...currentCache, ...newCacheEntries };
                 }
+    
+                const allyDetails = pickedAllyHeroes.map(h => currentCache[h.apiId]).filter((d): d is HeroDetails => !!d);
+                const enemyDetails = pickedEnemyHeroes.map(h => currentCache[h.apiId]).filter((d): d is HeroDetails => !!d);
+    
+                if (allyDetails.length !== pickedAllyHeroes.length || enemyDetails.length !== pickedEnemyHeroes.length) {
+                    throw new Error("Falha ao buscar os detalhes de um ou mais heróis selecionados. A análise será tentada novamente.");
+                }
+                
+                const pickedHeroIds = new Set(allPickedHeroes.map((h: Hero) => h.id));
+                const availableHeroes = (Object.values(heroes) as Hero[]).filter((h: Hero) => !pickedHeroIds.has(h.id));
+                
+                const analysisFromAI = await getDraftAnalysis(allyDetails, enemyDetails, availableHeroes);
+                
+                setCounterBanSuggestions(processAIBanSuggestions(analysisFromAI.banSuggestions));
+    
+                let nextPick: NextPickSuggestion | null = null;
+                if (analysisFromAI.nextPickSuggestion) {
+                    const heroData = (Object.values(heroes) as Hero[]).find((h: Hero) => h.name === analysisFromAI.nextPickSuggestion?.heroName);
+                    const role = findClosestString(analysisFromAI.nextPickSuggestion.role, ROLES as any) as Role;
+                    if (heroData) {
+                        nextPick = {
+                            heroName: heroData.name,
+                            imageUrl: heroData.imageUrl,
+                            role: role || heroData.roles[0] || 'Soldado',
+                            reason: analysisFromAI.nextPickSuggestion.reason,
+                        };
+                    }
+                }
+    
+                const validItemNames = GAME_ITEMS.map(item => item.nome);
+                const strategicItems: StrategicItemSuggestion[] = analysisFromAI.strategicItems.map(item => {
+                    const correctedName = findClosestString(item.name, validItemNames);
+                    const gameItem = GAME_ITEMS.find(i => i.nome === correctedName);
+                    return {
+                        name: correctedName,
+                        reason: item.reason,
+                        preco: gameItem?.preco || 0,
+                    };
+                });
+                
+                setDraftAnalysis({
+                    ...analysisFromAI,
+                    nextPickSuggestion: nextPick,
+                    strategicItems: strategicItems,
+                });
+    
+            } catch (error) {
+                setDraftAnalysisError(error instanceof Error ? error.message : "Erro desconhecido ao analisar o draft.");
+            } finally {
+                setIsDraftAnalysisLoading(false);
             }
+        };
     
-            const validItemNames = GAME_ITEMS.map(item => item.nome);
-            const strategicItems: StrategicItemSuggestion[] = analysisFromAI.strategicItems.map(item => {
-                const correctedName = findClosestString(item.name, validItemNames);
-                const gameItem = GAME_ITEMS.find(i => i.nome === correctedName);
-                return {
-                    name: correctedName,
-                    reason: item.reason,
-                    preco: gameItem?.preco || 0,
-                };
-            });
-            
-            setDraftAnalysis({
-                ...analysisFromAI,
-                nextPickSuggestion: nextPick,
-                strategicItems: strategicItems,
-            });
+        analyzeDraft();
     
-        } catch (error) {
-            setDraftAnalysisError(error instanceof Error ? error.message : "Erro desconhecido ao analisar o draft.");
-        } finally {
-            setIsDraftAnalysisLoading(false);
-        }
-    }, [draftAllyPicks, draftEnemyPicks, heroes, checkAnalysisLimit, session, fetchUserProfile]);
-
-    useEffect(() => {
-        if (gameMode !== '5v5' || Object.keys(heroes).length === 0) return;
-        
-        // Esta função agora é acionada por mudanças nos heróis ou no cache de detalhes.
-        // A lógica interna garante que a chamada da IA só aconteça quando todos os dados estiverem prontos.
-        runDraftAnalysis();
-
-    }, [draftAllyPicks, draftEnemyPicks, gameMode, heroes, heroDetailsCache, runDraftAnalysis]);
+    }, [draftAllyPicks, draftEnemyPicks, gameMode, heroes, checkAnalysisLimit]);
 
 
     const handleSlotClick = useCallback((team: Team | 'synergy', index: number) => {
