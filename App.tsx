@@ -598,7 +598,7 @@ const App: React.FC = () => {
 
     const handleAnalysis = useCallback(async () => {
         if (!matchupEnemyPick || !checkAnalysisLimit()) return;
-        
+    
         setTimeout(() => {
             analysisSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }, 100);
@@ -642,18 +642,22 @@ const App: React.FC = () => {
             if (!enemyHeroDetails) {
                 throw new Error("Falha ao carregar detalhes do herói inimigo para a análise.");
             }
-            
+    
+            // Otimização: Buscar todos os dados estatísticos necessários em paralelo antes da chamada da IA.
+            const [enemyCounterStats, yourCounterStats] = await Promise.all([
+                enemyHero.apiId ? fetchHeroCounterStats(enemyHero.apiId) : Promise.resolve({ counters: [], counteredBy: [] }),
+                (yourHero && yourHero.apiId) ? fetchHeroCounterStats(yourHero.apiId) : Promise.resolve({ counters: [], counteredBy: [] })
+            ]);
+    
             let winRate: number | null = null;
             if (yourHero && yourHero.apiId && enemyHero.apiId) {
-                 const enemyCounterStats = await fetchHeroCounterStats(enemyHero.apiId);
-                 const matchupStat = enemyCounterStats.counters.find(counter => counter.heroid === yourHero.apiId);
-                 let wr = matchupStat?.increase_win_rate ?? 0;
-                 if (wr === 0) {
-                     const yourCounterStats = await fetchHeroCounterStats(yourHero.apiId);
-                     const counterMatchupStat = yourCounterStats.counters.find(counter => counter.heroid === enemyHero.apiId);
-                     if (counterMatchupStat) wr = -counterMatchupStat.increase_win_rate;
-                 }
-                 winRate = wr;
+                const matchupStat = enemyCounterStats.counters.find(counter => counter.heroid === yourHero.apiId);
+                let wr = matchupStat?.increase_win_rate ?? 0;
+                if (wr === 0) {
+                    const counterMatchupStat = yourCounterStats.counters.find(counter => counter.heroid === enemyHero.apiId);
+                    if (counterMatchupStat) wr = -counterMatchupStat.increase_win_rate;
+                }
+                winRate = wr;
             }
     
             const combinedAnalysis = await getCombined1v1Analysis(
@@ -675,8 +679,8 @@ const App: React.FC = () => {
                 throw new Error("A resposta da IA está incompleta ou malformada. Por favor, tente novamente.");
             }
     
-            const { counters: counterData } = await fetchHeroCounterStats(enemyHero.apiId);
-            const allStatCounters = counterData
+            // Otimização: Reutiliza os dados já buscados, eliminando uma chamada de API redundante.
+            const allStatCounters = enemyCounterStats.counters
                 .map(c => ({ hero: heroApiIdMap[c.heroid], increase_win_rate: c.increase_win_rate }))
                 .filter((item): item is { hero: Hero; increase_win_rate: number } => !!item.hero)
                 .sort((a, b) => b.increase_win_rate - a.increase_win_rate);
