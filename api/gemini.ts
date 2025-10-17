@@ -128,7 +128,7 @@ async function handleDraftAnalysis(payload: any) {
     const allyDetailsPrompt = allyHeroesDetails.length > 0 ? allyHeroesDetails.map(formatHeroDetailsForPrompt).join('\n---\n') : "Nenhum.";
     const enemyDetailsPrompt = enemyHeroesDetails.length > 0 ? enemyHeroesDetails.map(formatHeroDetailsForPrompt).join('\n---\n') : "Nenhum.";
     const systemPrompt = "Você é um analista de draft Mítico de Mobile Legends. Analise o draft e responda APENAS com um objeto JSON válido que siga o schema.";
-    const userQuery = `DRAFT 5v5:\nTime Aliado:\n${allyDetailsPrompt}\nTime Inimigo:\n${enemyDetailsPrompt}\nHeróis Disponíveis: [${availableHeroNames}]\nItens: [${itemNames}]\nINSTRUÇÕES: Forneça 'advantageScore', 'advantageReason', 'allyComposition', 'enemyComposition', 'teamStrengths', 'teamWeaknesses', 'nextPickSuggestion' (ou nulo), 2 'strategicItems', e 3 'banSuggestions' táticas. As sugestões de ban devem focar em neutralizar a estratégia inimiga mais forte ou proteger a maior fraqueza do time aliado. O counterType deve ser 'HARD' ou 'SOFT'.`;
+    const userQuery = `DRAFT 5v5:\nTime Aliado:\n${allyDetailsPrompt}\nTime Inimigo:\n${enemyDetailsPrompt}\nHeróis Disponíveis: [${availableHeroNames}]\nItens: [${itemNames}]\nINSTRUÇÕES: Forneça 'advantageScore', 'advantageReason', 'allyComposition', 'enemyComposition', 'teamStrengths', 'teamWeaknesses', 'nextPickSuggestion' (ou nulo), 2 'strategicItems', e 5 'banSuggestions' táticas. As sugestões de ban devem focar em neutralizar a estratégia inimiga mais forte ou proteger a maior fraqueza do time aliado. O counterType deve ser 'HARD' ou 'SOFT'.`;
 
     const response = await ai.models.generateContent({
         model: "gemini-2.5-flash",
