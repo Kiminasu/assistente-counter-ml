@@ -8,6 +8,7 @@ interface AnalysisPanelProps {
     result: AnalysisResult | null;
     error: string | null;
     activeLane: LaneOrNone;
+    matchupAllyPick: string | null;
 }
 
 const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ 
@@ -15,7 +16,8 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
     loadingMessage,
     result, 
     error,
-    activeLane
+    activeLane,
+    matchupAllyPick
 }) => {
     const [selectedSuggestion, setSelectedSuggestion] = useState<HeroSuggestion | null>(null);
     const [selectedItem, setSelectedItem] = useState<ItemSuggestion | null>(null);
@@ -221,6 +223,49 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
                     );
                 })}
 
+                {matchupAllyPick && result.sugestoesCountersAliado && result.sugestoesCountersAliado.length > 0 && (() => {
+                    const allyCounters = result.sugestoesCountersAliado!;
+                    const isDetailVisible = selectedSuggestion && allyCounters.some(s => s.nome === selectedSuggestion.nome);
+
+                    return (
+                        <div className="mb-6">
+                            <h3 className="font-bold text-lg mb-3 text-center text-red-400">
+                                Heróis que Counteram seu Herói
+                            </h3>
+                            <div className="flex justify-center flex-wrap gap-4">
+                                {allyCounters.map((suggestion) => {
+                                    const isSelected = selectedSuggestion?.nome === suggestion.nome;
+                                    const heroImageSize = 'w-20 h-20';
+                                    return (
+                                        <div
+                                            key={suggestion.nome}
+                                            className="flex flex-col items-center text-center cursor-pointer group"
+                                            onClick={() => handleHeroClick(suggestion)}
+                                            aria-label={`Analisar ${suggestion.nome}`}
+                                            role="button"
+                                            aria-pressed={isSelected}
+                                        >
+                                            <img
+                                                loading="lazy"
+                                                src={suggestion.imageUrl}
+                                                alt={suggestion.nome}
+                                                className={`${heroImageSize} rounded-full object-cover border-4 transition-all duration-200 group-hover:scale-110 border-red-400 ${isSelected ? 'ring-4 ring-sky-400 ring-offset-2 ring-offset-slate-900' : ''}`}
+                                            />
+                                            <span className={`text-sm mt-2 font-medium transition-colors flex items-center gap-1 ${isSelected ? 'text-white' : 'text-gray-400'}`}>
+                                                {suggestion.nome}
+                                                <svg xmlns="http://www.w3.org/2000/svg" className={`h-3 w-3 transition-transform duration-300 ${isSelected ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                                                </svg>
+                                            </span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                            {isDetailVisible && selectedSuggestion && renderHeroDetailCard(selectedSuggestion)}
+                        </div>
+                    );
+                })()}
+
                 <h2 className="text-xl font-bold text-center mt-8 mb-4 text-amber-300">Itens de Counter Recomendados</h2>
                 
                 <div className="flex justify-center flex-wrap gap-4">
@@ -283,11 +328,11 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
     };
 
     return (
-        <aside className="col-span-1 glassmorphism p-4 rounded-2xl animated-entry flex flex-col lg:h-[85vh] border-2 panel-glow-primary">
+        <aside className="col-span-1 glassmorphism p-4 rounded-2xl animated-entry flex flex-col border-2 panel-glow-primary">
             <div className="flex-shrink-0">
                 <h2 className="text-2xl sm:text-3xl font-black text-center mb-4 tracking-wider text-amber-300" style={{ textShadow: '0 0 10px rgba(56, 182, 255, 0.3)'}}>Análise Tática da IA</h2>
             </div>
-            <div className="flex-1 overflow-y-auto pr-2 min-h-[200px] flex flex-col justify-center">
+            <div className="pr-2 min-h-[200px]">
                 {renderContent()}
             </div>
         </aside>

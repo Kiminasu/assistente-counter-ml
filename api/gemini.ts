@@ -5,7 +5,7 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { createClient } from '@supabase/supabase-js';
 
 // CORREÇÃO: Importando da pasta local _lib com extensões .js para compatibilidade com ESM no Node.js
-import { Hero, HeroDetails, DraftAnalysisResult, AnalysisResult, HeroStrategy, LANES, ROLES, AITacticalCounter, HeroStrategicAnalysis, AILaneRecommendation } from "./_lib/types.js";
+import { Hero, HeroDetails, DraftAnalysisResult, AnalysisResult, HeroStrategy, LANES, ROLES, AITacticalCounter, HeroStrategicAnalysis, AILaneRecommendation, SpellSuggestion } from "./_lib/types.js";
 import { GAME_ITEMS } from './_lib/items.js';
 import { SPELL_ICONS } from './_lib/constants.js';
 
@@ -30,11 +30,41 @@ const formatHeroDetailsForPrompt = (details: HeroDetails): string => {
 };
 
 const tacticalCounterSchema = { type: Type.OBJECT, properties: { heroName: { type: Type.STRING }, reason: { type: Type.STRING }, counterType: { type: Type.STRING, enum: ['HARD', 'SOFT'] } }, required: ["heroName", "reason", "counterType"] };
-const analysisResponseSchema = { type: Type.OBJECT, properties: { sugestoesHerois: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { nome: { type: Type.STRING }, motivo: { type: Type.STRING }, avisos: { type: Type.ARRAY, items: { type: Type.STRING } }, spells: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { nome: { type: Type.STRING }, motivo: { type: Type.STRING } }, required: ["nome", "motivo"] } } }, required: ["nome", "motivo", "avisos", "spells"] } }, sugestoesItens: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { nome: { type: Type.STRING }, motivo: { type: Type.STRING } }, required: ["nome", "motivo"] } } }, required: ["sugestoesHerois", "sugestoesItens"] };
-const matchupResponseSchema = { type: Type.OBJECT, properties: { classification: { type: Type.STRING }, detailedAnalysis: { type: Type.STRING }, recommendedSpell: { type: Type.OBJECT, properties: { nome: { type: Type.STRING }, motivo: { type: Type.STRING } }, required: ["nome", "motivo"] } }, required: ["classification", "detailedAnalysis", "recommendedSpell"] };
+
+const heroSuggestionItemSchema = {
+    type: Type.OBJECT,
+    properties: {
+        nome: { type: Type.STRING },
+        motivo: { type: Type.STRING },
+        avisos: { type: Type.ARRAY, items: { type: Type.STRING } },
+        spells: {
+            type: Type.ARRAY,
+            items: {
+                type: Type.OBJECT,
+                properties: {
+                    nome: { type: Type.STRING },
+                    motivo: { type: Type.STRING }
+                },
+                required: ["nome", "motivo"]
+            }
+        }
+    },
+    required: ["nome", "motivo", "avisos", "spells"]
+};
+const analysisResponseSchema = {
+    type: Type.OBJECT,
+    properties: {
+        sugestoesHerois: { type: Type.ARRAY, items: heroSuggestionItemSchema },
+        sugestoesItens: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { nome: { type: Type.STRING }, motivo: { type: Type.STRING } }, required: ["nome", "motivo"] } },
+        sugestoesCountersAliado: { type: Type.ARRAY, items: heroSuggestionItemSchema }
+    },
+    required: ["sugestoesHerois", "sugestoesItens", "sugestoesCountersAliado"]
+};
+
+const matchupResponseSchema = { type: Type.OBJECT, properties: { classification: { type: Type.STRING, enum: ['ANULA', 'VANTAGEM', 'NEUTRO', 'DESVANTAGEM'] }, detailedAnalysis: { type: Type.STRING }, recommendedSpell: { type: Type.OBJECT, properties: { nome: { type: Type.STRING }, motivo: { type: Type.STRING } }, required: ["nome", "motivo"], nullable: true } }, required: ["classification", "detailedAnalysis"] };
 const combined1v1Schema = { type: Type.OBJECT, properties: { strategicAnalysis: analysisResponseSchema, matchupAnalysis: { ...matchupResponseSchema, nullable: true }, banSuggestions: { type: Type.ARRAY, items: tacticalCounterSchema } }, required: ["strategicAnalysis", "banSuggestions"] };
 const compositionSchema = { type: Type.OBJECT, properties: { physicalDamage: { type: Type.INTEGER }, magicDamage: { type: Type.INTEGER }, tankiness: { type: Type.INTEGER }, control: { type: Type.INTEGER } }, required: ["physicalDamage", "magicDamage", "tankiness", "control"] };
-const draftAnalysisSchema = { type: Type.OBJECT, properties: { advantageScore: { type: Type.INTEGER }, advantageReason: { type: Type.STRING }, allyComposition: compositionSchema, enemyComposition: compositionSchema, teamStrengths: { type: Type.ARRAY, items: { type: Type.STRING } }, teamWeaknesses: { type: Type.ARRAY, items: { type: Type.STRING } }, nextPickSuggestion: { type: Type.OBJECT, properties: { heroName: { type: Type.STRING }, role: { type: Type.STRING, enum: ROLES as any }, reason: { type: Type.STRING } }, nullable: true }, strategicItems: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { name: { type: Type.STRING }, reason: { type: Type.STRING } }, required: ["name", "reason"] } }, banSuggestions: { type: Type.ARRAY, items: tacticalCounterSchema } }, required: ["advantageScore", "advantageReason", "allyComposition", "enemyComposition", "teamStrengths", "teamWeaknesses", "strategicItems", "banSuggestions"] };
+const draftAnalysisSchema = { type: Type.OBJECT, properties: { advantageScore: { type: Type.INTEGER }, advantageReason: { type: Type.STRING }, allyComposition: compositionSchema, enemyComposition: compositionSchema, teamStrengths: { type: Type.ARRAY, items: { type: Type.STRING } }, teamWeaknesses: { type: Type.ARRAY, items: { type: Type.STRING } }, nextPickSuggestion: { type: Type.OBJECT, properties: { heroName: { type: Type.STRING }, role: { type: Type.STRING, enum: ROLES as any }, reason: { type: Type.STRING } }, nullable: true, required: ["heroName", "role", "reason"] }, strategicItems: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { name: { type: Type.STRING }, reason: { type: Type.STRING } }, required: ["name", "reason"] } }, banSuggestions: { type: Type.ARRAY, items: tacticalCounterSchema } }, required: ["advantageScore", "advantageReason", "allyComposition", "enemyComposition", "teamStrengths", "teamWeaknesses", "strategicItems", "banSuggestions"] };
 const heroStrategySchema = { type: Type.OBJECT, properties: { coreItems: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { nome: { type: Type.STRING }, motivo: { type: Type.STRING } }, required: ["nome", "motivo"] } }, situationalItems: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { nome: { type: Type.STRING }, motivo: { type: Type.STRING } }, required: ["nome", "motivo"] } }, playstyle: { type: Type.STRING }, powerSpikes: { type: Type.STRING } }, required: ["coreItems", "situationalItems", "playstyle", "powerSpikes"] };
 
 // FIX: Added schema for the new AI feature.
@@ -87,14 +117,20 @@ async function handle1v1Analysis(payload: any) {
     const systemPrompt = `Você é um analista de nível Mítico de Mobile Legends. Forneça uma análise tática infalível baseada ESTRITAMENTE nos dados. Responda APENAS com um objeto JSON válido que siga o schema.`;
     const laneContext = lane === 'NENHUMA' ? 'em confronto geral' : `na lane '${lane}'`;
     
-    const strategicInstructions = `**Parte 1: Análise Estratégica (strategicAnalysis)**\nOponente: ${enemyHeroDetails.name} ${laneContext}.\nINSTRUÇÕES:\n- Sugira 3 a 5 dos melhores heróis de counter para a função '${selectedRole}'. Para cada um, forneça 'motivo', 'avisos', e 'spells' da lista [${spellList}]. A análise deve ser de nível profissional, considerando interações de habilidades, mobilidade e matchups conhecidos.\n- Sugira 3 'sugestoesItens' para counterar ${enemyHeroDetails.name} da lista [${itemNames}].`;
+    let strategicInstructions = `**Parte 1: Análise Estratégica (strategicAnalysis)**\nOponente: ${enemyHeroDetails.name} ${laneContext}.\nINSTRUÇÕES:\n- 'sugestoesHerois': Sugira 3 a 5 dos melhores heróis de counter para a função '${selectedRole}' para jogar CONTRA ${enemyHeroDetails.name}. Para cada um, forneça 'motivo', 'avisos', e 'spells' da lista [${spellList}].\n- 'sugestoesItens': Sugira 3 'sugestoesItens' para counterar ${enemyHeroDetails.name} da lista [${itemNames}].`;
+
+    if (yourHeroDetails) {
+        strategicInstructions += `\n- 'sugestoesCountersAliado': Sugira 3 heróis que counteram o herói aliado (${yourHeroDetails.name}). Para cada um, forneça 'motivo', 'avisos' e 'spells'.`;
+    } else {
+        strategicInstructions += `\n- 'sugestoesCountersAliado': Como não há herói aliado, retorne um array vazio [].`;
+    }
     
     let matchupInstructions = '';
     if (yourHeroDetails) {
         let winRateDesc = `NEUTRO`;
         if (winRate > 0.01) winRateDesc = `VANTAGEM de +${(winRate * 100).toFixed(1)}%`;
         else if (winRate < -0.01) winRateDesc = `DESVANTAGEM de ${(winRate * 100).toFixed(1)}%`;
-        matchupInstructions = `**Parte 2: Confronto Direto (matchupAnalysis)**\nMeu Herói (${yourHeroDetails.name}) vs Inimigo (${enemyHeroDetails.name}).\nEstatística: ${winRateDesc}.\nMeu Herói:\n${formatHeroDetailsForPrompt(yourHeroDetails)}\nInimigo:\n${enemyDetailsPrompt}\nInstruções: Determine 'classification', 'detailedAnalysis' e 'recommendedSpell' da lista [${spellList}].`;
+        matchupInstructions = `**Parte 2: Confronto Direto (matchupAnalysis)**\nMeu Herói (${yourHeroDetails.name}) vs Inimigo (${enemyHeroDetails.name}).\nEstatística: ${winRateDesc}.\nMeu Herói:\n${formatHeroDetailsForPrompt(yourHeroDetails)}\nInimigo:\n${enemyDetailsPrompt}\nInstruções: Determine 'classification' (ANULA, VANTAGEM, NEUTRO, DESVANTAGEM), 'detailedAnalysis' e 'recommendedSpell' da lista [${spellList}]. Se não houver feitiço, defina como nulo.`;
     }
 
     let banInstructions = '';
@@ -128,7 +164,7 @@ async function handleDraftAnalysis(payload: any) {
     const allyDetailsPrompt = allyHeroesDetails.length > 0 ? allyHeroesDetails.map(formatHeroDetailsForPrompt).join('\n---\n') : "Nenhum.";
     const enemyDetailsPrompt = enemyHeroesDetails.length > 0 ? enemyHeroesDetails.map(formatHeroDetailsForPrompt).join('\n---\n') : "Nenhum.";
     const systemPrompt = "Você é um analista de draft Mítico de Mobile Legends. Analise o draft e responda APENAS com um objeto JSON válido que siga o schema.";
-    const userQuery = `DRAFT 5v5:\nTime Aliado:\n${allyDetailsPrompt}\nTime Inimigo:\n${enemyDetailsPrompt}\nHeróis Disponíveis: [${availableHeroNames}]\nItens: [${itemNames}]\nINSTRUÇÕES: Forneça 'advantageScore', 'advantageReason', 'allyComposition', 'enemyComposition', 'teamStrengths', 'teamWeaknesses', 2 'strategicItems', e 5 'banSuggestions' táticas. Para 'nextPickSuggestion', se houver espaços vazios no time aliado, SUGIRA OBRIGATORIAMENTE o melhor herói da lista 'Heróis Disponíveis' para a próxima escolha. A sugestão deve considerar sinergia, counters e a lane mais apropriada, e não pode ser um herói já escolhido. Se o time aliado estiver completo, defina como nulo. As sugestões de ban devem focar em neutralizar a estratégia inimiga mais forte ou proteger a maior fraqueza do time aliado. O counterType deve ser 'HARD' ou 'SOFT'.`;
+    const userQuery = `DRAFT 5v5:\nTime Aliado:\n${allyDetailsPrompt}\nTime Inimigo:\n${enemyDetailsPrompt}\nHeróis Disponíveis: [${availableHeroNames}]\nItens: [${itemNames}]\nINSTRUÇÕES: Forneça 'advantageScore' (-10 a 10), 'advantageReason', 'allyComposition', 'enemyComposition', 'teamStrengths', 'teamWeaknesses', 2 'strategicItems', e 5 'banSuggestions' táticas. Para 'nextPickSuggestion', se houver espaços vazios no time aliado, SUGIRA OBRIGATORIAMENTE o melhor herói da lista 'Heróis Disponíveis' para a próxima escolha. A sugestão deve considerar sinergia, counters e a lane mais apropriada, e não pode ser um herói já escolhido. Se o time aliado estiver completo, defina como nulo. As sugestões de ban devem focar em neutralizar a estratégia inimiga mais forte ou proteger a maior fraqueza do time aliado. O counterType deve ser 'HARD' ou 'SOFT'. A role da sugestão deve ser uma das seguintes: [${ROLES.join(', ')}].`;
 
     const response = await ai.models.generateContent({
         model: "gemini-2.5-flash",

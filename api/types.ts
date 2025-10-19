@@ -2,6 +2,8 @@
 
 
 
+
+
 export interface Hero {
   id: string;
   apiId: number;
@@ -31,7 +33,7 @@ export interface HeroSuggestion {
   imageUrl: string;
   motivo: string;
   avisos: string[];
-  classificacao: 'ANULA' | 'VANTAGEM' | 'PERFEITO';
+  classificacao: 'ANULA' | 'VANTAGEM' | 'PERFEITO' | 'DESVANTAGEM';
   estatistica: string;
   spells: SpellSuggestion[];
 }
@@ -60,6 +62,7 @@ export interface ItemSuggestion {
 export interface AnalysisResult {
   sugestoesHerois: HeroSuggestion[];
   sugestoesItens: ItemSuggestion[];
+  sugestoesCountersAliado?: HeroSuggestion[];
 }
 
 export interface BanSuggestion {

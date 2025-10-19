@@ -675,7 +675,7 @@ const App: React.FC = () => {
     
             const { strategicAnalysis, matchupAnalysis, banSuggestions } = combinedAnalysis;
     
-            if (!strategicAnalysis || typeof strategicAnalysis !== 'object' || !Array.isArray(strategicAnalysis.sugestoesHerois) || !Array.isArray(strategicAnalysis.sugestoesItens) || !Array.isArray(banSuggestions)) {
+            if (!strategicAnalysis || typeof strategicAnalysis !== 'object' || !Array.isArray(strategicAnalysis.sugestoesHerois) || !Array.isArray(strategicAnalysis.sugestoesItens) || !Array.isArray(banSuggestions) || !Array.isArray(strategicAnalysis.sugestoesCountersAliado)) {
                 throw new Error("A resposta da IA está incompleta ou malformada. Por favor, tente novamente.");
             }
     
@@ -740,8 +740,39 @@ const App: React.FC = () => {
                 })
                 .filter((i): i is ItemSuggestion => i !== null);
             
-            setAnalysisResult({ sugestoesHerois: heroSuggestions, sugestoesItens: correctedItems });
-    
+            const allyCounterSuggestions: HeroSuggestion[] = (strategicAnalysis.sugestoesCountersAliado || [])
+                .map((aiSuggestion): HeroSuggestion | null => {
+                    if (!aiSuggestion || typeof aiSuggestion.nome !== 'string' || typeof aiSuggestion.motivo !== 'string') {
+                        console.warn("Sugestão de counter de aliado da IA inválida e foi descartada:", aiSuggestion);
+                        return null;
+                    }
+                    
+                    const heroData = (Object.values(heroes) as Hero[]).find((h: Hero) => h.name === aiSuggestion.nome);
+                    
+                    const correctedSpells = (aiSuggestion.spells || [])
+                        .map(spell => {
+                            if (!spell || typeof spell.nome !== 'string') {
+                                console.warn("Sugestão de feitiço da IA inválida e foi descartada:", spell);
+                                return null;
+                            }
+                            return { ...spell, nome: findClosestString(spell.nome, validSpellNames), motivo: spell.motivo || '' };
+                        })
+                        .filter((s): s is SpellSuggestion => s !== null);
+
+                    return {
+                        nome: aiSuggestion.nome,
+                        motivo: aiSuggestion.motivo,
+                        avisos: Array.isArray(aiSuggestion.avisos) ? aiSuggestion.avisos : [],
+                        spells: correctedSpells,
+                        imageUrl: heroData?.imageUrl || '',
+                        classificacao: 'DESVANTAGEM',
+                        estatistica: 'Counter Tático'
+                    };
+                })
+                .filter((s): s is HeroSuggestion => s !== null);
+
+            setAnalysisResult({ sugestoesHerois: heroSuggestions, sugestoesItens: correctedItems, sugestoesCountersAliado: allyCounterSuggestions });
+
             if (yourHero && matchupAnalysis && winRate != null && typeof matchupAnalysis.classification === 'string' && typeof matchupAnalysis.detailedAnalysis === 'string') {
                 const correctedSpell = (matchupAnalysis.recommendedSpell && typeof matchupAnalysis.recommendedSpell.nome === 'string') 
                     ? { 
@@ -1073,6 +1104,7 @@ const App: React.FC = () => {
                                     result={analysisResult}
                                     error={analysisError}
                                     activeLane={activeLane}
+                                    matchupAllyPick={matchupAllyPick}
                                 />
                             </div>
                         </div>

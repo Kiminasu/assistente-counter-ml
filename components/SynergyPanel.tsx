@@ -112,7 +112,7 @@ const SynergyPanel: React.FC<SynergyPanelProps> = ({ isLoading, error, relations
         }
 
         return (
-            <div className="p-1 space-y-6 animated-entry overflow-y-auto max-h-[70vh] pr-2">
+            <div className="p-1 space-y-6 animated-entry overflow-y-auto pr-2">
                  <div className="mb-4">
                     <CollapsibleTutorial title="Entendendo as Sinergias">
                         <ul className="list-disc list-inside space-y-2 text-xs text-gray-300">
@@ -146,7 +146,7 @@ const SynergyPanel: React.FC<SynergyPanelProps> = ({ isLoading, error, relations
     }
     
     return (
-        <div className="h-full pt-4">
+        <div className="pt-4">
             {renderContent()}
         </div>
     );

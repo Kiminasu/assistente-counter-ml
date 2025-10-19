@@ -61,7 +61,7 @@ const DirectMatchupPanel: React.FC<DirectMatchupPanelProps> = ({ isLoading, data
 
         if (!data) {
              return (
-                <div className="p-4 flex flex-col h-full animated-entry opacity-60">
+                <div className="p-4 flex flex-col animated-entry opacity-60">
                     <div className="mb-4">
                         <CollapsibleTutorial title="Entendendo o Confronto">
                              <ul className="list-disc list-inside space-y-2 text-xs text-gray-300">
@@ -102,7 +102,7 @@ const DirectMatchupPanel: React.FC<DirectMatchupPanelProps> = ({ isLoading, data
         const isTheoretical = winRate === 0;
 
         return (
-            <div className="p-4 flex flex-col h-full animated-entry">
+            <div className="p-4 flex flex-col animated-entry">
                 <div className="mb-4">
                     <CollapsibleTutorial title="Entendendo o Confronto">
                         <ul className="list-disc list-inside space-y-2 text-xs text-gray-300">
@@ -161,7 +161,7 @@ const DirectMatchupPanel: React.FC<DirectMatchupPanelProps> = ({ isLoading, data
     }
 
     return (
-        <div className="h-full pt-4">
+        <div className="pt-4">
              {renderContent()}
         </div>
     );

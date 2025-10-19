@@ -40,7 +40,7 @@ export interface HeroSuggestion {
   imageUrl: string;
   motivo: string;
   avisos: string[];
-  classificacao: 'ANULA' | 'VANTAGEM' | 'PERFEITO';
+  classificacao: 'ANULA' | 'VANTAGEM' | 'PERFEITO' | 'DESVANTAGEM';
   estatistica: string;
   spells: SpellSuggestion[];
   lane?: Lane; // Adicionado para counters por lane
@@ -70,6 +70,7 @@ export interface ItemSuggestion {
 export interface AnalysisResult {
   sugestoesHerois: HeroSuggestion[];
   sugestoesItens: ItemSuggestion[];
+  sugestoesCountersAliado?: HeroSuggestion[];
 }
 
 export interface BanSuggestion {

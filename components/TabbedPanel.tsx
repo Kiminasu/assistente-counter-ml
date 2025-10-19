@@ -13,7 +13,7 @@ const TabbedPanel: React.FC<TabbedPanelProps> = ({ tabs }) => {
     const [activeTab, setActiveTab] = useState(0);
 
     return (
-        <aside className="col-span-1 glassmorphism p-4 rounded-2xl animated-entry flex flex-col lg:h-[85vh] border-2 panel-glow-primary">
+        <aside className="col-span-1 glassmorphism p-4 rounded-2xl animated-entry flex flex-col border-2 panel-glow-primary">
             <nav className="flex-shrink-0 -mx-4 -mt-4 mb-4 flex" aria-label="Tabs">
                 {tabs.map((tab, index) => (
                     <button
@@ -29,7 +29,7 @@ const TabbedPanel: React.FC<TabbedPanelProps> = ({ tabs }) => {
                     </button>
                 ))}
             </nav>
-            <div className="flex-1 overflow-y-auto">
+            <div className="">
                 {tabs[activeTab].content}
             </div>
         </aside>
