@@ -1370,7 +1370,7 @@ const App: React.FC = () => {
                     <Header 
                         session={session}
                         userProfile={userProfile}
-                        onLogout={() => { if (supabase) { supabase.auth.signOut(); setView('landing'); } }}
+                        onLogout={async () => { if (supabase) { await supabase.auth.signOut(); setView('login'); } }}
                         onEditProfile={() => setIsProfileModalOpen(true)}
                         onUpgradeClick={() => handleSetGameMode('premium')}
                         analysisLimit={DAILY_ANALYSIS_LIMIT}

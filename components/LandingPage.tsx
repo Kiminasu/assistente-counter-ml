@@ -215,40 +215,46 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp, onSeePlans, onLo
                   <div className="relative w-full max-w-5xl mx-auto mt-20 h-36 sm:h-48 md:h-52 lg:h-[220px]" aria-hidden="true">
                         {/* Left Image */}
                         <div className="absolute left-[-6rem] sm:-left-24 md:-left-20 lg:-left-28 top-16 sm:top-20 w-[55%] sm:w-[45%] lg:w-[40%] transform -rotate-6 transition-transform duration-500 hover:rotate-[-8deg] hover:scale-105 z-10">
-                            <div className="bg-white/5 backdrop-blur-md p-2 sm:p-3 rounded-2xl sm:rounded-3xl border border-white/10 shadow-2xl">
-                                <img 
-                                    src="https://i.postimg.cc/fb5rY3Yn/Captura-de-tela-2025-10-18-234245.png" 
-                                    alt="Demonstração da interface de análise de herói"
-                                    className="w-full rounded-xl sm:rounded-2xl"
-                                    loading="eager"
-                                    fetchpriority="high"
-                                />
+                            <div className="animated-border-glow rounded-2xl sm:rounded-3xl">
+                                <div className="bg-slate-900 p-1 rounded-[22px] sm:rounded-[30px] shadow-2xl">
+                                    <img 
+                                        src="https://i.postimg.cc/fb5rY3Yn/Captura-de-tela-2025-10-18-234245.png" 
+                                        alt="Demonstração da interface de análise de herói"
+                                        className="w-full rounded-xl sm:rounded-2xl"
+                                        loading="eager"
+                                        fetchpriority="high"
+                                    />
+                                </div>
                             </div>
                         </div>
                         
                         {/* Center Image (higher and in front) */}
                         <div className="absolute left-1/2 -translate-x-1/2 top-0 w-[60%] sm:w-[50%] lg:w-[45%] transform transition-transform duration-500 hover:scale-105 z-20">
-                            <div className="bg-white/5 backdrop-blur-md p-2 sm:p-3 rounded-2xl sm:rounded-3xl border border-white/10 shadow-2xl">
-                                <img 
-                                    src="https://i.postimg.cc/dtdk5LJm/Captura-de-tela-2025-10-18-234245.png" 
-                                    alt="Demonstração da interface do aplicativo Mítica Estratégia"
-                                    className="w-full rounded-xl sm:rounded-2xl"
-                                    loading="eager"
-                                    fetchpriority="high"
-                                />
+                           <div className="animated-border-glow rounded-2xl sm:rounded-3xl">
+                                <div className="bg-slate-900 p-1 rounded-[22px] sm:rounded-[30px] shadow-2xl">
+                                    <img 
+                                        src="https://i.postimg.cc/dtdk5LJm/Captura-de-tela-2025-10-18-234245.png" 
+                                        alt="Demonstração da interface do aplicativo Mítica Estratégia"
+                                        className="w-full rounded-xl sm:rounded-2xl"
+                                        loading="eager"
+                                        fetchpriority="high"
+                                    />
+                                </div>
                             </div>
                         </div>
 
                         {/* Right Image */}
                         <div className="absolute right-[-6rem] sm:-right-24 md:-right-20 lg:-right-28 top-16 sm:top-20 w-[55%] sm:w-[45%] lg:w-[40%] transform rotate-6 transition-transform duration-500 hover:rotate-[8deg] hover:scale-105 z-10">
-                            <div className="bg-white/5 backdrop-blur-md p-2 sm:p-3 rounded-2xl sm:rounded-3xl border border-white/10 shadow-2xl">
-                                <img 
-                                    src="https://i.postimg.cc/qRR4SZnW/Captura-de-tela-2025-10-19-001014.png" 
-                                    alt="Demonstração da interface de draft 5v5"
-                                    className="w-full rounded-xl sm:rounded-2xl"
-                                    loading="eager"
-                                    fetchpriority="high"
-                                />
+                           <div className="animated-border-glow rounded-2xl sm:rounded-3xl">
+                                <div className="bg-slate-900 p-1 rounded-[22px] sm:rounded-[30px] shadow-2xl">
+                                    <img 
+                                        src="https://i.postimg.cc/qRR4SZnW/Captura-de-tela-2025-10-19-001014.png" 
+                                        alt="Demonstração da interface de draft 5v5"
+                                        className="w-full rounded-xl sm:rounded-2xl"
+                                        loading="eager"
+                                        fetchpriority="high"
+                                    />
+                                </div>
                             </div>
                         </div>
                   </div>
