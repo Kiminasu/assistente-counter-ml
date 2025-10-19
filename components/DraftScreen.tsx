@@ -1,10 +1,8 @@
 import React from 'react';
 import { Hero, Team, BanSuggestion, DraftAnalysisResult, RankCategory, UserProfile } from '../types';
 import HeroSlot from './HeroSlot';
-import BanSuggestions from './BanSuggestions';
-import DraftStatsPanel from './DraftStatsPanel';
-import DraftStrategySection from './DraftStrategySection';
 import CollapsibleTutorial from './CollapsibleTutorial';
+import DraftAnalysisPanel from './DraftAnalysisPanel'; // Importa o novo painel unificado
 
 interface DraftScreenProps {
     allyPicks: (string | null)[];
@@ -77,9 +75,9 @@ const DraftScreen: React.FC<DraftScreenProps> = ({
                 </p>
             </CollapsibleTutorial>
 
-            {/* Hero Selection Grid */}
-            <div className="grid grid-cols-2 gap-4">
-                {/* Ally Team */}
+            {/* Layout principal com 3 colunas */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+                {/* Coluna Aliados */}
                 <div className="flex flex-col gap-3 glassmorphism p-4 rounded-2xl border-2 panel-glow-blue">
                     <h2 className="text-2xl font-black text-center text-blue-300 tracking-wider">ALIADOS</h2>
                     {allyPicks.map((heroId, index) => (
@@ -94,7 +92,19 @@ const DraftScreen: React.FC<DraftScreenProps> = ({
                     ))}
                 </div>
 
-                {/* Enemy Team */}
+                {/* Coluna Central de Análise */}
+                <DraftAnalysisPanel
+                    analysis={draftAnalysis}
+                    isLoading={isDraftAnalysisLoading}
+                    error={draftAnalysisError}
+                    counterBanSuggestions={counterBanSuggestions}
+                    metaSuggestions={metaBanSuggestions}
+                    isBanLoading={isBanLoading}
+                    activeMetaRank={activeMetaRank}
+                    onMetaRankChange={onMetaRankChange}
+                />
+
+                {/* Coluna Inimigos */}
                 <div className="flex flex-col gap-3 glassmorphism p-4 rounded-2xl border-2 panel-glow-red">
                     <h2 className="text-2xl font-black text-center text-red-300 tracking-wider">INIMIGOS</h2>
                     {enemyPicks.map((heroId, index) => (
@@ -110,40 +120,18 @@ const DraftScreen: React.FC<DraftScreenProps> = ({
                 </div>
             </div>
 
-            {/* Controls & Info */}
-            <div className="flex flex-col gap-4">
-                <BanSuggestions
-                    counterSuggestions={counterBanSuggestions}
-                    metaSuggestions={metaBanSuggestions}
-                    isLoading={isBanLoading}
-                    variant="5v5"
-                    activeMetaRank={activeMetaRank}
-                    onMetaRankChange={onMetaRankChange}
-                />
-                <div className="flex justify-center">
-                    <button
-                        onClick={onClearDraft}
-                        className="flex items-center gap-2 bg-gray-800 hover:bg-red-900/50 text-gray-300 hover:text-red-300 font-semibold py-2 px-4 rounded-xl transition-colors duration-200 border border-gray-700 hover:border-red-700 text-sm"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clipRule="evenodd" />
-                        </svg>
-                        Limpar Draft
-                    </button>
-                </div>
+            {/* Botão de Limpar Draft */}
+            <div className="flex justify-center mt-2">
+                <button
+                    onClick={onClearDraft}
+                    className="flex items-center gap-2 bg-gray-800 hover:bg-red-900/50 text-gray-300 hover:text-red-300 font-semibold py-2 px-4 rounded-xl transition-colors duration-200 border border-gray-700 hover:border-red-700 text-sm"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clipRule="evenodd" />
+                    </svg>
+                    Limpar Draft
+                </button>
             </div>
-            
-            {/* Main Analysis Panels */}
-            <DraftStatsPanel 
-                analysis={draftAnalysis}
-                isLoading={isDraftAnalysisLoading}
-                error={draftAnalysisError}
-            />
-            <DraftStrategySection
-                analysis={draftAnalysis}
-                isLoading={isDraftAnalysisLoading}
-                error={draftAnalysisError}
-            />
         </div>
     );
 };
