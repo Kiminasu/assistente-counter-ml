@@ -35,7 +35,7 @@ const FeatureDetail: React.FC<{
   const imageContent = (
     <div className="lg:w-1/2 animated-entry">
       <div className="bg-white/5 backdrop-blur-md p-3 rounded-3xl border border-white/10 shadow-2xl transform transition-transform duration-500 hover:scale-105">
-        <img src={imageUrl} alt={title} className="w-full rounded-2xl" />
+        <img src={imageUrl} alt={title} className="w-full rounded-2xl" loading="eager" fetchpriority="high" />
       </div>
     </div>
   );
@@ -97,7 +97,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ onGoBack, onLaunchApp, onSe
                     "Build de itens e feitiços otimizados para o confronto específico.",
                     "Análise tática detalhada sobre como explorar as fraquezas do inimigo."
                 ]}
-                imageUrl="https://i.postimg.cc/0yGPSV0q/Captura-de-tela-2025-10-15-194740.png"
+                imageUrl="https://i.postimg.cc/fb5rY3Yn/Captura-de-tela-2025-10-18-234245.png"
             />
             <FeatureDetail
                 title="Estrategista de Draft 5v5 (Premium)"
@@ -107,7 +107,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ onGoBack, onLaunchApp, onSe
                     "Sugestão inteligente do próximo pick para fortalecer sua equipe.",
                     "Recomendações de bans táticos para desestabilizar a estratégia inimiga."
                 ]}
-                imageUrl="https://i.postimg.cc/mD83W35F/draft-screen-demo.png"
+                imageUrl="https://i.postimg.cc/qRR4SZnW/Captura-de-tela-2025-10-19-001014.png"
                 reverse
             />
             <FeatureDetail
@@ -118,7 +118,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ onGoBack, onLaunchApp, onSe
                     "Estratégia detalhada de como se comportar em cada fase do jogo.",
                     "Lista de counters perfeitos para EXP, Selva, Meio, Ouro e Rotação."
                 ]}
-                imageUrl="https://i.postimg.cc/pTjLg3xS/hero-intelligence-demo.png"
+                imageUrl="https://i.postimg.cc/dtdk5LJm/Captura-de-tela-2025-10-18-234245.png"
             />
         </section>
 
