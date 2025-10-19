@@ -10,7 +10,7 @@ export interface UserProfile {
     phone: string;
 }
 
-export type GameMode = 'dashboard' | '1v1' | '5v5' | 'ranking' | 'item' | 'synergy' | 'heroes' | 'premium';
+export type GameMode = 'dashboard' | '1v1' | '5v5' | 'ranking' | 'item' | 'synergy' | 'heroes' | 'premium' | 'history' | 'teams';
 
 export interface Hero {
   id: string;
@@ -235,4 +235,12 @@ export interface HeroDailyStats {
     winRate: number;
     pickRate: number;
     banRate: number;
+}
+
+export interface AnalysisHistoryItem {
+    id: string;
+    created_at: string;
+    analysis_type: '1v1' | '5v5' | 'synergy';
+    title: string;
+    analysis_data: any;
 }

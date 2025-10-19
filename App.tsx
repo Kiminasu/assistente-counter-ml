@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Session } from '@supabase/supabase-js';
-import { Hero, Lane, AnalysisResult, LANES, ROLES, Role, HeroSuggestion, BanSuggestion, MatchupData, ItemSuggestion, RankCategory, RankDays, SortField, HeroRankInfo, Team, DraftAnalysisResult, NextPickSuggestion, StrategicItemSuggestion, LaneOrNone, HeroDetails, HeroRelation, HeroStrategy, UserSignupRank, GameMode, AITacticalCounter, HeroStrategicAnalysis, UserProfile, AILaneRecommendation, SpellSuggestion } from './types';
+import { Hero, Lane, AnalysisResult, LANES, ROLES, Role, HeroSuggestion, BanSuggestion, MatchupData, ItemSuggestion, RankCategory, RankDays, SortField, HeroRankInfo, Team, DraftAnalysisResult, NextPickSuggestion, StrategicItemSuggestion, LaneOrNone, HeroDetails, HeroRelation, HeroStrategy, UserSignupRank, GameMode, AITacticalCounter, HeroStrategicAnalysis, UserProfile, AILaneRecommendation, SpellSuggestion, AnalysisHistoryItem } from './types';
 import { fetchHeroes, fetchHeroCounterStats, fetchHeroDetails, fetchHeroRankings, ApiHeroRankData, fetchHeroRelations, fetchHeroPositionsData } from './services/heroService';
 import { getCombined1v1Analysis, getDraftAnalysis, getHeroStrategicAnalysis } from './services/geminiService';
 import { findClosestString } from './utils';
@@ -32,6 +32,7 @@ import DashboardScreen from './components/DashboardScreen';
 import { supabase } from './supabaseClient';
 import LandingPage from './components/LandingPage';
 import FeaturesPage from './components/FeaturesPage';
+import HistoryScreen from './components/HistoryScreen';
 
 const DAILY_ANALYSIS_LIMIT = 5;
 
@@ -124,6 +125,11 @@ const App: React.FC = () => {
             return {};
         }
     });
+
+    // State for History
+    const [analysisHistory, setAnalysisHistory] = useState<AnalysisHistoryItem[]>([]);
+    const [isHistoryLoading, setIsHistoryLoading] = useState(false);
+    const [historyError, setHistoryError] = useState<string | null>(null);
 
     const heroDetailsCacheRef = useRef(heroDetailsCache);
     useEffect(() => {
@@ -235,9 +241,13 @@ const App: React.FC = () => {
     const analysisSectionRef = useRef<HTMLDivElement>(null);
 
     const handleSetGameMode = useCallback((mode: GameMode) => {
+        if (mode === 'history' && effectiveSubscriptionStatus === 'free') {
+            setIsUpgradeModalOpen(true);
+            return;
+        }
         setGameMode(mode);
         window.scrollTo(0, 0);
-    }, []);
+    }, [effectiveSubscriptionStatus]);
 
     const handleLaunchApp = useCallback(() => {
         setView('app');
@@ -508,6 +518,24 @@ const App: React.FC = () => {
         return true;
     }, [userProfile, effectiveSubscriptionStatus, session]);
 
+    const saveAnalysisToHistory = useCallback(async (type: '1v1' | '5v5' | 'synergy', title: string, data: any) => {
+        if (!supabase || !session?.user || effectiveSubscriptionStatus !== 'premium') return;
+
+        const { error } = await supabase.from('analysis_history').insert({
+            user_id: session.user.id,
+            analysis_type: type,
+            title,
+            analysis_data: data,
+        });
+
+        if (error) {
+            console.error("Erro ao salvar análise:", error);
+        } else {
+            // Opcional: atualizar o estado local do histórico para refletir a nova adição
+            fetchAnalysisHistory();
+        }
+    }, [session, effectiveSubscriptionStatus]);
+
     const processAIBanSuggestions = (suggestions: AITacticalCounter[]): BanSuggestion[] => {
         return (suggestions || []).map(suggestion => {
             const heroData = Object.values(heroes).find((h: Hero) => h.name === suggestion.heroName);
@@ -557,14 +585,18 @@ const App: React.FC = () => {
             const correctedCoreItems = strategy.coreItems.map(item => ({ ...item, nome: findClosestString(item.nome, validItemNames) }));
             const correctedSituationalItems = strategy.situationalItems.map(item => ({ ...item, nome: findClosestString(item.nome, validItemNames) }));
             
-            setHeroStrategicAnalysis({
+            const finalAnalysis: HeroStrategicAnalysis = {
                 strategy: { ...strategy, coreItems: correctedCoreItems, situationalItems: correctedSituationalItems },
                 tacticalCounters: aiCounters,
                 perfectLaneCounters: aiLaneCounters
-            });
+            };
+
+            setHeroStrategicAnalysis(finalAnalysis);
             
-            setCounterBanSuggestions(processAIBanSuggestions(aiCounters));
+            const bans = processAIBanSuggestions(aiCounters);
+            setCounterBanSuggestions(bans);
             
+            let finalPerfectLaneCounters: HeroSuggestion[] = [];
             if (aiLaneCounters) {
                 const validSpellNames = Object.keys(SPELL_ICONS);
                 const laneCounters: HeroSuggestion[] = aiLaneCounters.map(rec => {
@@ -583,9 +615,18 @@ const App: React.FC = () => {
                     };
                 });
                 setPerfectLaneCounters(laneCounters);
+                finalPerfectLaneCounters = laneCounters;
             }
 
             setSynergyRelations(relationsData);
+
+            saveAnalysisToHistory('synergy', `Análise de Herói: ${selectedHero.name}`, {
+                analysis: finalAnalysis,
+                relations: relationsData,
+                bans,
+                perfectCounters: finalPerfectLaneCounters,
+                context: { synergyHeroPick }
+            });
 
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : "Erro na análise estratégica da IA.";
@@ -595,7 +636,7 @@ const App: React.FC = () => {
         } finally {
             setIsSynergyAnalysisLoading(false);
         }
-    }, [synergyHeroPick, heroes, heroApiIdMap, checkAnalysisLimit]);
+    }, [synergyHeroPick, heroes, heroApiIdMap, checkAnalysisLimit, saveAnalysisToHistory]);
 
 
     const handleNavigateToHeroAnalysis = useCallback((heroId: string) => {
@@ -692,7 +733,8 @@ const App: React.FC = () => {
                 .filter((item): item is { hero: Hero; increase_win_rate: number } => !!item.hero)
                 .sort((a, b) => b.increase_win_rate - a.increase_win_rate);
     
-            setCounterBanSuggestions(processAIBanSuggestions(banSuggestions));
+            const bans = processAIBanSuggestions(banSuggestions);
+            setCounterBanSuggestions(bans);
             
             const validItemNames = GAME_ITEMS.map(item => item.nome);
             const validSpellNames = Object.keys(SPELL_ICONS);
@@ -777,9 +819,11 @@ const App: React.FC = () => {
                     };
                 })
                 .filter((s): s is HeroSuggestion => s !== null);
+            
+            const finalResult = { sugestoesHerois: heroSuggestions, sugestoesItens: correctedItems, sugestoesCountersAliado: allyCounterSuggestions };
+            setAnalysisResult(finalResult);
 
-            setAnalysisResult({ sugestoesHerois: heroSuggestions, sugestoesItens: correctedItems, sugestoesCountersAliado: allyCounterSuggestions });
-
+            let finalMatchupData: MatchupData | null = null;
             if (yourHero && matchupAnalysis && winRate != null && typeof matchupAnalysis.classification === 'string' && typeof matchupAnalysis.detailedAnalysis === 'string') {
                 const correctedSpell = (matchupAnalysis.recommendedSpell && typeof matchupAnalysis.recommendedSpell.nome === 'string') 
                     ? { 
@@ -789,17 +833,25 @@ const App: React.FC = () => {
                     } 
                     : null;
     
-                setMatchupData({ 
+                finalMatchupData = { 
                     yourHero, 
                     enemyHero, 
                     winRate, 
                     classification: matchupAnalysis.classification, 
                     detailedAnalysis: matchupAnalysis.detailedAnalysis, 
                     recommendedSpell: correctedSpell
-                });
+                };
+                setMatchupData(finalMatchupData);
             } else {
                 setMatchupData(null);
             }
+
+            saveAnalysisToHistory('1v1', `Análise 1v1: ${yourHero?.name || 'Counters'} vs ${enemyHero.name}`, {
+                result: finalResult,
+                matchup: finalMatchupData,
+                bans,
+                context: { matchupAllyPick, matchupEnemyPick, activeLane }
+            });
     
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : "Ocorreu um erro desconhecido ao buscar a análise.";
@@ -808,7 +860,7 @@ const App: React.FC = () => {
         } finally {
             setIs1v1AnalysisLoading(false);
         }
-    }, [matchupEnemyPick, matchupAllyPick, heroes, activeLane, heroDetailsCache, heroApiIdMap, laneToRoleMap, checkAnalysisLimit]);
+    }, [matchupEnemyPick, matchupAllyPick, heroes, activeLane, heroDetailsCache, heroApiIdMap, laneToRoleMap, checkAnalysisLimit, saveAnalysisToHistory]);
     
     useEffect(() => {
         if (gameMode !== '5v5' || Object.keys(heroes).length === 0) {
@@ -872,7 +924,8 @@ const App: React.FC = () => {
                 
                 const analysisFromAI = await getDraftAnalysis(allyDetails, enemyDetails, availableHeroes);
                 
-                setCounterBanSuggestions(processAIBanSuggestions(analysisFromAI.banSuggestions));
+                const bans = processAIBanSuggestions(analysisFromAI.banSuggestions);
+                setCounterBanSuggestions(bans);
     
                 let nextPick: NextPickSuggestion | null = null;
                 if (analysisFromAI.nextPickSuggestion) {
@@ -899,10 +952,17 @@ const App: React.FC = () => {
                     };
                 });
                 
-                setDraftAnalysis({
+                const finalAnalysis = {
                     ...analysisFromAI,
                     nextPickSuggestion: nextPick,
                     strategicItems: strategicItems,
+                };
+                setDraftAnalysis(finalAnalysis);
+
+                saveAnalysisToHistory('5v5', `Análise de Draft: ${new Date().toLocaleDateString()}`, {
+                    analysis: finalAnalysis,
+                    bans,
+                    context: { draftAllyPicks, draftEnemyPicks }
                 });
     
             } catch (error) {
@@ -914,7 +974,83 @@ const App: React.FC = () => {
     
         analyzeDraft();
     
-    }, [draftAllyPicks, draftEnemyPicks, gameMode, heroes, checkAnalysisLimit]);
+    }, [draftAllyPicks, draftEnemyPicks, gameMode, heroes, checkAnalysisLimit, saveAnalysisToHistory]);
+
+    const fetchAnalysisHistory = useCallback(async () => {
+        if (!supabase || !session?.user) return;
+
+        setIsHistoryLoading(true);
+        setHistoryError(null);
+
+        const { data, error } = await supabase
+            .from('analysis_history')
+            .select('*')
+            .eq('user_id', session.user.id)
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            setHistoryError('Falha ao carregar o histórico.');
+            console.error(error);
+        } else {
+            setAnalysisHistory(data);
+        }
+        setIsHistoryLoading(false);
+    }, [session]);
+
+    useEffect(() => {
+        if (gameMode === 'history') {
+            fetchAnalysisHistory();
+        }
+    }, [gameMode, fetchAnalysisHistory]);
+
+    const loadAnalysisFromHistory = useCallback((item: AnalysisHistoryItem) => {
+        const { analysis_type, analysis_data } = item;
+        setGameMode(analysis_type);
+        
+        // Limpa estados antigos para evitar sobreposição
+        setAnalysisResult(null);
+        setMatchupData(null);
+        setDraftAnalysis(null);
+        setHeroStrategicAnalysis(null);
+        setSynergyRelations(null);
+        setCounterBanSuggestions([]);
+        setPerfectLaneCounters([]);
+
+        if (analysis_type === '1v1') {
+            const { result, matchup, bans, context } = analysis_data;
+            setAnalysisResult(result);
+            setMatchupData(matchup);
+            setCounterBanSuggestions(bans);
+            setMatchupAllyPick(context.matchupAllyPick);
+            setMatchupEnemyPick(context.matchupEnemyPick);
+            setActiveLane(context.activeLane);
+        } else if (analysis_type === '5v5') {
+            const { analysis, bans, context } = analysis_data;
+            setDraftAnalysis(analysis);
+            setCounterBanSuggestions(bans);
+            setDraftAllyPicks(context.draftAllyPicks);
+            setDraftEnemyPicks(context.draftEnemyPicks);
+        } else if (analysis_type === 'synergy') {
+            const { analysis, relations, bans, perfectCounters, context } = analysis_data;
+            setHeroStrategicAnalysis(analysis);
+            setSynergyRelations(relations);
+            setCounterBanSuggestions(bans);
+            setPerfectLaneCounters(perfectCounters);
+            setSynergyHeroPick(context.synergyHeroPick);
+        }
+    }, []);
+
+    const handleDeleteAnalysis = useCallback(async (id: string) => {
+        if (!supabase) return;
+        
+        const { error } = await supabase.from('analysis_history').delete().eq('id', id);
+        if (error) {
+            alert('Falha ao apagar a análise.');
+            console.error(error);
+        } else {
+            setAnalysisHistory(prev => prev.filter(item => item.id !== id));
+        }
+    }, []);
 
 
     const handleSlotClick = useCallback((team: Team | 'synergy', index: number) => {
@@ -1181,6 +1317,14 @@ const App: React.FC = () => {
                 />;
             case 'heroes': return <HeroDatabaseScreen heroes={heroes} heroLanes={heroLanes} />;
             case 'premium': return <PremiumScreen userProfile={userProfile} />;
+            case 'history':
+                return <HistoryScreen 
+                    history={analysisHistory} 
+                    isLoading={isHistoryLoading} 
+                    error={historyError} 
+                    onLoadAnalysis={loadAnalysisFromHistory}
+                    onDeleteAnalysis={handleDeleteAnalysis}
+                />;
             default: return null;
         }
     };

@@ -116,37 +116,48 @@ interface AppNavigationBarProps {
 }
 
 const AppNavigationBar: React.FC<AppNavigationBarProps> = ({ activeMode, onSetMode, effectiveSubscriptionStatus }) => {
-    const modes: { id: GameMode; label: string; icon: React.ReactNode; isPro?: boolean }[] = [
+    const modes: { id: GameMode; label: string; icon: React.ReactNode; isPro?: boolean; isDisabled?: boolean }[] = [
+        // Left Side
         { id: '1v1', label: 'Análise 1vs1', icon: <span className="font-black text-xl tracking-tighter">1vs1</span> },
         { id: 'synergy', label: 'Análise de Herói', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" /></svg> },
         { id: '5v5', label: 'Draft 5vs5', icon: <span className="font-black text-xl tracking-tighter">5vs5</span>, isPro: true },
+        { id: 'history', label: 'Histórico', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.414-1.415L11 9.586V6z" clipRule="evenodd" /></svg>, isPro: true },
+        
+        // Center
         { id: 'dashboard', label: 'Painel', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" viewBox="0 0 20 20" fill="currentColor"><path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg> },
-        { id: 'heroes', label: 'Heróis', icon: <span className="font-black text-2xl">H</span> },
+
+        // Right Side
+        { id: 'heroes', label: 'Heróis', icon: <span className="font-black text-3xl">H</span> },
         { id: 'item', label: 'Itens', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 24 24" fill="currentColor"><path d="M19.5,6H17V4.5A1.5,1.5 0 0,0 15.5,3H8.5A1.5,1.5 0 0,0 7,4.5V6H4.5A1.5,1.5 0 0,0 3,7.5V11.25L5,13V19.5A1.5,1.5 0 0,0 6.5,21H17.5A1.5,1.5 0 0,0 19,19.5V13L21,11.25V7.5A1.5,1.5 0 0,0 19.5,6M15,6H9V4.5C9,4.22 9.22,4 9.5,4H14.5C14.78,4 15,4.22 15,4.5V6M12,17A2,2 0 0,1 10,15A2,2 0 0,1 12,13A2,2 0 0,1 14,15A2,2 0 0,1 12,17Z" /></svg> },
         { id: 'ranking', label: 'Ranking', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" /></svg> },
+        { id: 'teams', label: 'Times', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" /></svg>, isPro: true, isDisabled: true },
     ];
     
-    const centerIndex = 3;
+    const centerIndex = 4;
     const leftModes = modes.slice(0, centerIndex);
     const centerMode = modes[centerIndex];
     const rightModes = modes.slice(centerIndex + 1);
 
     const renderButton = (mode: typeof modes[0], isCenter: boolean) => {
         const isActive = activeMode === mode.id;
+        const isDisabled = mode.isDisabled;
         return (
             <button
                 key={mode.id}
-                onClick={() => onSetMode(mode.id)}
-                className={`relative group focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:rounded-full p-1 transition-transform duration-300 ${isCenter ? 'my-[-20px]' : ''}`}
+                onClick={() => !isDisabled && onSetMode(mode.id)}
+                disabled={isDisabled}
+                className={`relative group focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:rounded-full p-1 transition-transform duration-300 ${isCenter ? 'my-[-20px]' : ''} ${isDisabled ? 'cursor-not-allowed' : ''}`}
                 aria-current={isActive ? 'page' : undefined}
+                title={isDisabled ? `${mode.label} (Em breve)` : mode.label}
             >
                 <div className={`flex flex-col items-center justify-center rounded-full transition-all duration-300
                     ${isCenter 
                         ? `h-24 w-24 border-2 shadow-lg shadow-black/50 group-hover:border-sky-400 group-hover:shadow-[var(--glow-primary)] ${isActive ? 'bg-sky-600 border-sky-400' : 'bg-[#1f1d31] border-slate-600'}`
                         : `h-14 w-28 ${isActive ? 'bg-sky-600 shadow-sm shadow-sky-500/30' : 'group-hover:bg-slate-700'}`
-                    }`}
+                    }
+                    ${isDisabled ? 'opacity-50' : ''}`}
                 >
-                    <div className={`flex items-center justify-center transition-colors ${isCenter ? '' : 'h-7'} ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-white'}`}>
+                    <div className={`flex items-center justify-center transition-colors ${isCenter ? 'h-8 w-8' : 'h-7'} ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-white'}`}>
                         {mode.icon}
                     </div>
                     <div className={`text-center text-[10px] font-semibold mt-0.5 transition-colors ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-white'} ${isCenter ? 'leading-tight px-1' : 'whitespace-nowrap'}`}>
@@ -154,9 +165,9 @@ const AppNavigationBar: React.FC<AppNavigationBarProps> = ({ activeMode, onSetMo
                     </div>
                 </div>
 
-                {mode.isPro && !isCenter && effectiveSubscriptionStatus !== 'premium' && (
-                    <span className="absolute -top-0 -right-0 bg-gradient-to-br from-amber-400 to-yellow-500 text-black text-[8px] font-bold px-1 py-0.5 rounded-full shadow-md animate-soft-blink">
-                        PRO
+                {(mode.isPro || isDisabled) && !isCenter && (
+                     <span className={`absolute -top-0 -right-0 text-black text-[8px] font-bold px-1 py-0.5 rounded-full shadow-md ${isDisabled ? 'bg-slate-500' : 'bg-gradient-to-br from-amber-400 to-yellow-500 animate-soft-blink'}`}>
+                        {isDisabled ? 'EM BREVE' : 'PRO'}
                     </span>
                 )}
             </button>
@@ -190,7 +201,9 @@ const Header: React.FC<HeaderProps> = ({ activeMode, onSetMode, session, userPro
         'heroes': 'Explore a enciclopédia de heróis, visualize suas habilidades, e encontre o personagem perfeito para seu estilo de jogo.',
         'item': 'Navegue por todos os itens do jogo, filtrados por categoria, para entender seus atributos e habilidades.',
         'ranking': 'Explore as estatísticas de heróis, filtre por elo e período para descobrir os heróis mais fortes do meta atual.',
-        'premium': 'Conheça os planos e desbloqueie o acesso ilimitado a todas as ferramentas da Mítica Estratégia.'
+        'premium': 'Conheça os planos e desbloqueie o acesso ilimitado a todas as ferramentas da Mítica Estratégia.',
+        'history': 'Acesse e reveja todas as suas análises de IA salvas. Disponível para assinantes Mítico e Glória Imortal.',
+        'teams': 'Gerencie sua equipe, convide jogadores e analise drafts em grupo. (Em breve para assinantes Glória Imortal)'
     };
 
     return (

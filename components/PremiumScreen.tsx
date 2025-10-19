@@ -174,6 +174,7 @@ const PremiumScreen: React.FC<PremiumScreenProps> = ({ userProfile }) => {
                 { text: 'Análise 1vs1 e de Herói', included: true },
                 { text: 'Enciclopédia e Ranking', included: true },
                 { text: 'Analisador de Draft 5vs5', included: false },
+                { text: 'Histórico de Análises', included: false },
             ],
             scaleClass: 'lg:scale-95 hover:scale-100',
         },
@@ -188,6 +189,7 @@ const PremiumScreen: React.FC<PremiumScreenProps> = ({ userProfile }) => {
                 { text: 'Análise 1vs1 e de Herói', included: true },
                 { text: 'Enciclopédia e Ranking', included: true },
                 { text: 'Analisador de Draft 5vs5', included: false },
+                { text: 'Histórico de Análises', included: false },
             ],
         },
         {
@@ -202,6 +204,7 @@ const PremiumScreen: React.FC<PremiumScreenProps> = ({ userProfile }) => {
             features: [
                 { text: 'Análises de IA Ilimitadas', included: true },
                 { text: 'Acesso Completo ao Analisador de Draft 5vs5', included: true },
+                { text: 'Histórico de Análises Salvas', included: true },
                 { text: 'Acesso Antecipado a Novos Recursos', included: true },
                 { text: 'Enciclopédia e Ranking completos', included: true },
             ],
