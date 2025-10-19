@@ -183,7 +183,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp, onSeePlans, onLo
         <>
             <style>{MarqueeStyles}</style>
             <LandingHeader onLaunchApp={onLaunchApp} onSeePlans={onSeePlans} onLoginClick={onLoginClick} onNavigateToFeatures={onNavigateToFeatures} onGoBackToLanding={onGoBackToLanding} />
-            <main className="flex flex-col items-center text-white space-y-32 sm:space-y-40 md:space-y-48 pt-16 pb-20 overflow-x-hidden">
+            <main className="flex flex-col items-center text-white space-y-24 sm:space-y-32 md:space-y-40 pt-16 pb-20 overflow-x-hidden">
 
               {/* Hero Section */}
               <section className="relative w-full flex flex-col items-center justify-center text-center px-4 pt-16 sm:pt-20">
