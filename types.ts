@@ -7,6 +7,7 @@ export interface UserProfile {
     analysis_count: number;
     last_analysis_at: string | null;
     subscription_expires_at: string | null;
+    phone: string;
 }
 
 export type GameMode = 'dashboard' | '1v1' | '5v5' | 'ranking' | 'item' | 'synergy' | 'heroes' | 'premium';

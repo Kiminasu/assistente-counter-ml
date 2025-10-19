@@ -134,15 +134,22 @@ const App: React.FC = () => {
         if (!supabase) return;
         const { data, error } = await supabase
             .from('profiles')
-            .select('username, rank, subscription_status, analysis_count, last_analysis_at, subscription_expires_at')
+            .select('username, rank, subscription_status, analysis_count, last_analysis_at, subscription_expires_at, phone')
             .eq('id', user.id)
             .single();
-
-        if (error && error.code !== 'PGRST116') { // Ignore "0 rows" error
+    
+        if (error && error.code !== 'PGRST116') { // Ignora o erro "0 rows"
             console.error("Erro ao buscar perfil:", error);
             setUserProfile(null);
+        } else if (data) {
+            // Garante que o 'phone' seja uma string para contas antigas que possam ter o valor nulo.
+            const completeProfile = {
+                ...data,
+                phone: data.phone || '',
+            };
+            setUserProfile(completeProfile as UserProfile);
         } else {
-            setUserProfile(data as UserProfile | null);
+            setUserProfile(null);
         }
     }, []);
 

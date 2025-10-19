@@ -14,6 +14,7 @@ interface UserProfileModalProps {
 const UserProfileModal: React.FC<UserProfileModalProps> = ({ isOpen, onClose, userProfile, userId, onProfileUpdate }) => {
     const [username, setUsername] = useState(userProfile.username);
     const [rank, setRank] = useState<UserSignupRank>(userProfile.rank);
+    const [phone, setPhone] = useState(userProfile.phone || '');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [message, setMessage] = useState<string | null>(null);
@@ -22,6 +23,7 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ isOpen, onClose, us
         if (isOpen) {
             setUsername(userProfile.username);
             setRank(userProfile.rank);
+            setPhone(userProfile.phone || '');
             setError(null);
             setMessage(null);
         }
@@ -42,7 +44,7 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ isOpen, onClose, us
         try {
             const { error: updateError } = await supabase
                 .from('profiles')
-                .update({ username, rank })
+                .update({ username, rank, phone })
                 .eq('id', userId);
 
             if (updateError) throw updateError;
@@ -96,6 +98,18 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ isOpen, onClose, us
                             >
                                 {USER_SIGNUP_RANKS.map(r => <option key={r} value={r}>{r}</option>)}
                             </select>
+                        </div>
+                         <div>
+                            <label htmlFor="phone-profile" className="block text-sm font-medium text-gray-300">Telefone</label>
+                            <input
+                                id="phone-profile"
+                                type="tel"
+                                value={phone}
+                                onChange={(e) => setPhone(e.target.value)}
+                                required
+                                className="mt-1 block w-full bg-slate-800/50 border border-slate-700 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-violet-500 focus:border-violet-500 sm:text-sm"
+                                placeholder="(XX) XXXXX-XXXX"
+                            />
                         </div>
                         <div className="flex justify-end gap-4 pt-4">
                              <button type="button" onClick={onClose} className="py-2 px-4 bg-gray-700 hover:bg-gray-600 rounded-lg text-white font-semibold transition-colors">Cancelar</button>

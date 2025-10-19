@@ -12,6 +12,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onGoBack }) => {
     const [password, setPassword] = useState('');
     const [username, setUsername] = useState('');
     const [rank, setRank] = useState('Guerreiro');
+    const [phone, setPhone] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [message, setMessage] = useState<string | null>(null);
@@ -49,7 +50,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onGoBack }) => {
                 if (data.user) {
                     const { error: profileError } = await supabase
                         .from('profiles')
-                        .insert({ id: data.user.id, username, rank });
+                        .insert({ id: data.user.id, username, rank, phone });
                     if (profileError) throw profileError;
                 }
                 setMessage('Cadastro realizado! Por favor, verifique seu e-mail para confirmar sua conta.');
@@ -185,6 +186,13 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onGoBack }) => {
                                 <label htmlFor="email-modal" className="block text-sm font-medium text-gray-300">E-mail</label>
                                 <input id="email-modal" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="mt-1 block w-full bg-slate-800/50 border border-slate-700 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-sky-500 focus:border-sky-500 sm:text-sm" placeholder="seu@email.com" />
                             </div>
+
+                             {!isLogin && (
+                                <div>
+                                    <label htmlFor="phone-modal" className="block text-sm font-medium text-gray-300">Telefone</label>
+                                    <input id="phone-modal" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required className="mt-1 block w-full bg-slate-800/50 border border-slate-700 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-sky-500 focus:border-sky-500 sm:text-sm" placeholder="(XX) XXXXX-XXXX" />
+                                </div>
+                            )}
 
                             <div>
                                 <label htmlFor="password-modal" className="block text-sm font-medium text-gray-300">Senha (mínimo 6 caracteres)</label>
