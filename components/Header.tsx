@@ -165,9 +165,9 @@ const AppNavigationBar: React.FC<AppNavigationBarProps> = ({ activeMode, onSetMo
                     </div>
                 </div>
 
-                {(mode.isPro || isDisabled) && !isCenter && (
+                {(mode.isPro || isDisabled) && !isCenter && effectiveSubscriptionStatus === 'free' && (
                      <span className={`absolute -top-0 -right-0 text-black text-[8px] font-bold px-1 py-0.5 rounded-full shadow-md ${isDisabled ? 'bg-slate-500' : 'bg-gradient-to-br from-amber-400 to-yellow-500 animate-soft-blink'}`}>
-                        {isDisabled ? 'EM BREVE' : 'PRO'}
+                        {isDisabled ? 'EM BREVE' : 'PREMIUM'}
                     </span>
                 )}
             </button>
