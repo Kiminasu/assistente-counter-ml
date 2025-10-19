@@ -117,7 +117,7 @@ interface AppNavigationBarProps {
 
 const AppNavigationBar: React.FC<AppNavigationBarProps> = ({ activeMode, onSetMode, effectiveSubscriptionStatus }) => {
     const modes: { id: GameMode; label: string; icon: React.ReactNode; isPro?: boolean }[] = [
-        { id: '1v1', label: 'Análise 1v1', icon: <span className="font-black text-xl tracking-tighter">1vs1</span> },
+        { id: '1v1', label: 'Análise 1vs1', icon: <span className="font-black text-xl tracking-tighter">1vs1</span> },
         { id: 'synergy', label: 'Análise de Herói', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" /></svg> },
         { id: '5v5', label: 'Draft 5vs5', icon: <span className="font-black text-xl tracking-tighter">5vs5</span>, isPro: true },
         { id: 'dashboard', label: 'Painel', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" viewBox="0 0 20 20" fill="currentColor"><path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg> },
