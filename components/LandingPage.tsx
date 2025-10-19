@@ -255,7 +255,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp, onSeePlans, onLo
               </section>
 
               {/* Features Section */}
-              <section id="features" className="w-full max-w-6xl mx-auto px-4 animated-entry text-center scroll-mt-20">
+              <section id="features" className="w-full max-w-6xl mx-auto px-4 animated-entry text-center scroll-mt-20 mt-8">
                   <h2 className="text-3xl sm:text-4xl font-bold">Tudo que você precisa para <span className="font-black text-amber-300" style={{ fontFamily: "'Inter', sans-serif", textShadow: '0 0 10px rgba(245, 158, 11, 0.4)'}}>Dominar</span></h2>
                   <p className="mt-4 text-slate-400 max-w-2xl mx-auto">
                       De análises individuais a estratégias de equipe completas, nossa IA fornece as ferramentas para levar seu jogo no Mobile Legends ao próximo nível.

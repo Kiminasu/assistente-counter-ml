@@ -1,5 +1,5 @@
 import React from 'react';
-import { AnalysisHistoryItem } from '../types';
+import { AnalysisHistoryItem, Hero } from '../types';
 
 interface HistoryScreenProps {
     history: AnalysisHistoryItem[];
@@ -7,6 +7,7 @@ interface HistoryScreenProps {
     error: string | null;
     onLoadAnalysis: (item: AnalysisHistoryItem) => void;
     onDeleteAnalysis: (id: string) => void;
+    heroes: Record<string, Hero>;
 }
 
 const AnalysisTypeIcon: React.FC<{ type: '1v1' | '5v5' | 'synergy' }> = ({ type }) => {
@@ -22,12 +23,84 @@ const AnalysisTypeIcon: React.FC<{ type: '1v1' | '5v5' | 'synergy' }> = ({ type 
     }
 };
 
-const HistoryScreen: React.FC<HistoryScreenProps> = ({ history, isLoading, error, onLoadAnalysis, onDeleteAnalysis }) => {
+const HistoryScreen: React.FC<HistoryScreenProps> = ({ history, isLoading, error, onLoadAnalysis, onDeleteAnalysis, heroes }) => {
     
     const handleDelete = (e: React.MouseEvent, id: string) => {
         e.stopPropagation(); // Impede que o clique acione o onLoadAnalysis
         if (window.confirm('Tem certeza que deseja apagar esta análise? Esta ação não pode ser desfeita.')) {
             onDeleteAnalysis(id);
+        }
+    };
+
+    const renderAnalysisContent = (item: AnalysisHistoryItem) => {
+        const { analysis_type, analysis_data } = item;
+        const context = analysis_data.context;
+
+        switch (analysis_type) {
+            case 'synergy': {
+                const heroId = context.synergyHeroPick;
+                const hero = heroId ? heroes[heroId] : null;
+                return (
+                    <div className="flex items-center gap-3">
+                        {hero ? (
+                            <img src={hero.imageUrl} alt={hero.name} className="w-10 h-10 rounded-full border-2 border-violet-400" title={`Análise de ${hero.name}`} />
+                        ) : (
+                            <div className="w-10 h-10 rounded-full bg-slate-700 border-2 border-violet-400" />
+                        )}
+                        <p className="font-bold text-slate-100 group-hover:text-white transition-colors">Análise de Herói</p>
+                    </div>
+                );
+            }
+            case '1v1': {
+                const allyHeroId = context.matchupAllyPick;
+                const enemyHeroId = context.matchupEnemyPick;
+                const allyHero = allyHeroId ? heroes[allyHeroId] : null;
+                const enemyHero = enemyHeroId ? heroes[enemyHeroId] : null;
+
+                return (
+                    <div className="flex items-center gap-2">
+                        {allyHero ? (
+                            <img src={allyHero.imageUrl} alt={allyHero.name} className="w-10 h-10 rounded-full border-2 border-blue-400" title={allyHero.name} />
+                        ) : (
+                            <div className="w-10 h-10 rounded-full bg-slate-700 border-2 border-blue-400 flex items-center justify-center text-slate-400 font-bold text-xs" title="Nenhum herói">?</div>
+                        )}
+                        <span className="font-bold text-slate-500 mx-1">vs</span>
+                        {enemyHero ? (
+                            <img src={enemyHero.imageUrl} alt={enemyHero.name} className="w-10 h-10 rounded-full border-2 border-red-400" title={enemyHero.name} />
+                        ) : (
+                             <div className="w-10 h-10 rounded-full bg-slate-700 border-2 border-red-400" />
+                        )}
+                    </div>
+                );
+            }
+            case '5v5': {
+                const allyPicks = context.draftAllyPicks || [];
+                const enemyPicks = context.draftEnemyPicks || [];
+
+                const renderTeam = (picks: (string|null)[], borderColor: string) => (
+                    <div className="flex -space-x-3 sm:-space-x-4">
+                        {Array.from({ length: 5 }).map((_, i) => {
+                            const heroId = picks[i];
+                            const hero = heroId ? heroes[heroId] : null;
+                            return hero ? (
+                                <img key={i} src={hero.imageUrl} alt={hero.name} title={hero.name} className={`w-8 h-8 rounded-full border-2 ${borderColor} bg-slate-900`} />
+                            ) : (
+                                <div key={i} className={`w-8 h-8 rounded-full border-2 ${borderColor} bg-slate-700 flex items-center justify-center text-slate-400 font-bold text-xs`}>?</div>
+                            );
+                        })}
+                    </div>
+                );
+                
+                return (
+                    <div className="flex flex-col sm:flex-row items-center gap-2">
+                        {renderTeam(allyPicks, 'border-blue-400')}
+                        <span className="font-bold text-slate-500 mx-1 my-1 sm:my-0">vs</span>
+                        {renderTeam(enemyPicks, 'border-red-400')}
+                    </div>
+                );
+            }
+            default:
+                return <p className="font-bold text-slate-100 group-hover:text-white transition-colors">{item.title}</p>;
         }
     };
 
@@ -74,13 +147,13 @@ const HistoryScreen: React.FC<HistoryScreenProps> = ({ history, isLoading, error
                                 <div className="flex-shrink-0 w-12 h-12 bg-slate-800 rounded-lg flex items-center justify-center mr-4">
                                     <AnalysisTypeIcon type={item.analysis_type} />
                                 </div>
-                                <div className="flex-grow">
-                                    <p className="font-bold text-slate-100 group-hover:text-white transition-colors">{item.title}</p>
-                                    <p className="text-xs text-slate-400">{new Date(item.created_at).toLocaleString('pt-BR')}</p>
+                                <div className="flex-grow min-w-0">
+                                    {renderAnalysisContent(item)}
+                                    <p className="text-xs text-slate-400 mt-1">{new Date(item.created_at).toLocaleString('pt-BR')}</p>
                                 </div>
                                 <button
                                     onClick={(e) => handleDelete(e, item.id)}
-                                    className="flex-shrink-0 w-8 h-8 rounded-full bg-slate-700 text-slate-400 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center opacity-0 group-hover:opacity-100"
+                                    className="flex-shrink-0 w-8 h-8 rounded-full bg-slate-700 text-slate-400 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center opacity-0 group-hover:opacity-100 ml-2"
                                     aria-label="Apagar análise"
                                 >
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">

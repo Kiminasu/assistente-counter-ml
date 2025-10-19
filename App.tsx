@@ -1324,6 +1324,7 @@ const App: React.FC = () => {
                     error={historyError} 
                     onLoadAnalysis={loadAnalysisFromHistory}
                     onDeleteAnalysis={handleDeleteAnalysis}
+                    heroes={heroes}
                 />;
             default: return null;
         }
