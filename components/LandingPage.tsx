@@ -212,9 +212,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp, onSeePlans, onLo
                   </div>
                 
                   {/* Image Showcase Section */}
-                  <div className="relative w-full max-w-5xl mx-auto mt-20 h-36 sm:h-48 md:h-52 lg:h-[220px]" aria-hidden="true">
+                  <div className="relative w-full max-w-5xl mx-auto mt-20 h-48 sm:h-52 md:h-52 lg:h-[220px]" aria-hidden="true">
                         {/* Left Image */}
-                        <div className="absolute left-[-6rem] sm:-left-24 md:-left-20 lg:-left-28 top-16 sm:top-20 w-[55%] sm:w-[45%] lg:w-[40%] transform -rotate-6 transition-transform duration-500 hover:rotate-[-8deg] hover:scale-105 z-10">
+                        <div className="absolute left-[-2rem] sm:-left-24 md:-left-20 lg:-left-28 top-12 sm:top-20 w-[60%] sm:w-[45%] lg:w-[40%] transform -rotate-6 transition-transform duration-500 hover:rotate-[-8deg] hover:scale-105 z-10">
                             <div className="animated-border-glow rounded-2xl sm:rounded-3xl">
                                 <div className="bg-slate-900 p-1 rounded-[22px] sm:rounded-[30px] shadow-2xl">
                                     <img 
@@ -229,7 +229,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp, onSeePlans, onLo
                         </div>
                         
                         {/* Center Image (higher and in front) */}
-                        <div className="absolute left-1/2 -translate-x-1/2 top-0 w-[60%] sm:w-[50%] lg:w-[45%] transform transition-transform duration-500 hover:scale-105 z-20">
+                        <div className="absolute left-1/2 -translate-x-1/2 top-0 w-[65%] sm:w-[50%] lg:w-[45%] transform transition-transform duration-500 hover:scale-105 z-20">
                            <div className="animated-border-glow rounded-2xl sm:rounded-3xl">
                                 <div className="bg-slate-900 p-1 rounded-[22px] sm:rounded-[30px] shadow-2xl">
                                     <img 
@@ -244,7 +244,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp, onSeePlans, onLo
                         </div>
 
                         {/* Right Image */}
-                        <div className="absolute right-[-6rem] sm:-right-24 md:-right-20 lg:-right-28 top-16 sm:top-20 w-[55%] sm:w-[45%] lg:w-[40%] transform rotate-6 transition-transform duration-500 hover:rotate-[8deg] hover:scale-105 z-10">
+                        <div className="absolute right-[-2rem] sm:-right-24 md:-right-20 lg:-right-28 top-12 sm:top-20 w-[60%] sm:w-[45%] lg:w-[40%] transform rotate-6 transition-transform duration-500 hover:rotate-[8deg] hover:scale-105 z-10">
                            <div className="animated-border-glow rounded-2xl sm:rounded-3xl">
                                 <div className="bg-slate-900 p-1 rounded-[22px] sm:rounded-[30px] shadow-2xl">
                                     <img 
@@ -317,7 +317,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp, onSeePlans, onLo
                             Nossa IA tem dados sobre cada herói do Mobile Legends, desde os clássicos até os lançamentos mais recentes. Não importa quem você enfrente no seu próximo jogo, a Mítica Estratégia tem a resposta.
                         </p>
                     </div>
-                    <div className="h-[400px] grid grid-cols-3 md:grid-cols-6 gap-2 md:gap-4 overflow-hidden" style={{ maskImage: 'linear-gradient(to bottom, black 50%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, black 50%, transparent 100%)' }} aria-hidden="true">
+                    <div className="h-[400px] grid grid-cols-6 gap-2 md:gap-4 overflow-hidden" style={{ maskImage: 'linear-gradient(to bottom, black 50%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, black 50%, transparent 100%)' }} aria-hidden="true">
                         <HeroScrollColumn heroes={columns[0] || []} className="animate-marquee-up" style={{ animationDuration: '40s' }} />
                         <HeroScrollColumn heroes={columns[1] || []} className="animate-marquee-down" style={{ animationDuration: '40s' }} />
                         <HeroScrollColumn heroes={columns[2] || []} className="animate-marquee-up" style={{ animationDuration: '40s' }} />
