@@ -81,7 +81,7 @@ const UserPanel: React.FC<Pick<HeaderProps, 'userProfile' | 'onLogout' | 'onEdit
             </div>
 
             {isMenuOpen && (
-                <div className="absolute top-full right-0 mt-2 w-max max-w-[calc(100vw-2rem)] sm:max-w-xs md:w-64 bg-slate-900/80 backdrop-blur-md rounded-lg shadow-lg border border-slate-700 p-3 modal-animation">
+                <div className="absolute top-full right-0 mt-2 w-64 max-w-[calc(100vw-2rem)] bg-slate-900/80 backdrop-blur-md rounded-lg shadow-lg border border-slate-700 p-3 modal-animation">
                     <div className="flex items-center gap-3 border-b border-slate-700 pb-3 mb-3">
                          <div className="w-12 h-12 rounded-full bg-sky-800 flex items-center justify-center font-bold text-sky-300 border-2 border-sky-600 flex-shrink-0">
                             {getInitials(userProfile.username)}
@@ -127,47 +127,62 @@ const AppNavigationBar: React.FC<AppNavigationBarProps> = ({ activeMode, onSetMo
         { id: 'teams', label: 'Times', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" /></svg>, isPro: true, isDisabled: true },
     ];
     
-    const renderButton = (mode: typeof modes[0], variant: 'mobile' | 'desktop') => {
+    const renderDesktopButton = (mode: typeof modes[0], isCenter: boolean) => {
         const isActive = activeMode === mode.id;
         const isDisabled = mode.isDisabled;
-        const isCenterDesktop = variant === 'desktop' && mode.id === 'dashboard';
-
-        // Styles for Desktop
-        const desktopOuterClasses = isCenterDesktop ? 'my-[-20px]' : '';
-        const desktopInnerClasses = `flex flex-col items-center justify-center rounded-full transition-all duration-300 ${isDisabled ? 'opacity-50' : ''} ${
-            isCenterDesktop 
-                ? `h-24 w-24 border-2 shadow-lg shadow-black/50 group-hover:border-sky-400 group-hover:shadow-[var(--glow-primary)] ${isActive ? 'bg-sky-600 border-sky-400' : 'bg-[#1f1d31] border-slate-600'}`
-                : `h-14 w-28 ${isActive ? 'bg-sky-600 shadow-sm shadow-sky-500/30' : 'group-hover:bg-slate-700'}`
-        }`;
-        const desktopIconClasses = isCenterDesktop ? 'h-8 w-8' : 'h-7';
-        
-        // Styles for Mobile
-        const mobileInnerClasses = `w-16 h-16 flex flex-col items-center justify-center rounded-full transition-all duration-300 ${isDisabled ? 'opacity-50' : ''} ${
-            isActive ? 'bg-sky-600' : 'bg-slate-800/50 group-hover:bg-slate-700'
-        }`;
-        const mobileIconClasses = 'h-6 w-6';
-
         return (
             <button
-                key={`${mode.id}-${variant}`}
+                key={`${mode.id}-desktop`}
                 onClick={() => !isDisabled && onSetMode(mode.id)}
                 disabled={isDisabled}
-                className={`relative group focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:rounded-full p-1 transition-transform duration-300 ${variant === 'desktop' ? desktopOuterClasses : ''} ${isDisabled ? 'cursor-not-allowed' : ''}`}
+                className={`relative group focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:rounded-full p-1 transition-transform duration-300 ${isCenter ? 'my-[-20px]' : ''} ${isDisabled ? 'cursor-not-allowed' : ''}`}
                 aria-current={isActive ? 'page' : undefined}
                 title={isDisabled ? `${mode.label} (Em breve)` : mode.label}
             >
-                <div className={variant === 'desktop' ? desktopInnerClasses : mobileInnerClasses}>
-                    <div className={`flex items-center justify-center transition-colors ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-white'} ${variant === 'desktop' ? desktopIconClasses : mobileIconClasses}`}>
+                <div className={`flex flex-col items-center justify-center rounded-full transition-all duration-300 ${isDisabled ? 'opacity-50' : ''} ${
+                    isCenter 
+                        ? `h-24 w-24 border-2 shadow-lg shadow-black/50 group-hover:border-sky-400 group-hover:shadow-[var(--glow-primary)] ${isActive ? 'bg-sky-600 border-sky-400' : 'bg-[#1f1d31] border-slate-600'}`
+                        : `h-14 w-28 ${isActive ? 'bg-sky-600 shadow-sm shadow-sky-500/30' : 'group-hover:bg-slate-700'}`
+                }`}>
+                    <div className={`flex items-center justify-center transition-colors ${isCenter ? 'h-8 w-8' : 'h-7'} ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-white'}`}>
                         {mode.icon}
                     </div>
-                    <div className={`text-center text-[10px] font-semibold mt-0.5 transition-colors ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-white'} ${variant === 'desktop' && isCenterDesktop ? 'leading-tight px-1' : 'whitespace-nowrap'}`}>
+                    <div className={`text-center text-[10px] font-semibold mt-0.5 transition-colors ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-white'} ${isCenter ? 'leading-tight px-1' : 'whitespace-nowrap'}`}>
                         {mode.label}
                     </div>
                 </div>
-
-                {(mode.isPro || isDisabled) && effectiveSubscriptionStatus === 'free' && (
-                     <span className={`absolute top-0 right-0 text-black text-[8px] font-bold px-1 py-0.5 rounded-full shadow-md ${isDisabled ? 'bg-slate-500' : 'bg-gradient-to-br from-amber-400 to-yellow-500 animate-soft-blink'}`}>
+                {(mode.isPro || isDisabled) && !isCenter && effectiveSubscriptionStatus === 'free' && (
+                     <span className={`absolute -top-0 -right-0 text-black text-[8px] font-bold px-1 py-0.5 rounded-full shadow-md ${isDisabled ? 'bg-slate-500' : 'bg-gradient-to-br from-amber-400 to-yellow-500 animate-soft-blink'}`}>
                         {isDisabled ? 'EM BREVE' : 'PREMIUM'}
+                    </span>
+                )}
+            </button>
+        );
+    };
+    
+    const renderMobileButton = (mode: typeof modes[0]) => {
+        const isActive = activeMode === mode.id;
+        const isDisabled = mode.isDisabled;
+        return (
+            <button
+                key={`${mode.id}-mobile`}
+                onClick={() => !isDisabled && onSetMode(mode.id)}
+                disabled={isDisabled}
+                className="relative group focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:rounded-lg"
+                aria-current={isActive ? 'page' : undefined}
+                title={isDisabled ? `${mode.label} (Em breve)` : mode.label}
+            >
+                <div className={`flex flex-col items-center justify-center rounded-lg transition-all duration-300 w-20 h-20 p-1 ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''} ${isActive ? 'bg-sky-600' : 'bg-slate-800/50 group-hover:bg-slate-700'}`}>
+                    <div className={`h-7 w-7 flex items-center justify-center ${isActive ? 'text-white' : 'text-slate-300 group-hover:text-white'}`}>
+                        {mode.icon}
+                    </div>
+                    <span className={`text-[10px] font-semibold mt-1 text-center leading-tight ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-white'}`}>
+                        {mode.label}
+                    </span>
+                </div>
+                {(mode.isPro || isDisabled) && effectiveSubscriptionStatus === 'free' && (
+                     <span className={`absolute top-0 right-0 text-black text-[8px] font-bold px-1 py-0.5 rounded-full shadow-md ${isDisabled ? 'bg-slate-500' : 'bg-gradient-to-br from-amber-400 to-yellow-500'}`}>
+                        {isDisabled ? 'BREVE' : 'PRO'}
                     </span>
                 )}
             </button>
@@ -185,22 +200,22 @@ const AppNavigationBar: React.FC<AppNavigationBarProps> = ({ activeMode, onSetMo
             <nav className="hidden lg:flex justify-center animated-entry z-10">
                 <div className="grid grid-cols-[1fr_auto_1fr] items-center bg-[#13121d] rounded-[32px] p-2 border border-slate-700 shadow-lg shadow-black/30 gap-5">
                     <div className="flex justify-end gap-5">
-                        {leftModes.map(mode => renderButton(mode, 'desktop'))}
+                        {leftModes.map(mode => renderDesktopButton(mode, false))}
                     </div>
                     <div className="flex-shrink-0">
-                        {renderButton(centerMode, 'desktop')}
+                        {renderDesktopButton(centerMode, true)}
                     </div>
                     <div className="flex justify-start gap-5">
-                        {rightModes.map(mode => renderButton(mode, 'desktop'))}
+                        {rightModes.map(mode => renderDesktopButton(mode, false))}
                     </div>
                 </div>
             </nav>
 
             {/* Mobile Navigation */}
             <nav className="lg:hidden w-full flex justify-center animated-entry z-10 px-2">
-                <div className="w-full max-w-sm bg-[#13121d] rounded-2xl p-3 border border-slate-700 shadow-lg shadow-black/30">
-                    <div className="grid grid-cols-5 gap-x-1 gap-y-2 justify-items-center">
-                        {modes.map(mode => renderButton(mode, 'mobile'))}
+                 <div className="w-full max-w-md bg-[#13121d] rounded-2xl p-3 border border-slate-700 shadow-lg shadow-black/30">
+                    <div className="flex flex-wrap justify-center gap-2">
+                        {modes.map(mode => renderMobileButton(mode))}
                     </div>
                 </div>
             </nav>
