@@ -168,7 +168,7 @@ const AppNavigationBar: React.FC<AppNavigationBarProps> = ({ activeMode, onSetMo
                 key={`${mode.id}-mobile`}
                 onClick={() => !isDisabled && onSetMode(mode.id)}
                 disabled={isDisabled}
-                className="relative group focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:rounded-lg"
+                className="relative group focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:rounded-lg flex-shrink-0"
                 aria-current={isActive ? 'page' : undefined}
                 title={isDisabled ? `${mode.label} (Em breve)` : mode.label}
             >
@@ -212,9 +212,9 @@ const AppNavigationBar: React.FC<AppNavigationBarProps> = ({ activeMode, onSetMo
             </nav>
 
             {/* Mobile Navigation */}
-            <nav className="lg:hidden w-full flex justify-center animated-entry z-10 px-2">
-                 <div className="w-full max-w-md bg-[#13121d] rounded-2xl p-3 border border-slate-700 shadow-lg shadow-black/30">
-                    <div className="flex flex-wrap justify-center gap-2">
+            <nav className="lg:hidden w-full animated-entry z-10">
+                <div className="bg-[#13121d]/80 backdrop-blur-sm border-y border-slate-700/50 shadow-lg shadow-black/30">
+                    <div className="flex items-center gap-2 p-3 overflow-x-auto invisible-scrollbar">
                         {modes.map(mode => renderMobileButton(mode))}
                     </div>
                 </div>
