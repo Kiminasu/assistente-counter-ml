@@ -4,10 +4,9 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { GoogleGenAI, Type } from "@google/genai";
 import { createClient } from '@supabase/supabase-js';
 
-// CORREÇÃO: Importando da pasta local _lib com extensões .js para compatibilidade com ESM no Node.js
-import { Hero, HeroDetails, DraftAnalysisResult, AnalysisResult, HeroStrategy, LANES, ROLES, AITacticalCounter, HeroStrategicAnalysis, AILaneRecommendation, SpellSuggestion } from "./_lib/types.js";
-import { GAME_ITEMS } from './_lib/items.js';
-import { SPELL_ICONS } from './_lib/constants.js';
+import { Hero, HeroDetails, DraftAnalysisResult, AnalysisResult, HeroStrategy, LANES, ROLES, AITacticalCounter, HeroStrategicAnalysis, AILaneRecommendation, SpellSuggestion } from "./types.js";
+import { GAME_ITEMS } from './data/items.js';
+import { SPELL_ICONS } from './constants.js';
 
 // --- INICIALIZAÇÃO SEGURA NO BACKEND ---
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || "" });

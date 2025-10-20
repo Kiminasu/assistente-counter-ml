@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { BanSuggestion, Hero, HeroStrategicAnalysis, RankCategory, HeroRelation, HeroSuggestion, Role, Lane } from '../types';
-import CollapsibleTutorial from './CollapsibleTutorial';
-import SynergyPanel from './SynergyPanel';
-import HeroStrategyPanel from './HeroStrategyPanel';
-import BanSuggestions from './BanSuggestions';
-import { RATING_STYLES, ROLE_TAGS, LANE_ICONS, SPELL_ICONS } from '../constants';
+import { BanSuggestion, Hero, HeroStrategicAnalysis, RankCategory, HeroRelation, HeroSuggestion, Role, Lane } from './types';
+import CollapsibleTutorial from './components/CollapsibleTutorial';
+import SynergyPanel from './components/SynergyPanel';
+import HeroStrategyPanel from './components/HeroStrategyPanel';
+import BanSuggestions from './components/BanSuggestions';
+import { RATING_STYLES, ROLE_TAGS, LANE_ICONS, SPELL_ICONS } from './constants';
 
 interface SynergyExplorerScreenProps {
     selectedHeroId: string | null;
@@ -52,7 +52,7 @@ const PerfectLaneCountersPanel: React.FC<{ suggestions: HeroSuggestion[], isLoad
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {sortedSuggestions.map(suggestion => {
+            {sortedSuggestions.map((suggestion, index) => {
                 const isExpanded = expandedLane === suggestion.lane;
                 return (
                     <div key={suggestion.lane} className="p-3 bg-black bg-opacity-30 rounded-xl animated-entry border-l-4 border-red-500">

@@ -11,18 +11,18 @@ import LoadingOverlay from './components/LoadingOverlay';
 import AnalysisPanel from './components/AnalysisPanel';
 import LaneSelector from './components/LaneSelector';
 import HeroSelectionModal from './components/HeroSelectionModal';
-import BanSuggestions from './components/BanSuggestions';
+import BanSuggestions from './BanSuggestions';
 import DirectMatchupPanel from './components/DirectMatchupPanel';
 import Footer from './components/Footer';
 import TabbedPanel from './components/TabbedPanel';
 import HeroRankings from './components/HeroRankings';
-import Header from './components/Header';
-import DraftScreen from './components/DraftScreen';
+import Header from './Header';
+import DraftScreen from './DraftScreen';
 import SynergyPanel from './components/SynergyPanel';
 import HeroSlot from './components/HeroSlot';
 import ItemDatabaseScreen from './components/ItemDatabaseScreen';
 import CollapsibleTutorial from './components/CollapsibleTutorial';
-import SynergyExplorerScreen from './components/SynergyExplorerScreen';
+import SynergyExplorerScreen from './SynergyExplorerScreen';
 import HeroDatabaseScreen from './components/HeroDatabaseScreen';
 import AuthScreen from './AuthScreen';
 import UserProfileModal from './components/UserProfileModal';
@@ -66,6 +66,7 @@ const App: React.FC = () => {
 
     const [session, setSession] = useState<Session | null>(null);
     const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+    const [profileError, setProfileError] = useState<string | null>(null);
     const [isProfileChecked, setIsProfileChecked] = useState(false);
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
     const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
@@ -138,23 +139,31 @@ const App: React.FC = () => {
 
     const fetchUserProfile = useCallback(async (user: { id: string }) => {
         if (!supabase) return;
+        setProfileError(null); // Clear previous errors
         const { data, error } = await supabase
             .from('profiles')
             .select('username, rank, subscription_status, analysis_count, last_analysis_at, subscription_expires_at, phone')
             .eq('id', user.id)
             .single();
     
-        if (error && error.code !== 'PGRST116') { // Ignora o erro "0 rows"
+        if (error && error.code !== 'PGRST116') { // PGRST116 is "No rows found"
             console.error("Erro ao buscar perfil:", error);
+            // This is a real database/permission error
+            const detailedError = `Falha ao carregar o perfil do usuário. Causa provável: As Políticas de Segurança (RLS) da tabela 'profiles' no Supabase não estão configuradas para permitir a leitura. Verifique se existe uma política 'SELECT' ativa para usuários autenticados que permite a leitura da sua própria linha (ex: auth.uid() = id). (Erro: ${error.message})`;
+            setProfileError(detailedError);
             setUserProfile(null);
         } else if (data) {
-            // Garante que o 'phone' seja uma string para contas antigas que possam ter o valor nulo.
+            // Profile found, success!
             const completeProfile = {
                 ...data,
                 phone: data.phone || '',
             };
             setUserProfile(completeProfile as UserProfile);
         } else {
+            // No data and no error (or "No rows found" error), meaning profile doesn't exist
+            console.warn("Nenhum perfil encontrado para o usuário:", user.id);
+            const noProfileError = "Seu perfil não foi encontrado. Se você acabou de se cadastrar, a criação do perfil pode ter falhado. Isso geralmente ocorre se a confirmação de e-mail estiver habilitada e as políticas de 'INSERT' no Supabase não permitirem a criação de perfis para usuários não confirmados. Verifique suas políticas de RLS.";
+            setProfileError(noProfileError);
             setUserProfile(null);
         }
     }, []);
@@ -178,6 +187,7 @@ const App: React.FC = () => {
                 }
             } else {
                 setUserProfile(null);
+                setProfileError(null);
             }
             setIsProfileChecked(true);
         };
@@ -1381,6 +1391,15 @@ const App: React.FC = () => {
                         onNavigateToFeatures={handleNavigateToFeatures}
                         onGoBackToLanding={handleGoBackToLanding}
                     />
+
+                    {profileError && (
+                        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+                            <div className="bg-red-900/50 border border-red-700 text-red-200 px-4 py-3 rounded-lg relative" role="alert">
+                                <strong className="font-bold">Erro de Configuração!</strong>
+                                <span className="block sm:inline ml-2">{profileError}</span>
+                            </div>
+                        </div>
+                    )}
 
                     <main className="w-full max-w-7xl mx-auto flex-grow px-4 sm:px-6 lg:px-8 mb-16">
                         {renderContent()}

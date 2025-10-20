@@ -1,9 +1,3 @@
-
-
-
-
-
-
 export interface Hero {
   id: string;
   apiId: number;
@@ -36,6 +30,7 @@ export interface HeroSuggestion {
   classificacao: 'ANULA' | 'VANTAGEM' | 'PERFEITO' | 'DESVANTAGEM';
   estatistica: string;
   spells: SpellSuggestion[];
+  lane?: Lane; // Adicionado para counters por lane
 }
 
 export interface GameItemAbility {
@@ -104,7 +99,6 @@ export interface HeroRankInfo {
     banRate: number;
 }
 
-// FIX: Export the HeroDailyRate interface.
 export interface HeroDailyRate {
   date: string;
   win_rate: number;
@@ -155,7 +149,6 @@ export interface HeroStrategy {
   powerSpikes: string;
 }
 
-// FIX: Added interface for the new AI feature.
 export interface AILaneRecommendation {
     lane: Lane;
     heroName: string;
@@ -164,7 +157,6 @@ export interface AILaneRecommendation {
     spells: SpellSuggestion[];
 }
 
-// FIX: Replaced 'perfectCounter' with 'perfectLaneCounters' to support the new AI feature.
 export interface HeroStrategicAnalysis {
     strategy: HeroStrategy;
     tacticalCounters: AITacticalCounter[];
@@ -174,11 +166,13 @@ export interface HeroStrategicAnalysis {
 export interface HeroSkill {
     skillname: string;
     skilldesc: string;
+    skillicon?: string;
 }
 
 export interface SkillCombo {
     title: string;
     desc: string;
+    skillIcons: string[];
 }
 
 export interface HeroDetails {
@@ -188,9 +182,46 @@ export interface HeroDetails {
     combos: SkillCombo[];
 }
 
-// FIX: Export the HeroRelation interface so it can be used by other components.
 export interface HeroRelation {
     assist: { target_hero_id: number[] };
     strong: { target_hero_id: number[] };
     weak: { target_hero_id: number[] };
+}
+
+export interface HeroDetailStats {
+    winRate: number;
+    pickRate: number;
+    banRate: number;
+}
+
+export interface TimeWinRate {
+    time: string;
+    winRate: number;
+}
+
+export interface SynergyStat {
+    hero: Hero;
+    increaseWinRate: number;
+    winRateOverTime: TimeWinRate[];
+}
+
+export interface FullHeroStats {
+    stats: HeroDetailStats;
+    bestSynergies: SynergyStat[];
+    worstSynergies: SynergyStat[];
+}
+
+export interface HeroDailyStats {
+    date: string;
+    winRate: number;
+    pickRate: number;
+    banRate: number;
+}
+
+export interface AnalysisHistoryItem {
+    id: string;
+    created_at: string;
+    analysis_type: '1v1' | '5v5' | 'synergy';
+    title: string;
+    analysis_data: any;
 }
