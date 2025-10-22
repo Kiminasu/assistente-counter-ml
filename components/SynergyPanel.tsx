@@ -19,7 +19,7 @@ const HeroListItem: React.FC<{ hero: Hero | undefined }> = ({ hero }) => {
                 loading="lazy"
                 src={hero.imageUrl}
                 alt={hero.name}
-                className="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover border-2 border-gray-600 group-hover:border-violet-500 transition-colors"
+                className="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover border-2 border-gray-600 group-hover:border-sky-500 transition-colors"
             />
             <span className="text-xs mt-1 font-medium">{hero.name}</span>
         </div>
@@ -77,7 +77,7 @@ const SynergyPanel: React.FC<SynergyPanelProps> = ({ isLoading, error, relations
         if (isLoading) {
             return (
                 <div className="flex flex-col items-center justify-center h-full">
-                    <div className="w-10 h-10 border-2 border-dashed rounded-full animate-spin border-violet-400"></div>
+                    <div className="w-10 h-10 border-2 border-dashed rounded-full animate-spin border-sky-400"></div>
                     <p className="mt-3 text-sm text-gray-300">CARREGANDO ANÁLISE...</p>
                 </div>
             );

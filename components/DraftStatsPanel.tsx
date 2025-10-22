@@ -96,7 +96,7 @@ const DraftStatsPanel: React.FC<DraftStatsPanelProps> = ({ analysis, isLoading, 
             {isLoading && (
                 <div className="absolute inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center rounded-2xl z-10 animated-entry">
                     <div className="flex flex-col items-center">
-                        <div className="w-10 h-10 border-2 border-dashed rounded-full animate-spin border-violet-400"></div>
+                        <div className="w-10 h-10 border-2 border-dashed rounded-full animate-spin border-sky-400"></div>
                         <p className="mt-3 text-sm text-gray-300">{hasExistingAnalysis ? 'Atualizando análise...' : 'Analisando o draft...'}</p>
                     </div>
                 </div>

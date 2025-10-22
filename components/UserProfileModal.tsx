@@ -67,7 +67,7 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ isOpen, onClose, us
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center p-4 z-50">
-            <div className="glassmorphism rounded-2xl shadow-xl max-w-md w-full flex flex-col border border-violet-500 modal-animation">
+            <div className="glassmorphism rounded-2xl shadow-xl max-w-md w-full flex flex-col border border-sky-500 modal-animation">
                 <div className="p-4 border-b border-gray-700 flex justify-between items-center">
                     <h2 className="text-xl font-bold">Editar Perfil</h2>
                     <button onClick={onClose} className="text-3xl text-gray-400 hover:text-white">&times;</button>
@@ -84,7 +84,7 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ isOpen, onClose, us
                                 value={username}
                                 onChange={(e) => setUsername(e.target.value)}
                                 required
-                                className="mt-1 block w-full bg-slate-800/50 border border-slate-700 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-violet-500 focus:border-violet-500 sm:text-sm"
+                                className="mt-1 block w-full bg-slate-800/50 border border-slate-700 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-sky-500 focus:border-sky-500 sm:text-sm"
                             />
                         </div>
                         <div>
@@ -94,7 +94,7 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ isOpen, onClose, us
                                 value={rank}
                                 onChange={(e) => setRank(e.target.value as UserSignupRank)}
                                 required
-                                className="mt-1 block w-full bg-slate-800/50 border border-slate-700 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-violet-500 focus:border-violet-500 sm:text-sm"
+                                className="mt-1 block w-full bg-slate-800/50 border border-slate-700 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-sky-500 focus:border-sky-500 sm:text-sm"
                             >
                                 {USER_SIGNUP_RANKS.map(r => <option key={r} value={r}>{r}</option>)}
                             </select>
@@ -107,7 +107,7 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ isOpen, onClose, us
                                 value={phone}
                                 onChange={(e) => setPhone(e.target.value)}
                                 required
-                                className="mt-1 block w-full bg-slate-800/50 border border-slate-700 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-violet-500 focus:border-violet-500 sm:text-sm"
+                                className="mt-1 block w-full bg-slate-800/50 border border-slate-700 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-sky-500 focus:border-sky-500 sm:text-sm"
                                 placeholder="(XX) XXXXX-XXXX"
                             />
                         </div>
@@ -116,7 +116,7 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ isOpen, onClose, us
                              <button
                                 type="submit"
                                 disabled={loading}
-                                className="py-2 px-4 bg-violet-600 hover:bg-violet-500 rounded-lg text-white font-semibold transition-colors disabled:opacity-50"
+                                className="py-2 px-4 bg-sky-600 hover:bg-sky-500 rounded-lg text-white font-semibold transition-colors disabled:opacity-50"
                             >
                                 {loading ? 'Salvando...' : 'Salvar'}
                             </button>

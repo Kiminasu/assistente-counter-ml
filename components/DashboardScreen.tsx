@@ -160,14 +160,14 @@ const TierList: React.FC<{
                 <div className="flex bg-black/30 p-0.5 rounded-lg mt-2 sm:mt-0">
                     {(Object.keys(RANK_LABELS) as RankCategory[]).filter(r => r !== 'all' && r !== 'honor').map(rank => (
                         <button key={rank} onClick={() => setActiveRank(rank)}
-                            className={`px-2 py-1 text-xs font-semibold rounded-md transition-colors ${activeRank === rank ? 'bg-violet-600 text-white' : 'text-gray-400 hover:bg-gray-700/50'}`}>
+                            className={`px-2 py-1 text-xs font-semibold rounded-md transition-colors ${activeRank === rank ? 'bg-sky-600 text-white' : 'text-gray-400 hover:bg-gray-700/50'}`}>
                             {RANK_LABELS[rank]}
                         </button>
                     ))}
                 </div>
             </div>
             <p className="text-center text-xs text-slate-400 mb-4"><strong>S:</strong> Mais Fortes, <strong>A:</strong> Muito Fortes, <strong>B:</strong> Fortes e Equilibrados</p>
-            {isLoading && <div className="flex justify-center items-center h-48"><div className="w-8 h-8 border-2 border-dashed rounded-full animate-spin border-violet-400"></div></div>}
+            {isLoading && <div className="flex justify-center items-center h-48"><div className="w-8 h-8 border-2 border-dashed rounded-full animate-spin border-sky-400"></div></div>}
             {error && <p className="text-center text-xs text-yellow-400 h-48 flex items-center justify-center">{error}</p>}
             {!isLoading && !error && (
                 <div className="space-y-4">
@@ -213,7 +213,7 @@ const CrucialMetaItems: React.FC = () => {
             <h2 className="text-xl font-bold text-center mb-4 text-amber-300">ITENS CRUCIAIS DO META</h2>
             <div className="space-y-4">
                 {items.map(item => (
-                    <div key={item.name} className="p-3 bg-black/30 rounded-xl flex items-start gap-3 border-l-4 border-violet-500">
+                    <div key={item.name} className="p-3 bg-black/30 rounded-xl flex items-start gap-3 border-l-4 border-sky-500">
                         <img src={ITEM_ICONS[item.name] || ITEM_ICONS.default} alt={item.name} className="w-12 h-12 rounded-lg flex-shrink-0" />
                         <div>
                             <p className="font-bold">{item.name}</p>
@@ -242,7 +242,7 @@ const Tools: React.FC<{ onSetMode: (mode: GameMode) => void; effectiveSubscripti
             <h2 className="text-xl font-bold text-center mb-4 text-amber-300">FERRAMENTAS ESTRATÉGICAS</h2>
             <div className="grid grid-cols-3 md:grid-cols-6 lg:grid-cols-3 gap-3">
                 {tools.map(tool => (
-                    <button key={tool.mode} onClick={() => onSetMode(tool.mode)} className="relative flex flex-col items-center justify-center gap-1 p-2 bg-slate-800/50 rounded-lg border border-slate-700 hover:bg-violet-600/50 hover:border-violet-500 transition-all duration-300 transform hover:-translate-y-1 h-24">
+                    <button key={tool.mode} onClick={() => onSetMode(tool.mode)} className="relative flex flex-col items-center justify-center gap-1 p-2 bg-slate-800/50 rounded-lg border border-slate-700 hover:bg-sky-600/50 hover:border-sky-500 transition-all duration-300 transform hover:-translate-y-1 h-24">
                         {tool.isPremium && effectiveSubscriptionStatus !== 'premium' && <span className="absolute -top-1.5 -right-1.5 bg-gradient-to-br from-amber-400 to-yellow-500 text-black text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow-lg animate-soft-blink">PREMIUM</span>}
                         <div className="h-8 flex items-center justify-center text-slate-300">{tool.icon}</div>
                         <span className="text-xs font-semibold text-center leading-tight">{tool.label}</span>

@@ -212,7 +212,12 @@ const MobileNavigationBar: React.FC<AppNavigationBarProps> = ({ activeMode, onSe
         <nav ref={mobileMenuRef} className="w-full animated-entry z-10 flex flex-col items-center">
              <button
                 key={centerMode.id}
-                onClick={() => setIsMobileMenuOpen(prev => !prev)}
+                onClick={() => {
+                    if (activeMode !== 'dashboard') {
+                        onSetMode('dashboard');
+                    }
+                    setIsMobileMenuOpen(prev => !prev);
+                }}
                 className={`relative group focus:outline-none p-1 transition-transform duration-300`}
                 aria-current={activeMode === centerMode.id ? 'page' : undefined}
                 title={centerMode.label}
@@ -306,7 +311,7 @@ const Header: React.FC<HeaderProps> = ({ activeMode, onSetMode, session, userPro
                         ) : (
                             <button onClick={() => onSetMode('dashboard')} className="flex items-center gap-2 cursor-pointer group">
                                 <img src="https://i.postimg.cc/ZK4nFyHG/mitica-logo-Photoroom.png" alt="Logo" className="h-10 w-10 transition-transform group-hover:scale-110" />
-                                <span className="font-bold text-lg text-white hidden sm:block transition-all group-hover:brightness-110 relative top-[2px]" style={{ fontFamily: "'Inter', sans-serif" }}>Mítica Estratégia MLBB</span>
+                                <span className="font-bold text-lg text-white transition-all group-hover:brightness-110 relative top-[2px]" style={{ fontFamily: "'Inter', sans-serif" }}>Mítica Estratégia <span className="hidden sm:inline">MLBB</span></span>
                             </button>
                         )}
 

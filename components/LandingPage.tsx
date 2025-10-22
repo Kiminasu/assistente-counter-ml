@@ -26,7 +26,7 @@ const LandingHeader: React.FC<LandingHeaderProps> = ({ onLaunchApp, onSeePlans, 
                 <div className="flex justify-between items-center h-16">
                     <div className="flex items-center gap-2">
                         <img src="https://i.postimg.cc/ZK4nFyHG/mitica-logo-Photoroom.png" alt="Logo" className="h-10 w-10" />
-                        <span className="font-bold text-lg hidden sm:block text-white relative top-[2px]">Mítica Estratégia MLBB</span>
+                        <span className="font-bold text-lg text-white relative top-[2px]">Mítica Estratégia <span className="hidden sm:inline">MLBB</span></span>
                     </div>
                     <nav className="hidden md:flex gap-6 items-center">
                         <button onClick={onNavigateToFeatures} className="text-sm font-semibold text-slate-300 hover:text-white transition-colors">Funcionalidades</button>

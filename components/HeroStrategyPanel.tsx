@@ -11,7 +11,7 @@ interface HeroStrategyPanelProps {
 }
 
 const ItemCard: React.FC<{ item: ItemSuggestion, type: 'Core' | 'Situacional' }> = ({ item, type }) => {
-    const borderColor = type === 'Core' ? 'border-amber-400' : 'border-violet-400';
+    const borderColor = type === 'Core' ? 'border-amber-400' : 'border-sky-400';
     return (
         <div className={`p-2 bg-black bg-opacity-30 rounded-xl flex items-start gap-3 border-l-4 ${borderColor}`}>
             <img 
@@ -68,7 +68,7 @@ const HeroStrategyPanel: React.FC<HeroStrategyPanelProps> = ({ selectedHero, ana
                 </div>
 
                  <div>
-                    <h3 className="text-sm uppercase font-bold text-violet-400 mb-2">Itens Situacionais</h3>
+                    <h3 className="text-sm uppercase font-bold text-sky-400 mb-2">Itens Situacionais</h3>
                     <div className="space-y-2">
                         {analysis.situationalItems.map(item => <ItemCard key={item.nome} item={item} type="Situacional" />)}
                     </div>

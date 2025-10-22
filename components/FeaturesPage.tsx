@@ -67,7 +67,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ onGoBack, onLaunchApp, onSe
                   </button>
                   <div className="flex items-center gap-4">
                        <button onClick={onSeePlans} className="text-sm font-semibold text-slate-300 hover:text-white transition-colors">Planos</button>
-                       <button onClick={onLaunchApp} className="bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white font-bold py-2 px-5 rounded-lg text-sm hover:from-violet-600 hover:to-fuchsia-600 transition-all duration-300">
+                       <button onClick={onLaunchApp} className="bg-gradient-to-r from-sky-500 to-cyan-500 text-white font-bold py-2 px-5 rounded-lg text-sm hover:from-sky-600 hover:to-cyan-600 transition-all duration-300">
                           Acessar App
                       </button>
                   </div>
@@ -129,15 +129,15 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ onGoBack, onLaunchApp, onSe
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div className="glassmorphism p-6 rounded-2xl text-center border border-slate-700">
-                    <h4 className="text-xl font-bold text-violet-300">Enciclopédia de Heróis</h4>
+                    <h4 className="text-xl font-bold text-sky-300">Enciclopédia de Heróis</h4>
                     <p className="mt-2 text-sm text-slate-400">Navegue por todos os heróis, veja suas habilidades, estatísticas detalhadas e combos táticos.</p>
                 </div>
                 <div className="glassmorphism p-6 rounded-2xl text-center border border-slate-700">
-                    <h4 className="text-xl font-bold text-violet-300">Banco de Dados de Itens</h4>
+                    <h4 className="text-xl font-bold text-sky-300">Banco de Dados de Itens</h4>
                     <p className="mt-2 text-sm text-slate-400">Consulte todos os itens do jogo, seus atributos, habilidades passivas, custos e otimize suas builds.</p>
                 </div>
                 <div className="glassmorphism p-6 rounded-2xl text-center border border-slate-700">
-                    <h4 className="text-xl font-bold text-violet-300">Ranking do Meta</h4>
+                    <h4 className="text-xl font-bold text-sky-300">Ranking do Meta</h4>
                     <p className="mt-2 text-sm text-slate-400">Descubra os heróis mais fortes com filtros por elo, período e taxa de vitória, escolha ou banimento.</p>
                 </div>
             </div>
@@ -151,7 +151,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ onGoBack, onLaunchApp, onSe
             <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
                 <button 
                     onClick={onLaunchApp} 
-                    className="w-full sm:w-auto bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white font-bold py-4 px-8 rounded-xl text-lg hover:from-violet-400 hover:to-fuchsia-400 transition-all duration-300 shadow-lg shadow-violet-500/40 transform hover:scale-105"
+                    className="w-full sm:w-auto bg-gradient-to-r from-sky-500 to-cyan-500 text-white font-bold py-4 px-8 rounded-xl text-lg hover:from-sky-400 hover:to-cyan-400 transition-all duration-300 shadow-lg shadow-sky-500/40 transform hover:scale-105"
                 >
                     Analisar Agora (Grátis)
                 </button>
