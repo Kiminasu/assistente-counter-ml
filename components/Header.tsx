@@ -114,7 +114,7 @@ interface AppNavigationBarProps {
     effectiveSubscriptionStatus: 'free' | 'premium';
 }
 
-const AppNavigationBar: React.FC<AppNavigationBarProps> = ({ activeMode, onSetMode, effectiveSubscriptionStatus }) => {
+const DesktopNavigationBar: React.FC<AppNavigationBarProps> = ({ activeMode, onSetMode, effectiveSubscriptionStatus }) => {
     const modes: { id: GameMode; label: string; icon: React.ReactNode; isPro?: boolean; isDisabled?: boolean }[] = [
         { id: '1v1', label: 'Análise 1vs1', icon: <span className="font-black text-xl tracking-tighter">1vs1</span> },
         { id: 'synergy', label: 'Análise de Herói', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" /></svg> },
@@ -126,8 +126,13 @@ const AppNavigationBar: React.FC<AppNavigationBarProps> = ({ activeMode, onSetMo
         { id: 'ranking', label: 'Ranking', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" /></svg> },
         { id: 'teams', label: 'Times', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" /></svg>, isPro: true, isDisabled: true },
     ];
-    
-    const renderDesktopButton = (mode: typeof modes[0], isCenter: boolean) => {
+
+    const centerIndex = modes.findIndex(m => m.id === 'dashboard');
+    const leftModes = modes.slice(0, centerIndex);
+    const centerMode = modes[centerIndex];
+    const rightModes = modes.slice(centerIndex + 1);
+
+    const renderButton = (mode: typeof modes[0], isCenter: boolean) => {
         const isActive = activeMode === mode.id;
         const isDisabled = mode.isDisabled;
         return (
@@ -159,67 +164,110 @@ const AppNavigationBar: React.FC<AppNavigationBarProps> = ({ activeMode, onSetMo
             </button>
         );
     };
-    
-    const renderMobileButton = (mode: typeof modes[0]) => {
-        const isActive = activeMode === mode.id;
-        const isDisabled = mode.isDisabled;
-        return (
-            <button
-                key={`${mode.id}-mobile`}
-                onClick={() => !isDisabled && onSetMode(mode.id)}
-                disabled={isDisabled}
-                className="relative group focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:rounded-lg flex-shrink-0"
-                aria-current={isActive ? 'page' : undefined}
-                title={isDisabled ? `${mode.label} (Em breve)` : mode.label}
-            >
-                <div className={`flex flex-col items-center justify-center rounded-lg transition-all duration-300 w-20 h-20 p-1 ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''} ${isActive ? 'bg-sky-600' : 'bg-slate-800/50 group-hover:bg-slate-700'}`}>
-                    <div className={`h-7 w-7 flex items-center justify-center ${isActive ? 'text-white' : 'text-slate-300 group-hover:text-white'}`}>
-                        {mode.icon}
-                    </div>
-                    <span className={`text-[10px] font-semibold mt-1 text-center leading-tight ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-white'}`}>
-                        {mode.label}
-                    </span>
-                </div>
-                {(mode.isPro || isDisabled) && effectiveSubscriptionStatus === 'free' && (
-                     <span className={`absolute top-0 right-0 text-black text-[8px] font-bold px-1 py-0.5 rounded-full shadow-md ${isDisabled ? 'bg-slate-500' : 'bg-gradient-to-br from-amber-400 to-yellow-500'}`}>
-                        {isDisabled ? 'BREVE' : 'PRO'}
-                    </span>
-                )}
-            </button>
-        );
-    };
-
-    const centerIndex = modes.findIndex(m => m.id === 'dashboard');
-    const leftModes = modes.slice(0, centerIndex);
-    const centerMode = modes[centerIndex];
-    const rightModes = modes.slice(centerIndex + 1);
 
     return (
-        <>
-            {/* Desktop Navigation */}
-            <nav className="hidden lg:flex justify-center animated-entry z-10">
-                <div className="grid grid-cols-[1fr_auto_1fr] items-center bg-[#13121d] rounded-[32px] p-2 border border-slate-700 shadow-lg shadow-black/30 gap-5">
-                    <div className="flex justify-end gap-5">
-                        {leftModes.map(mode => renderDesktopButton(mode, false))}
-                    </div>
-                    <div className="flex-shrink-0">
-                        {renderDesktopButton(centerMode, true)}
-                    </div>
-                    <div className="flex justify-start gap-5">
-                        {rightModes.map(mode => renderDesktopButton(mode, false))}
-                    </div>
+        <nav className="flex justify-center animated-entry z-10">
+            <div className="grid grid-cols-[1fr_auto_1fr] items-center bg-[#13121d] rounded-[32px] p-2 border border-slate-700 shadow-lg shadow-black/30 gap-5">
+                <div className="flex justify-end gap-5 flex-wrap">
+                    {leftModes.map(mode => renderButton(mode, false))}
                 </div>
-            </nav>
+                <div className="flex-shrink-0">
+                    {renderButton(centerMode, true)}
+                </div>
+                <div className="flex justify-start gap-5 flex-wrap">
+                    {rightModes.map(mode => renderButton(mode, false))}
+                </div>
+            </div>
+        </nav>
+    );
+};
 
-            {/* Mobile Navigation */}
-            <nav className="lg:hidden w-full animated-entry z-10">
-                <div className="bg-[#13121d]/80 backdrop-blur-sm border-y border-slate-700/50 shadow-lg shadow-black/30">
-                    <div className="flex items-center gap-2 p-3 overflow-x-auto invisible-scrollbar">
-                        {modes.map(mode => renderMobileButton(mode))}
+const MobileNavigationBar: React.FC<AppNavigationBarProps> = ({ activeMode, onSetMode, effectiveSubscriptionStatus }) => {
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const mobileMenuRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target as Node)) {
+                setIsMobileMenuOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const modes: { id: GameMode; label: string; icon: React.ReactNode; isPro?: boolean; isDisabled?: boolean }[] = [
+        { id: '1v1', label: 'Análise 1vs1', icon: <span className="font-black text-xl tracking-tighter">1vs1</span> },
+        { id: 'synergy', label: 'Análise de Herói', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" /></svg> },
+        { id: '5v5', label: 'Draft 5vs5', icon: <span className="font-black text-xl tracking-tighter">5vs5</span>, isPro: true },
+        { id: 'history', label: 'Histórico', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.414-1.415L11 9.586V6z" clipRule="evenodd" /></svg>, isPro: true },
+        { id: 'heroes', label: 'Heróis', icon: <span className="font-black text-3xl">H</span> },
+        { id: 'item', label: 'Itens', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 24 24" fill="currentColor"><path d="M19.5,6H17V4.5A1.5,1.5 0 0,0 15.5,3H8.5A1.5,1.5 0 0,0 7,4.5V6H4.5A1.5,1.5 0 0,0 3,7.5V11.25L5,13V19.5A1.5,1.5 0 0,0 6.5,21H17.5A1.5,1.5 0 0,0 19,19.5V13L21,11.25V7.5A1.5,1.5 0 0,0 19.5,6M15,6H9V4.5C9,4.22 9.22,4 9.5,4H14.5C14.78,4 15,4.22 15,4.5V6M12,17A2,2 0 0,1 10,15A2,2 0 0,1 12,13A2,2 0 0,1 14,15A2,2 0 0,1 12,17Z" /></svg> },
+        { id: 'ranking', label: 'Ranking', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" /></svg> },
+        { id: 'teams', label: 'Times', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" /></svg>, isPro: true, isDisabled: true },
+    ];
+    const centerMode = { id: 'dashboard', label: 'Painel', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" viewBox="0 0 20 20" fill="currentColor"><path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg> };
+
+    return (
+        <nav ref={mobileMenuRef} className="w-full animated-entry z-10 flex flex-col items-center">
+             <button
+                key={centerMode.id}
+                onClick={() => setIsMobileMenuOpen(prev => !prev)}
+                className={`relative group focus:outline-none p-1 transition-transform duration-300`}
+                aria-current={activeMode === centerMode.id ? 'page' : undefined}
+                title={centerMode.label}
+                aria-haspopup="true"
+                aria-expanded={isMobileMenuOpen}
+            >
+                <div className={`flex flex-col items-center justify-center rounded-full transition-all duration-300 h-24 w-24 border-2 shadow-lg shadow-black/50 group-hover:border-sky-400 group-hover:shadow-[var(--glow-primary)] ${activeMode === centerMode.id || isMobileMenuOpen ? 'bg-sky-600 border-sky-400' : 'bg-[#1f1d31] border-slate-600'}`}>
+                    <div className={`flex items-center justify-center transition-colors h-8 w-8 text-white`}>
+                        {isMobileMenuOpen ? 
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg> 
+                            : centerMode.icon}
+                    </div>
+                    <div className={`text-center text-[10px] font-semibold mt-0.5 transition-colors text-white leading-tight px-1`}>
+                       {isMobileMenuOpen ? 'Fechar' : centerMode.label}
                     </div>
                 </div>
-            </nav>
-        </>
+            </button>
+            <div className={`w-full max-w-sm px-4 transition-all duration-300 ease-in-out overflow-hidden ${isMobileMenuOpen ? 'max-h-96 mt-4' : 'max-h-0'}`}>
+                 <div className="grid grid-cols-4 gap-2 p-2 bg-[#13121d]/80 backdrop-blur-sm border border-slate-700/50 rounded-2xl shadow-lg shadow-black/30">
+                    {modes.map(mode => {
+                         const isActive = activeMode === mode.id;
+                         const isDisabled = mode.isDisabled;
+                         return (
+                             <button
+                                 key={`${mode.id}-mobile`}
+                                 onClick={() => {
+                                     if (!isDisabled) {
+                                        onSetMode(mode.id);
+                                        setIsMobileMenuOpen(false);
+                                     }
+                                 }}
+                                 disabled={isDisabled}
+                                 className="relative group focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:rounded-lg"
+                                 aria-current={isActive ? 'page' : undefined}
+                                 title={isDisabled ? `${mode.label} (Em breve)` : mode.label}
+                             >
+                                 <div className={`flex flex-col items-center justify-center rounded-lg transition-all duration-300 h-20 p-1 ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''} ${isActive ? 'bg-sky-600' : 'bg-slate-800/50 group-hover:bg-slate-700'}`}>
+                                     <div className={`h-7 w-7 flex items-center justify-center ${isActive ? 'text-white' : 'text-slate-300 group-hover:text-white'}`}>
+                                         {mode.icon}
+                                     </div>
+                                     <span className={`text-[10px] font-semibold mt-1 text-center leading-tight ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-white'}`}>
+                                         {mode.label}
+                                     </span>
+                                 </div>
+                                 {(mode.isPro || isDisabled) && effectiveSubscriptionStatus === 'free' && (
+                                      <span className={`absolute top-1 right-1 text-black text-[8px] font-bold px-1 rounded-full shadow-md ${isDisabled ? 'bg-slate-500' : 'bg-gradient-to-br from-amber-400 to-yellow-500'}`}>
+                                         {isDisabled ? 'BREVE' : 'PRO'}
+                                     </span>
+                                 )}
+                             </button>
+                         );
+                    })}
+                </div>
+            </div>
+        </nav>
     );
 };
 
@@ -293,11 +341,22 @@ const Header: React.FC<HeaderProps> = ({ activeMode, onSetMode, session, userPro
             
             {activeMode !== 'premium' && (
                 <div className="text-center mt-8 mb-4 animated-entry">
-                     <AppNavigationBar
-                        activeMode={activeMode}
-                        onSetMode={onSetMode}
-                        effectiveSubscriptionStatus={effectiveSubscriptionStatus}
-                    />
+                    {/* Contêiner explícito para navegação de DESKTOP */}
+                    <div className="hidden lg:block">
+                        <DesktopNavigationBar
+                            activeMode={activeMode}
+                            onSetMode={onSetMode}
+                            effectiveSubscriptionStatus={effectiveSubscriptionStatus}
+                        />
+                    </div>
+                     {/* Contêiner explícito para navegação de CELULAR */}
+                    <div className="block lg:hidden">
+                        <MobileNavigationBar
+                            activeMode={activeMode}
+                            onSetMode={onSetMode}
+                            effectiveSubscriptionStatus={effectiveSubscriptionStatus}
+                        />
+                    </div>
                     
                     <p className="text-sm text-slate-400 mt-4 max-w-xl mx-auto flex items-center justify-center transition-opacity duration-300 min-h-[40px] px-4">
                         {descriptions[activeMode]}
