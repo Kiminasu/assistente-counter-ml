@@ -43,7 +43,7 @@ const TeamsScreen: React.FC<TeamsScreenProps> = ({ session }) => {
         setMembers([]);
         setInvitation(null);
     
-        if (!session?.user?.id || !session.user.email) {
+        if (!session?.user?.id || !session.user.email || !supabase) {
             setError("Usuário não autenticado.");
             setLoading(false);
             return;
@@ -54,8 +54,7 @@ const TeamsScreen: React.FC<TeamsScreenProps> = ({ session }) => {
             const userEmail = session.user.email;
             let teamId: string | null = null;
     
-            // 1. Primeiro, determine o ID da equipe do usuário, se houver.
-            // Priorize a propriedade, pois é a associação mais forte.
+            // 1. Determine team ID
             const { data: ownedTeamData, error: ownedTeamError } = await supabase
                 .from('teams')
                 .select('id')
@@ -66,7 +65,6 @@ const TeamsScreen: React.FC<TeamsScreenProps> = ({ session }) => {
             if (ownedTeamData) {
                 teamId = ownedTeamData.id;
             } else {
-                // Se não for proprietário, verifique se é um membro aceito.
                 const { data: memberRecord, error: memberError } = await supabase
                     .from('team_members')
                     .select('team_id')
@@ -80,7 +78,7 @@ const TeamsScreen: React.FC<TeamsScreenProps> = ({ session }) => {
                 }
             }
     
-            // 2. Se um ID de equipe foi encontrado, busque os detalhes completos da equipe e dos membros.
+            // 2. Fetch full team data if teamId exists
             if (teamId) {
                 const { data: teamData, error: teamError } = await supabase
                     .from('teams')
@@ -88,27 +86,65 @@ const TeamsScreen: React.FC<TeamsScreenProps> = ({ session }) => {
                     .eq('id', teamId)
                     .single();
                 if (teamError) throw teamError;
-    
-                const { data: membersData, error: membersError } = await supabase
+
+                // Fetch members without the join
+                const { data: membersOnlyData, error: membersError } = await supabase
                     .from('team_members')
-                    .select('*, profiles(username)')
+                    .select('*')
                     .eq('team_id', teamId);
                 if (membersError) throw membersError;
+
+                const userIds = membersOnlyData
+                    .map(m => m.user_id)
+                    .filter((id): id is string => !!id);
+
+                let membersWithProfiles: TeamMember[] = membersOnlyData.map(m => ({ ...m, profiles: null }));
+
+                if (userIds.length > 0) {
+                    // Fetch profiles for those user_ids
+                    const { data: profilesData, error: profilesError } = await supabase
+                        .from('profiles')
+                        .select('id, username')
+                        .in('id', userIds);
+                    
+                    if (profilesError) {
+                         if (profilesError.message.includes('infinite recursion')) {
+                             throw new Error('Erro de Configuração Detectado: Ocorreu uma recursão infinita ao buscar os perfis dos membros. Isso é geralmente causado por uma configuração incorreta das Políticas de Segurança (RLS) no Supabase. Por favor, revise suas políticas para corrigir o problema.');
+                         }
+                        throw profilesError;
+                    }
+
+                    // Combine the data
+                    const profilesMap = new Map(profilesData.map(p => [p.id, { username: p.username }]));
+                    membersWithProfiles = membersOnlyData.map(member => ({
+                        ...member,
+                        profiles: member.user_id ? profilesMap.get(member.user_id) || null : null
+                    }));
+                }
     
                 setTeam(teamData);
-                setMembers(membersData as TeamMember[]);
+                setMembers(membersWithProfiles);
             } else {
-                // 3. Se não houver equipe associada, verifique se há convites pendentes.
+                // 3. Check for pending invitations
                 const { data: invite, error: inviteError } = await supabase
                     .from('team_members')
-                    .select('*, teams(*)')
+                    .select('*')
                     .eq('invited_email', userEmail)
                     .eq('status', 'pending')
                     .maybeSingle();
                 if (inviteError) throw inviteError;
     
-                if (invite && invite.teams) {
-                    setInvitation(invite as TeamMember & { teams: TeamData });
+                if (invite) {
+                     const { data: teamForInvite, error: teamForInviteError } = await supabase
+                        .from('teams')
+                        .select('*')
+                        .eq('id', invite.team_id)
+                        .single();
+                    if (teamForInviteError) throw teamForInviteError;
+
+                    if (teamForInvite) {
+                        setInvitation({ ...invite, teams: teamForInvite });
+                    }
                 }
             }
         } catch (err: any) {
@@ -126,26 +162,52 @@ const TeamsScreen: React.FC<TeamsScreenProps> = ({ session }) => {
 
     const handleCreateTeam = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!session?.user || !teamName) return;
+        if (!session?.user || !teamName || !supabase) return;
         setLoading(true);
-        const { error: insertError } = await supabase
-            .from('teams')
-            .insert({ name: teamName, logo_url: logoUrl, owner_id: session.user.id });
-
-        if (insertError) {
-            setError(insertError.message);
-        } else {
+        setError(null);
+    
+        try {
+            // 1. Create the team and get its ID
+            const { data: teamData, error: insertError } = await supabase
+                .from('teams')
+                .insert({ name: teamName, logo_url: logoUrl, owner_id: session.user.id })
+                .select()
+                .single();
+    
+            if (insertError) throw insertError;
+            if (!teamData) throw new Error("Falha ao obter dados da equipe recém-criada.");
+    
+            // 2. Add the owner as an accepted member
+            const { error: memberError } = await supabase
+                .from('team_members')
+                .insert({
+                    team_id: teamData.id,
+                    user_id: session.user.id,
+                    invited_email: session.user.email!, // Email should exist if user is logged in
+                    status: 'accepted'
+                });
+            
+            if (memberError) {
+                // Try to clean up if adding member fails
+                await supabase.from('teams').delete().eq('id', teamData.id);
+                throw memberError;
+            }
+    
             setIsCreateModalOpen(false);
             setTeamName('');
             setLogoUrl('');
-            await fetchData(); // Refrescar dados
+            await fetchData(); // Refresh data
+    
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
     };
 
     const handleInviteMember = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!team || !inviteEmail || members.length >= 6) {
+        if (!team || !inviteEmail || members.length >= 6 || !supabase) {
             setError(members.length >= 6 ? 'Limite de 6 membros atingido.' : 'Email inválido.');
             return;
         }
@@ -165,7 +227,7 @@ const TeamsScreen: React.FC<TeamsScreenProps> = ({ session }) => {
     };
 
     const handleRemoveMember = async (memberId: number) => {
-        if (!window.confirm("Tem a certeza que quer remover este membro?")) return;
+        if (!window.confirm("Tem a certeza que quer remover este membro?") || !supabase) return;
         setLoading(true);
         const { error: deleteError } = await supabase
             .from('team_members')
@@ -178,7 +240,7 @@ const TeamsScreen: React.FC<TeamsScreenProps> = ({ session }) => {
     };
 
     const handleAcceptInvite = async () => {
-        if (!invitation || !session?.user) return;
+        if (!invitation || !session?.user || !supabase) return;
         setLoading(true);
         const { error: updateError } = await supabase
             .from('team_members')
@@ -194,7 +256,7 @@ const TeamsScreen: React.FC<TeamsScreenProps> = ({ session }) => {
     };
     
     const handleDeclineInvite = async () => {
-        if (!invitation) return;
+        if (!invitation || !supabase) return;
         setLoading(true);
         const { error: deleteError } = await supabase
             .from('team_members')
