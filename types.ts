@@ -8,6 +8,7 @@ export interface UserProfile {
     last_analysis_at: string | null;
     subscription_expires_at: string | null;
     phone: string;
+    plan_id?: string;
 }
 
 export type GameMode = 'dashboard' | '1v1' | '5v5' | 'ranking' | 'item' | 'synergy' | 'heroes' | 'premium' | 'history' | 'teams';
@@ -243,4 +244,23 @@ export interface AnalysisHistoryItem {
     analysis_type: '1v1' | '5v5' | 'synergy';
     title: string;
     analysis_data: any;
+}
+
+export type TeamMemberStatus = 'pending' | 'accepted';
+
+export interface TeamData {
+  id: string;
+  created_at: string;
+  name: string;
+  logo_url: string | null;
+  owner_id: string;
+}
+
+export interface TeamMember {
+  id: number;
+  team_id: string;
+  user_id: string | null;
+  invited_email: string;
+  status: TeamMemberStatus;
+  profiles?: { username: string } | null;
 }

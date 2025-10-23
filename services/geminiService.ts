@@ -16,8 +16,8 @@ async function fetchGeminiWithCache<T>(cacheKey: string, fetchFunction: () => Pr
         } else {
              console.log(`[Cache IA] MISS para: ${cacheKey}`);
         }
-    } catch (e) {
-        console.error(`[Cache IA] Falha ao ler do cache para a chave ${cacheKey}`, e);
+    } catch (e: any) {
+        console.error(`[Cache IA] Falha ao ler do cache para a chave ${cacheKey}`, e.message);
     }
 
     const fetchedData = await fetchFunction();
@@ -29,8 +29,8 @@ async function fetchGeminiWithCache<T>(cacheKey: string, fetchFunction: () => Pr
         };
         localStorage.setItem(cacheKey, JSON.stringify(itemToCache));
         console.log(`[Cache IA] Escrito no cache para a chave: ${cacheKey}`);
-    } catch (e) {
-        console.error(`[Cache IA] Falha ao escrever no cache para a chave ${cacheKey}`, e);
+    } catch (e: any) {
+        console.error(`[Cache IA] Falha ao escrever no cache para a chave ${cacheKey}`, e.message);
     }
 
     return fetchedData;
@@ -81,7 +81,7 @@ async function callBackendApi<T>(analysisType: string, payload: any): Promise<T>
 
         return response.json() as T;
     } catch (error) {
-        console.error(`Erro ao chamar a API backend para ${analysisType}:`, error);
+        console.error(`Erro ao chamar a API backend para ${analysisType}:`, error instanceof Error ? error.message : String(error));
         
         if (error instanceof Error && error.name === 'AbortError') {
             throw new Error('A análise da IA demorou muito para responder (timeout). Por favor, tente novamente.');

@@ -243,7 +243,7 @@ const Tools: React.FC<{ onSetMode: (mode: GameMode) => void; effectiveSubscripti
             <div className="grid grid-cols-3 md:grid-cols-6 lg:grid-cols-3 gap-3">
                 {tools.map(tool => (
                     <button key={tool.mode} onClick={() => onSetMode(tool.mode)} className="relative flex flex-col items-center justify-center gap-1 p-2 bg-slate-800/50 rounded-lg border border-slate-700 hover:bg-sky-600/50 hover:border-sky-500 transition-all duration-300 transform hover:-translate-y-1 h-24">
-                        {tool.isPremium && effectiveSubscriptionStatus !== 'premium' && <span className="absolute -top-1.5 -right-1.5 bg-gradient-to-br from-amber-400 to-yellow-500 text-black text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow-lg animate-soft-blink">PREMIUM</span>}
+                        {tool.isPremium && effectiveSubscriptionStatus === 'free' && <span className="absolute -top-1.5 -right-1.5 bg-gradient-to-br from-amber-400 to-yellow-500 text-black text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow-lg animate-soft-blink">PREMIUM</span>}
                         <div className="h-8 flex items-center justify-center text-slate-300">{tool.icon}</div>
                         <span className="text-xs font-semibold text-center leading-tight">{tool.label}</span>
                     </button>

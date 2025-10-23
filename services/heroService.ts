@@ -135,8 +135,8 @@ async function fetchWithCache<T>(cacheKey: string, fetchFunction: () => Promise<
                 return data as T;
             }
         }
-    } catch (e) {
-        console.error(`Falha ao ler o cache para a chave ${cacheKey}`, e);
+    } catch (e: any) {
+        console.error(`Falha ao ler o cache para a chave ${cacheKey}`, e.message);
     }
 
     const fetchedData = await fetchFunction();
@@ -147,8 +147,8 @@ async function fetchWithCache<T>(cacheKey: string, fetchFunction: () => Promise<
             data: fetchedData,
         };
         localStorage.setItem(cacheKey, JSON.stringify(itemToCache));
-    } catch (e) {
-        console.error(`Falha ao escrever no cache para a chave ${cacheKey}`, e);
+    } catch (e: any) {
+        console.error(`Falha ao escrever no cache para a chave ${cacheKey}`, e.message);
     }
 
     return fetchedData;
@@ -202,8 +202,8 @@ export async function fetchHeroes(): Promise<Record<string, Hero>> {
 
             return heroDatabase;
 
-        } catch (error) {
-            console.error("Falha ao buscar ou processar os dados dos heróis:", error);
+        } catch (error: any) {
+            console.error("Falha ao buscar ou processar os dados dos heróis:", error.message);
             throw new Error("Não foi possível carregar os dados dos heróis. O serviço pode estar temporariamente indisponível.");
         }
     }, ttl);
@@ -255,8 +255,8 @@ export async function fetchHeroPositionsData(): Promise<Record<number, { roles: 
             }
             return positionsDatabase;
 
-        } catch (error) {
-            console.error("Falha ao buscar ou processar os dados de posição dos heróis:", error);
+        } catch (error: any) {
+            console.error("Falha ao buscar ou processar os dados de posição dos heróis:", error.message);
             // Return an empty object on failure to avoid breaking the app
             return {};
         }
@@ -292,8 +292,8 @@ export async function fetchHeroCounterStats(heroApiId: number): Promise<HeroCoun
             const counteredBy = record.sub_hero_last || [];
             
             return { counters, counteredBy };
-        } catch (error) {
-            console.error(`Falha ao buscar stats de counter para o herói ID ${heroApiId}:`, error);
+        } catch (error: any) {
+            console.error(`Falha ao buscar stats de counter para o herói ID ${heroApiId}:`, error.message);
             // Retornar um objeto vazio em caso de falha para evitar que a UI quebre
             return { counters: [], counteredBy: [] };
         }
@@ -336,8 +336,8 @@ export async function fetchSkillCombos(heroApiId: number): Promise<SkillCombo[]>
 
             return combos;
 
-        } catch (error) {
-            console.error(`Falha ao buscar combos de habilidade para o herói ID ${heroApiId}:`, error);
+        } catch (error: any) {
+            console.error(`Falha ao buscar combos de habilidade para o herói ID ${heroApiId}:`, error.message);
             return [];
         }
     }, ttl);
@@ -411,8 +411,8 @@ export async function fetchHeroDetails(heroApiId: number): Promise<HeroDetails> 
                 combos: combos,
             };
 
-        } catch (error) {
-            console.error(`Falha ao buscar detalhes para o herói ID ${heroApiId}:`, error);
+        } catch (error: any) {
+            console.error(`Falha ao buscar detalhes para o herói ID ${heroApiId}:`, error.message);
             throw new Error("Não foi possível carregar os detalhes do herói.");
         }
     }, ttl);
@@ -445,8 +445,8 @@ export async function fetchHeroRankings(
             }
 
             return records.map((r: any) => r.data as ApiHeroRankData);
-        } catch (error) {
-            console.error(`Falha ao buscar ranking de heróis:`, error);
+        } catch (error: any) {
+            console.error(`Falha ao buscar ranking de heróis:`, error.message);
             throw new Error("Não foi possível carregar o ranking de heróis.");
         }
     }, ttl);
@@ -537,8 +537,8 @@ export async function fetchHeroDetailStats(
                 bestSynergies,
                 worstSynergies,
             };
-        } catch (error) {
-            console.error(`Falha ao buscar estatísticas detalhadas para o herói ID ${heroApiId}:`, error);
+        } catch (error: any) {
+            console.error(`Falha ao buscar estatísticas detalhadas para o herói ID ${heroApiId}:`, error.message);
             return null;
         }
     }, ttl);
@@ -622,8 +622,8 @@ export async function fetchHeroRelations(
                 weak: { target_hero_id: weakIds },
             };
 
-        } catch (error) {
-            console.error(`Falha ao buscar relações para o herói ID ${heroApiId}:`, error);
+        } catch (error: any) {
+            console.error(`Falha ao buscar relações para o herói ID ${heroApiId}:`, error.message);
             throw new Error("Não foi possível carregar os dados de sinergia do herói.");
         }
     }, ttl);
@@ -663,8 +663,8 @@ export async function fetchHeroRate(
                 banRate: d.ban_rate,
             })).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-        } catch (error) {
-            console.error(`Falha ao buscar taxas para o herói ID ${heroApiId}:`, error);
+        } catch (error: any) {
+            console.error(`Falha ao buscar taxas para o herói ID ${heroApiId}:`, error.message);
             return []; // Return empty array on failure to avoid breaking UI
         }
     }, ttl);

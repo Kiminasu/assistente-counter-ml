@@ -74,7 +74,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json({ init_point: result.init_point });
 
     } catch (error: any) {
-        console.error("Erro ao criar preferência do Mercado Pago:", error);
+        console.error("Erro ao criar preferência do Mercado Pago:", error.message);
         return res.status(500).json({ error: error.message || "Erro interno do servidor ao processar o pagamento." });
     }
 }

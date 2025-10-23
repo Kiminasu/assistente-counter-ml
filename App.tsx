@@ -11,12 +11,12 @@ import LoadingOverlay from './components/LoadingOverlay';
 import AnalysisPanel from './components/AnalysisPanel';
 import LaneSelector from './components/LaneSelector';
 import HeroSelectionModal from './components/HeroSelectionModal';
-import BanSuggestions from './BanSuggestions';
+import BanSuggestions from './components/BanSuggestions';
 import DirectMatchupPanel from './components/DirectMatchupPanel';
 import Footer from './components/Footer';
 import TabbedPanel from './components/TabbedPanel';
 import HeroRankings from './components/HeroRankings';
-import Header from './Header';
+import Header from './components/Header';
 import DraftScreen from './DraftScreen';
 import SynergyPanel from './components/SynergyPanel';
 import HeroSlot from './components/HeroSlot';
@@ -33,6 +33,7 @@ import { supabase } from './supabaseClient';
 import LandingPage from './components/LandingPage';
 import FeaturesPage from './components/FeaturesPage';
 import HistoryScreen from './components/HistoryScreen';
+import TeamsScreen from './components/TeamsScreen';
 
 const DAILY_ANALYSIS_LIMIT = 5;
 
@@ -66,6 +67,7 @@ const App: React.FC = () => {
 
     const [session, setSession] = useState<Session | null>(null);
     const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+    const [isPremium, setIsPremium] = useState(false);
     const [profileError, setProfileError] = useState<string | null>(null);
     const [isProfileChecked, setIsProfileChecked] = useState(false);
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -121,8 +123,8 @@ const App: React.FC = () => {
         try {
             const item = window.localStorage.getItem('heroDetailsCache');
             return item ? JSON.parse(item) : {};
-        } catch (error) {
-            console.error("Erro ao ler o cache de detalhes do herói do localStorage", error);
+        } catch (error: any) {
+            console.error("Erro ao ler o cache de detalhes do herói do localStorage", error.message);
             return {};
         }
     });
@@ -139,42 +141,49 @@ const App: React.FC = () => {
 
     const fetchUserProfile = useCallback(async (user: { id: string }) => {
         if (!supabase) return;
-        setProfileError(null); // Clear previous errors
-        const { data, error } = await supabase
-            .from('profiles')
-            .select('username, rank, subscription_status, analysis_count, last_analysis_at, subscription_expires_at, phone')
-            .eq('id', user.id)
-            .single();
+        setProfileError(null);
     
-        if (error && error.code !== 'PGRST116') { // PGRST116 is "No rows found"
-            console.error("Erro ao buscar perfil:", error);
-            // This is a real database/permission error
-            const detailedError = `Falha ao carregar o perfil do usuário. Causa provável: As Políticas de Segurança (RLS) da tabela 'profiles' no Supabase não estão configuradas para permitir a leitura. Verifique se existe uma política 'SELECT' ativa para usuários autenticados que permite a leitura da sua própria linha (ex: auth.uid() = id). (Erro: ${error.message})`;
+        const [profileResult, premiumStatusResult] = await Promise.all([
+            supabase
+                .from('profiles')
+                .select('username, rank, subscription_status, analysis_count, last_analysis_at, subscription_expires_at, phone, plan_id')
+                .eq('id', user.id)
+                .single(),
+            supabase.rpc('is_premium_member', { p_user_id: user.id })
+        ]);
+    
+        const { data, error } = profileResult;
+        const { data: premiumStatus, error: rpcError } = premiumStatusResult;
+    
+        if (error && error.code !== 'PGRST116') {
+            console.error("Erro ao buscar perfil:", error.message);
+            let detailedError = `Falha ao carregar o perfil do usuário. Verifique suas Políticas de Segurança (RLS) no Supabase. (Erro: ${error.message})`;
+
+            if (error.code === '42P17' || error.message.includes('infinite recursion')) {
+                detailedError = 'Erro de Configuração Detectado: Ocorreu um erro de recursão infinita ao buscar seus dados. Isso é geralmente causado por uma configuração incorreta das Políticas de Segurança (RLS) no Supabase, onde as tabelas "profiles" e "team_members" podem estar se consultando mutuamente. Por favor, revise suas políticas para corrigir o problema.';
+            }
+            
             setProfileError(detailedError);
             setUserProfile(null);
         } else if (data) {
-            // Profile found, success!
-            const completeProfile = {
-                ...data,
-                phone: data.phone || '',
-            };
+            const completeProfile = { ...data, phone: data.phone || '' };
             setUserProfile(completeProfile as UserProfile);
         } else {
-            // No data and no error (or "No rows found" error), meaning profile doesn't exist
             console.warn("Nenhum perfil encontrado para o usuário:", user.id);
-            const noProfileError = "Seu perfil não foi encontrado. Se você acabou de se cadastrar, a criação do perfil pode ter falhado. Isso geralmente ocorre se a confirmação de e-mail estiver habilitada e as políticas de 'INSERT' no Supabase não permitirem a criação de perfis para usuários não confirmados. Verifique suas políticas de RLS.";
+            const noProfileError = "Seu perfil não foi encontrado. Se você acabou de se cadastrar, a criação pode ter falhado.";
             setProfileError(noProfileError);
             setUserProfile(null);
         }
+    
+        if (rpcError) {
+            console.error("Erro ao verificar status premium via RPC:", rpcError.message);
+            setIsPremium(false);
+        } else {
+            setIsPremium(premiumStatus);
+        }
     }, []);
 
-    const effectiveSubscriptionStatus = useMemo(() => {
-        if (userProfile?.subscription_status === 'premium' && userProfile.subscription_expires_at) {
-            return new Date(userProfile.subscription_expires_at) > new Date() ? 'premium' : 'free';
-        }
-        return 'free';
-    }, [userProfile]);
-
+    const effectiveSubscriptionStatus = useMemo(() => isPremium ? 'premium' : 'free', [isPremium]);
 
     useEffect(() => {
         const handleAuthChange = async (session: Session | null) => {
@@ -188,6 +197,7 @@ const App: React.FC = () => {
             } else {
                 setUserProfile(null);
                 setProfileError(null);
+                setIsPremium(false);
             }
             setIsProfileChecked(true);
         };
@@ -227,8 +237,8 @@ const App: React.FC = () => {
     useEffect(() => {
         try {
             window.localStorage.setItem('heroDetailsCache', JSON.stringify(heroDetailsCache));
-        } catch (error) {
-            console.error("Erro ao escrever o cache de detalhes do herói no localStorage", error);
+        } catch (error: any) {
+            console.error("Erro ao escrever o cache de detalhes do herói no localStorage", error.message);
         }
     }, [heroDetailsCache]);
     
@@ -251,13 +261,20 @@ const App: React.FC = () => {
     const analysisSectionRef = useRef<HTMLDivElement>(null);
 
     const handleSetGameMode = useCallback((mode: GameMode) => {
-        if (mode === 'history' && effectiveSubscriptionStatus === 'free') {
+        if (mode === 'teams') {
+            // Acesso exclusivo para o plano Glória Imortal
+            if (userProfile?.plan_id !== 'monthly_glory') {
+                setIsUpgradeModalOpen(true);
+                return;
+            }
+        } else if ((mode === 'history' || mode === '5v5') && !isPremium) {
+            // Acesso para qualquer plano premium
             setIsUpgradeModalOpen(true);
             return;
         }
         setGameMode(mode);
         window.scrollTo(0, 0);
-    }, [effectiveSubscriptionStatus]);
+    }, [isPremium, userProfile]);
 
     const handleLaunchApp = useCallback(() => {
         setView('app');
@@ -449,8 +466,8 @@ const App: React.FC = () => {
                     .slice(0, NUMBER_OF_META_BAN_SUGGESTIONS);
 
                 setMetaBanSuggestions(metaBans);
-            } catch (error) {
-                console.error("Falha ao buscar sugestões de banimento meta:", error);
+            } catch (error: any) {
+                console.error("Falha ao buscar sugestões de banimento meta:", error.message);
                 setMetaBanSuggestions([]);
             } finally {
                 setIsMetaBansLoading(false);
@@ -516,7 +533,7 @@ const App: React.FC = () => {
             return false;
         }
         if (!userProfile) return false;
-        if (effectiveSubscriptionStatus === 'premium') return true;
+        if (isPremium) return true;
 
         const today = new Date().toISOString().split('T')[0];
         const lastAnalysisDate = userProfile.last_analysis_at ? new Date(userProfile.last_analysis_at).toISOString().split('T')[0] : null;
@@ -526,10 +543,31 @@ const App: React.FC = () => {
             return false;
         }
         return true;
-    }, [userProfile, effectiveSubscriptionStatus, session]);
+    }, [userProfile, isPremium, session]);
+
+    const fetchAnalysisHistory = useCallback(async () => {
+        if (!supabase || !session?.user) return;
+
+        setIsHistoryLoading(true);
+        setHistoryError(null);
+
+        const { data, error } = await supabase
+            .from('analysis_history')
+            .select('*')
+            .eq('user_id', session.user.id)
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            setHistoryError('Falha ao carregar o histórico.');
+            console.error('Falha ao carregar o histórico:', error.message);
+        } else {
+            setAnalysisHistory(data);
+        }
+        setIsHistoryLoading(false);
+    }, [session]);
 
     const saveAnalysisToHistory = useCallback(async (type: '1v1' | '5v5' | 'synergy', title: string, data: any) => {
-        if (!supabase || !session?.user || effectiveSubscriptionStatus !== 'premium') return;
+        if (!supabase || !session?.user || !isPremium) return;
 
         const { error } = await supabase.from('analysis_history').insert({
             user_id: session.user.id,
@@ -539,12 +577,12 @@ const App: React.FC = () => {
         });
 
         if (error) {
-            console.error("Erro ao salvar análise:", error);
+            console.error("Erro ao salvar análise:", error.message);
         } else {
             // Opcional: atualizar o estado local do histórico para refletir a nova adição
             fetchAnalysisHistory();
         }
-    }, [session, effectiveSubscriptionStatus]);
+    }, [session, isPremium, fetchAnalysisHistory]);
 
     const processAIBanSuggestions = (suggestions: AITacticalCounter[]): BanSuggestion[] => {
         return (suggestions || []).map(suggestion => {
@@ -907,7 +945,7 @@ const App: React.FC = () => {
                             fetchHeroDetails(h.apiId)
                                 .then(details => ({ apiId: h.apiId, details }))
                                 .catch(err => {
-                                    console.error(`Falha ao buscar detalhes para o draft de ${h.name}:`, err);
+                                    console.error(`Falha ao buscar detalhes para o draft de ${h.name}:`, err.message);
                                     return null;
                                 })
                         )
@@ -986,27 +1024,6 @@ const App: React.FC = () => {
     
     }, [draftAllyPicks, draftEnemyPicks, gameMode, heroes, checkAnalysisLimit, saveAnalysisToHistory]);
 
-    const fetchAnalysisHistory = useCallback(async () => {
-        if (!supabase || !session?.user) return;
-
-        setIsHistoryLoading(true);
-        setHistoryError(null);
-
-        const { data, error } = await supabase
-            .from('analysis_history')
-            .select('*')
-            .eq('user_id', session.user.id)
-            .order('created_at', { ascending: false });
-
-        if (error) {
-            setHistoryError('Falha ao carregar o histórico.');
-            console.error(error);
-        } else {
-            setAnalysisHistory(data);
-        }
-        setIsHistoryLoading(false);
-    }, [session]);
-
     useEffect(() => {
         if (gameMode === 'history') {
             fetchAnalysisHistory();
@@ -1056,7 +1073,7 @@ const App: React.FC = () => {
         const { error } = await supabase.from('analysis_history').delete().eq('id', id);
         if (error) {
             alert('Falha ao apagar a análise.');
-            console.error(error);
+            console.error(error.message);
         } else {
             setAnalysisHistory(prev => prev.filter(item => item.id !== id));
         }
@@ -1336,6 +1353,8 @@ const App: React.FC = () => {
                     onDeleteAnalysis={handleDeleteAnalysis}
                     heroes={heroes}
                 />;
+            case 'teams':
+                return <TeamsScreen session={session} />;
             default: return null;
         }
     };

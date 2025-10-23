@@ -19,8 +19,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     try {
         const { body } = req;
         
-        // Foco no evento de pagamento atualizado, que é o mais comum para confirmações.
-        if (body.type === 'payment' && body.action === 'payment.updated') {
+        if (body.type === 'payment') {
             const paymentId = body.data.id;
             
             const client = new MercadoPagoConfig({ accessToken: MERCADOPAGO_ACCESS_TOKEN });
@@ -30,30 +29,33 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
             if (paymentInfo && paymentInfo.status === 'approved' && paymentInfo.external_reference) {
                 const userId = paymentInfo.external_reference;
+                const planId = paymentInfo.items?.[0]?.id;
+
+                if (!planId) {
+                    console.error(`Webhook: planId não encontrado no pagamento ${paymentId} para o usuário ${userId}.`);
+                    // Ainda assim, continuamos para pelo menos dar o status premium.
+                }
                 
-                // Calcula a data de expiração para 30 dias a partir de agora
                 const expiresAt = new Date();
                 expiresAt.setDate(expiresAt.getDate() + 30);
 
-                // Atualiza o perfil do usuário no Supabase para 'premium' e define a data de expiração
                 const { error: updateError } = await supabaseAdmin
                     .from('profiles')
                     .update({ 
                         subscription_status: 'premium',
-                        subscription_expires_at: expiresAt.toISOString() 
+                        subscription_expires_at: expiresAt.toISOString(),
+                        plan_id: planId // Salva o ID do plano
                     })
                     .eq('id', userId);
 
                 if (updateError) {
-                    console.error(`Erro ao atualizar perfil para premium para o usuário ${userId}:`, updateError);
-                    // Não retorna erro para o MP, mas loga o problema.
+                    console.error(`Erro ao atualizar perfil para premium para o usuário ${userId}:`, updateError.message);
                 } else {
-                    console.log(`Usuário ${userId} atualizado para premium com sucesso. Acesso expira em ${expiresAt.toISOString()}.`);
+                    console.log(`Usuário ${userId} atualizado para o plano ${planId} com sucesso. Acesso expira em ${expiresAt.toISOString()}.`);
                 }
             }
         }
         
-        // Responde ao Mercado Pago para confirmar o recebimento do webhook
         res.status(200).send('ok');
 
     } catch (error: any) {

@@ -47,18 +47,31 @@ const UserPanel: React.FC<Pick<HeaderProps, 'userProfile' | 'onLogout' | 'onEdit
 
     if (!userProfile) return null;
 
+    const isGlory = userProfile.plan_id === 'monthly_glory';
+
     return (
         <div ref={menuRef} className="relative z-20">
             <div className="flex items-center gap-3">
                 {effectiveSubscriptionStatus === 'premium' ? (
-                    <div className="hidden sm:flex items-center gap-2 bg-gradient-to-r from-amber-500 to-yellow-600 p-1.5 rounded-full border border-amber-400/50 shadow-lg shadow-amber-500/20">
-                        <div className="flex items-center gap-1.5 px-2">
-                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-black" viewBox="0 0 20 20" fill="currentColor">
-                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                            </svg>
-                            <span className="font-bold text-sm text-black">PREMIUM</span>
+                    isGlory ? (
+                        <div className="hidden sm:flex items-center gap-2 bg-gradient-to-r from-purple-500 to-indigo-600 p-1.5 rounded-full border border-purple-400/50 shadow-lg shadow-purple-500/20">
+                            <div className="flex items-center gap-1.5 px-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-white" viewBox="0 0 20 20" fill="currentColor">
+                                    <path d="M10 2a.75.75 0 01.684.453l1.325 2.69 2.968.43a.75.75 0 01.416 1.28l-2.148 2.094.507 2.957a.75.75 0 01-1.088.79l-2.655-1.396a.75.75 0 00-.702 0l-2.655 1.396a.75.75 0 01-1.088-.79l.507-2.957-2.148-2.094a.75.75 0 01.416-1.28l2.968-.43L9.316 2.453A.75.75 0 0110 2zM5 14.5a.75.75 0 01.75-.75h8.5a.75.75 0 010 1.5h-8.5a.75.75 0 01-.75-.75z" />
+                                </svg>
+                                <span className="font-bold text-sm text-white">GLÓRIA IMORTAL</span>
+                            </div>
                         </div>
-                    </div>
+                    ) : (
+                        <div className="hidden sm:flex items-center gap-2 bg-gradient-to-r from-amber-500 to-yellow-600 p-1.5 rounded-full border border-amber-400/50 shadow-lg shadow-amber-500/20">
+                            <div className="flex items-center gap-1.5 px-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-black" viewBox="0 0 20 20" fill="currentColor">
+                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                </svg>
+                                <span className="font-bold text-sm text-black">MÍTICO</span>
+                            </div>
+                        </div>
+                    )
                 ) : (
                     <div className="hidden sm:flex items-center gap-2 bg-slate-900/50 backdrop-blur-sm p-1.5 rounded-full border border-slate-700">
                          <span className="text-xs font-mono text-slate-300 px-3 flex items-center gap-1.5 whitespace-nowrap" title="Análises restantes">
@@ -94,7 +107,9 @@ const UserPanel: React.FC<Pick<HeaderProps, 'userProfile' | 'onLogout' | 'onEdit
 
                     {effectiveSubscriptionStatus === 'premium' && userProfile.subscription_expires_at && (
                         <div className="px-3 py-2 text-xs border-b border-slate-700 mb-2">
-                            <p className="font-semibold text-amber-300">Plano Premium Ativo</p>
+                            <p className={`font-semibold ${isGlory ? 'text-purple-300' : 'text-amber-300'}`}>
+                                {isGlory ? 'Plano Glória Imortal' : 'Plano Mítico'} Ativo
+                            </p>
                             <p className="text-slate-400">Expira em: {new Date(userProfile.subscription_expires_at).toLocaleDateString('pt-BR')}</p>
                         </div>
                     )}
@@ -124,7 +139,7 @@ const DesktopNavigationBar: React.FC<AppNavigationBarProps> = ({ activeMode, onS
         { id: 'heroes', label: 'Heróis', icon: <span className="font-black text-3xl">H</span> },
         { id: 'item', label: 'Itens', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 24 24" fill="currentColor"><path d="M19.5,6H17V4.5A1.5,1.5 0 0,0 15.5,3H8.5A1.5,1.5 0 0,0 7,4.5V6H4.5A1.5,1.5 0 0,0 3,7.5V11.25L5,13V19.5A1.5,1.5 0 0,0 6.5,21H17.5A1.5,1.5 0 0,0 19,19.5V13L21,11.25V7.5A1.5,1.5 0 0,0 19.5,6M15,6H9V4.5C9,4.22 9.22,4 9.5,4H14.5C14.78,4 15,4.22 15,4.5V6M12,17A2,2 0 0,1 10,15A2,2 0 0,1 12,13A2,2 0 0,1 14,15A2,2 0 0,1 12,17Z" /></svg> },
         { id: 'ranking', label: 'Ranking', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" /></svg> },
-        { id: 'teams', label: 'Times', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" /></svg>, isPro: true, isDisabled: true },
+        { id: 'teams', label: 'Times', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" /></svg>, isPro: true },
     ];
 
     const centerIndex = modes.findIndex(m => m.id === 'dashboard');
@@ -157,8 +172,14 @@ const DesktopNavigationBar: React.FC<AppNavigationBarProps> = ({ activeMode, onS
                     </div>
                 </div>
                 {(mode.isPro || isDisabled) && !isCenter && effectiveSubscriptionStatus === 'free' && (
-                     <span className={`absolute -top-0 -right-0 text-black text-[8px] font-bold px-1 py-0.5 rounded-full shadow-md ${isDisabled ? 'bg-slate-500' : 'bg-gradient-to-br from-amber-400 to-yellow-500 animate-soft-blink'}`}>
-                        {isDisabled ? 'EM BREVE' : 'PREMIUM'}
+                     <span className={`absolute -top-0 -right-0 text-black text-[8px] font-bold px-1 py-0.5 rounded-full shadow-md ${
+                        isDisabled 
+                            ? 'bg-slate-500' 
+                            : mode.id === 'teams' 
+                                ? 'bg-gradient-to-br from-purple-400 to-indigo-500' 
+                                : 'bg-gradient-to-br from-amber-400 to-yellow-500 animate-soft-blink'
+                    }`}>
+                        {isDisabled ? 'EM BREVE' : (mode.id === 'teams' ? 'GLÓRIA' : 'PREMIUM')}
                     </span>
                 )}
             </button>
@@ -204,7 +225,7 @@ const MobileNavigationBar: React.FC<AppNavigationBarProps> = ({ activeMode, onSe
         { id: 'heroes', label: 'Heróis', icon: <span className="font-black text-3xl">H</span> },
         { id: 'item', label: 'Itens', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 24 24" fill="currentColor"><path d="M19.5,6H17V4.5A1.5,1.5 0 0,0 15.5,3H8.5A1.5,1.5 0 0,0 7,4.5V6H4.5A1.5,1.5 0 0,0 3,7.5V11.25L5,13V19.5A1.5,1.5 0 0,0 6.5,21H17.5A1.5,1.5 0 0,0 19,19.5V13L21,11.25V7.5A1.5,1.5 0 0,0 19.5,6M15,6H9V4.5C9,4.22 9.22,4 9.5,4H14.5C14.78,4 15,4.22 15,4.5V6M12,17A2,2 0 0,1 10,15A2,2 0 0,1 12,13A2,2 0 0,1 14,15A2,2 0 0,1 12,17Z" /></svg> },
         { id: 'ranking', label: 'Ranking', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" /></svg> },
-        { id: 'teams', label: 'Times', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" /></svg>, isPro: true, isDisabled: true },
+        { id: 'teams', label: 'Times', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" /></svg>, isPro: true },
     ];
     const centerMode = { id: 'dashboard', label: 'Painel', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" viewBox="0 0 20 20" fill="currentColor"><path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg> };
 
@@ -263,8 +284,14 @@ const MobileNavigationBar: React.FC<AppNavigationBarProps> = ({ activeMode, onSe
                                      </span>
                                  </div>
                                  {(mode.isPro || isDisabled) && effectiveSubscriptionStatus === 'free' && (
-                                      <span className={`absolute top-1 right-1 text-black text-[8px] font-bold px-1 rounded-full shadow-md ${isDisabled ? 'bg-slate-500' : 'bg-gradient-to-br from-amber-400 to-yellow-500'}`}>
-                                         {isDisabled ? 'BREVE' : 'PRO'}
+                                    <span className={`absolute top-1 right-1 text-black text-[8px] font-bold px-1 rounded-full shadow-md ${
+                                        isDisabled 
+                                            ? 'bg-slate-500' 
+                                            : mode.id === 'teams'
+                                                ? 'bg-gradient-to-br from-purple-400 to-indigo-500'
+                                                : 'bg-gradient-to-br from-amber-400 to-yellow-500'
+                                      }`}>
+                                         {isDisabled ? 'BREVE' : (mode.id === 'teams' ? 'GLÓRIA' : 'PRO')}
                                      </span>
                                  )}
                              </button>
@@ -288,7 +315,7 @@ const Header: React.FC<HeaderProps> = ({ activeMode, onSetMode, session, userPro
         'ranking': 'Explore as estatísticas de heróis, filtre por elo e período para descobrir os heróis mais fortes do meta atual.',
         'premium': 'Conheça os planos e desbloqueie o acesso ilimitado a todas as ferramentas da Mítica Estratégia.',
         'history': 'Acesse e reveja todas as suas análises de IA salvas. Disponível para assinantes Mítico e Glória Imortal.',
-        'teams': 'Gerencie sua equipe, convide jogadores e analise drafts em grupo. (Em breve para assinantes Glória Imortal)'
+        'teams': 'Gerencie sua equipe, convide jogadores e analise drafts em grupo. (Exclusivo para assinantes Glória Imortal)'
     };
 
     return (
@@ -309,9 +336,9 @@ const Header: React.FC<HeaderProps> = ({ activeMode, onSetMode, session, userPro
                                 <span className="hidden sm:block">Voltar</span>
                             </button>
                         ) : (
-                            <button onClick={() => onSetMode('dashboard')} className="flex items-center gap-2 cursor-pointer group">
+                            <button onClick={() => onGoBackToLanding()} className="flex items-center gap-2 cursor-pointer group">
                                 <img src="https://i.postimg.cc/ZK4nFyHG/mitica-logo-Photoroom.png" alt="Logo" className="h-10 w-10 transition-transform group-hover:scale-110" />
-                                <span className="font-bold text-lg text-white transition-all group-hover:brightness-110 relative top-[2px]" style={{ fontFamily: "'Inter', sans-serif" }}>Mítica Estratégia <span className="hidden sm:inline">MLBB</span></span>
+                                <span className="font-bold text-lg text-white hidden sm:block transition-all group-hover:brightness-110 relative top-[2px]" style={{ fontFamily: "'Inter', sans-serif" }}>Mítica Estratégia MLBB</span>
                             </button>
                         )}
 

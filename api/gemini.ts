@@ -253,7 +253,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         
         return res.status(200).json(result);
     } catch (error: any) {
-        console.error("Erro na função de API:", error);
+        console.error("Erro na função de API:", error.message);
         return res.status(500).json({ error: error.message || "Erro interno do servidor." });
     }
 }

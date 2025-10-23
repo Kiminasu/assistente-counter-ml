@@ -220,7 +220,7 @@ const PremiumScreen: React.FC<PremiumScreenProps> = ({ userProfile }) => {
             features: [
                 { text: 'Todos os benefícios do plano Mítico', included: true },
                 { 
-                  text: 'Gerenciamento de Time (em breve)',
+                  text: 'Gerenciamento de Time',
                   included: true, 
                   description: '(Crie e gerencie até 5 contas para os membros do seu time, analise drafts em grupo e receba insights de sinergia.)'
                 },
