@@ -261,20 +261,14 @@ const App: React.FC = () => {
     const analysisSectionRef = useRef<HTMLDivElement>(null);
 
     const handleSetGameMode = useCallback((mode: GameMode) => {
-        if (mode === 'teams') {
-            // Acesso exclusivo para o plano Glória Imortal
-            if (userProfile?.plan_id !== 'monthly_glory') {
-                setIsUpgradeModalOpen(true);
-                return;
-            }
-        } else if ((mode === 'history' || mode === '5v5') && !isPremium) {
+        if ((mode === 'history' || mode === '5v5') && !isPremium) {
             // Acesso para qualquer plano premium
             setIsUpgradeModalOpen(true);
             return;
         }
         setGameMode(mode);
         window.scrollTo(0, 0);
-    }, [isPremium, userProfile]);
+    }, [isPremium]);
 
     const handleLaunchApp = useCallback(() => {
         setView('app');
@@ -1331,6 +1325,7 @@ const App: React.FC = () => {
                     counterBanSuggestions={counterBanSuggestions}
                     metaBanSuggestions={metaBanSuggestions}
                     isMetaBansLoading={isMetaBansLoading}
+                    // FIX: The variable 'activeMetaRank' was not defined in this scope. It has been replaced with the correct state variable 'metaBanRankCategory'.
                     activeMetaRank={metaBanRankCategory}
                     onMetaRankChange={setMetaBanRankCategory}
                     onAnalyze={handleSynergyAnalysis}
@@ -1354,7 +1349,7 @@ const App: React.FC = () => {
                     heroes={heroes}
                 />;
             case 'teams':
-                return <TeamsScreen session={session} />;
+                return <TeamsScreen session={session} userProfile={userProfile} onUpgradeClick={() => setIsUpgradeModalOpen(true)} />;
             default: return null;
         }
     };
