@@ -44,98 +44,103 @@ const TeamsScreen: React.FC<TeamsScreenProps> = ({ session, userProfile, onUpgra
 
 
     const fetchData = useCallback(async () => {
-        setError(null);
-    
-        if (!session?.user?.id || !session.user.email || !supabase) {
-            throw new Error("Usuário não autenticado.");
-        }
-    
-        const userId = session.user.id;
-        
-        const { data: inviteData, error: rpcError } = await supabase.rpc('get_my_invitation');
-
-        if (rpcError) {
-            if (rpcError.message.includes('function get_my_invitation() does not exist')) {
-                throw new Error("Ação necessária: A função de busca de convites não foi encontrada no backend. Por favor, peça ao administrador para criar a função 'get_my_invitation' no Editor SQL do Supabase.");
-            }
-            throw rpcError;
-        }
-
-        const inviteRecord = inviteData && Array.isArray(inviteData) && inviteData.length > 0 ? inviteData[0] : null;
-
-        if (inviteRecord) {
-            const fullInvitation = {
-                id: inviteRecord.id,
-                team_id: inviteRecord.team_id,
-                invited_email: inviteRecord.invited_email,
-                status: 'pending',
-                user_id: null,
-                teams: {
-                    id: inviteRecord.team_id,
-                    name: inviteRecord.team_name,
-                    logo_url: inviteRecord.team_logo_url,
-                    created_at: new Date().toISOString(), 
-                    owner_id: ''
-                }
-            };
-            setInvitation(fullInvitation as (TeamMember & { teams: TeamData }));
-            setTeam(null);
-            return;
-        }
-    
-        const { data: memberRecord, error: memberError } = await supabase
-            .from('team_members')
-            .select('team_id')
-            .eq('user_id', userId)
-            .eq('status', 'accepted')
-            .maybeSingle();
-    
-        if (memberError) throw memberError;
-    
-        if (memberRecord?.team_id) {
-            const teamId = memberRecord.team_id;
-    
-            const [teamResult, membersResult] = await Promise.all([
-                supabase.from('teams').select('*').eq('id', teamId).single(),
-                supabase.from('team_members').select('*, profiles(username)').eq('team_id', teamId)
-            ]);
-    
-            const { data: teamData, error: teamError } = teamResult;
-            if (teamError) throw teamError;
-    
-            const { data: membersData, error: membersError } = membersResult;
-            if (membersError) {
-                if (membersError.message.includes('infinite recursion')) {
-                    throw new Error('Erro de Configuração Detectado: Ocorreu uma recursão infinita ao buscar os perfis dos membros. Isso é geralmente causado por uma configuração incorreta das Políticas de Segurança (RLS) no Supabase. Por favor, revise suas políticas para corrigir o problema.');
-                }
-                throw membersError;
-            }
-            
-            setTeam(teamData);
-            setMembers(membersData as TeamMember[]);
-            setInvitation(null);
-        } else {
+        if (!session?.user?.id || !supabase) {
             setTeam(null);
             setMembers([]);
             setInvitation(null);
+            setLoading(false);
+            return;
+        }
+        
+        setError(null);
+        setLoading(true);
+
+        try {
+            const { data: inviteData, error: inviteRpcError } = await supabase.rpc('get_my_invitation');
+            if (inviteRpcError) {
+                if (inviteRpcError.message.includes('function public.get_my_invitation() does not exist')) {
+                    setError("Falha na configuração do backend: A função para buscar convites ('get_my_invitation') não existe. O administrador precisa criá-la no Supabase.");
+                    setLoading(false);
+                    return;
+                }
+                throw inviteRpcError;
+            }
+
+            const inviteRecord = inviteData?.[0];
+            if (inviteRecord) {
+                setInvitation({
+                    id: inviteRecord.id, team_id: inviteRecord.team_id, invited_email: inviteRecord.invited_email, status: 'pending', user_id: null,
+                    teams: {
+                        id: inviteRecord.team_id, name: inviteRecord.team_name, logo_url: inviteRecord.team_logo_url, created_at: '', owner_id: ''
+                    }
+                } as (TeamMember & { teams: TeamData }));
+                setTeam(null);
+                setLoading(false);
+                return;
+            }
+
+            const { data: teamData, error: teamRpcError } = await supabase.rpc('get_my_team');
+            if (teamRpcError) {
+                if (teamRpcError.message.includes('function public.get_my_team() does not exist')) {
+                     setError("Falha na configuração do backend: A função para buscar sua equipe ('get_my_team') não existe. O administrador precisa criá-la no Supabase.");
+                     setLoading(false);
+                     return;
+                }
+                throw teamRpcError;
+            }
+            
+            const teamRecord = teamData?.[0];
+            if (teamRecord) {
+                const currentTeam = {
+                    id: teamRecord.team_id, name: teamRecord.team_name, logo_url: teamRecord.team_logo_url, owner_id: teamRecord.owner_id, created_at: ''
+                };
+                setTeam(currentTeam);
+
+                const { data: membersData, error: membersError } = await supabase
+                    .rpc('get_team_members', { p_team_id: teamRecord.team_id });
+
+                if (membersError) {
+                    if (membersError.message.includes('function get_team_members(p_team_id => uuid) does not exist')) {
+                        setError("Falha na configuração do backend: A função para buscar membros ('get_team_members') não existe. O administrador precisa criá-la no Supabase.");
+                        setLoading(false);
+                        return;
+                    }
+                    throw membersError;
+                }
+
+                const enrichedMembers = (membersData || []).map((member: any) => ({
+                    id: member.id,
+                    team_id: member.team_id,
+                    user_id: member.user_id,
+                    invited_email: member.invited_email,
+                    status: member.status,
+                    profiles: member.username ? { username: member.username } : null
+                }));
+                
+                setMembers(enrichedMembers as TeamMember[]);
+                setInvitation(null);
+            } else {
+                setTeam(null);
+                setMembers([]);
+                setInvitation(null);
+            }
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
         }
     }, [session]);
     
     useEffect(() => {
-        const initialLoad = async () => {
-            setLoading(true);
-            try {
-                await fetchData();
-            } catch (err: any) {
-                console.error("Erro ao buscar dados da equipe:", err.message);
-                const errorMessage = `Falha ao carregar dados da equipe. Verifique as políticas de segurança (RLS). (Erro: ${err.message})`;
-                setError(errorMessage);
-            } finally {
-                setLoading(false);
-            }
-        };
-        initialLoad();
-    }, [fetchData]);
+        if(session) {
+            fetchData();
+        } else {
+            setLoading(false);
+            setTeam(null);
+            setMembers([]);
+            setInvitation(null);
+        }
+    }, [session, fetchData]);
 
     const handleCreateTeam = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -227,43 +232,25 @@ const TeamsScreen: React.FC<TeamsScreenProps> = ({ session, userProfile, onUpgra
     };
 
     const handleAcceptInvite = async () => {
-        const currentInvitation = invitation; // Captura os dados do convite atual
-        if (!currentInvitation || !session?.user || !supabase) return;
+        if (!invitation || !session?.user || !supabase) return;
         setLoading(true);
         setError(null);
     
         try {
-            // Chama a função no backend para aceitar o convite
             const { error: rpcError } = await supabase.rpc('accept_my_invitation');
             if (rpcError) throw rpcError;
-    
-            // ATUALIZAÇÃO OTIMISTA: Assume que a operação foi bem-sucedida e atualiza a UI imediatamente.
-            // Usa os dados da equipe que já estavam no objeto do convite.
+
+            // Limpa o convite da UI imediatamente e busca os novos dados da equipe
             setInvitation(null);
-            setTeam(currentInvitation.teams);
-            setLoading(false); // Para o carregamento principal, a UI já está correta.
-    
-            // Em segundo plano, busca a lista completa e atualizada de membros.
-            const { data: membersData, error: membersError } = await supabase
-                .from('team_members')
-                .select('*, profiles(username)')
-                .eq('team_id', currentInvitation.teams.id);
-            
-            if (membersError) {
-                // Se a busca de membros falhar, exibe um erro não bloqueante.
-                console.error("Falha ao buscar membros da equipe após aceitar convite:", membersError.message);
-                setError("Não foi possível carregar a lista de membros da equipe. Por favor, atualize a página.");
-            } else {
-                setMembers(membersData as TeamMember[]);
-            }
+            await fetchData();
     
         } catch (err: any) {
             let friendlyError = err.message;
             if (err.message?.includes('function accept_my_invitation() does not exist')) {
-                friendlyError = "Ação necessária: A função para aceitar convites não foi encontrada. Peça ao administrador para criar a função 'accept_my_invitation' no Editor SQL do Supabase.";
+                friendlyError = "Ação necessária: A função para aceitar convites não foi encontrada. Crie a função 'accept_my_invitation' no Editor SQL do Supabase.";
             }
             setError(friendlyError);
-            setLoading(false); // Garante que o carregamento pare em caso de erro.
+            setLoading(false);
         }
     };
     
@@ -276,13 +263,12 @@ const TeamsScreen: React.FC<TeamsScreenProps> = ({ session, userProfile, onUpgra
             const { error: rpcError } = await supabase.rpc('decline_my_invitation');
             if (rpcError) throw rpcError;
             
-            // O convite foi removido no backend. Apenas limpa o estado local para refletir isso.
             setInvitation(null);
     
         } catch (err: any) {
             let friendlyError = err.message;
             if (err.message?.includes('function decline_my_invitation() does not exist')) {
-                friendlyError = "Ação necessária: A função para recusar convites não foi encontrada. Peça ao administrador para criar a função 'decline_my_invitation' no Editor SQL do Supabase.";
+                friendlyError = "Ação necessária: A função para recusar convites não foi encontrada. Crie a função 'decline_my_invitation' no Editor SQL do Supabase.";
             }
             setError(friendlyError);
         } finally {
@@ -316,6 +302,33 @@ const TeamsScreen: React.FC<TeamsScreenProps> = ({ session, userProfile, onUpgra
         }
     };
 
+    const handleDeleteTeam = async () => {
+        if (!team || !supabase) return;
+        if (!window.confirm("Tem a certeza que quer apagar a sua equipe? TODOS os membros serão removidos e esta ação não pode ser desfeita.")) return;
+        
+        setLoading(true);
+        setError(null);
+
+        try {
+            const { error: rpcError } = await supabase.rpc('delete_my_team');
+            if (rpcError) {
+                 if (rpcError.message.includes('function public.delete_my_team() does not exist')) {
+                    setError("Falha na configuração do backend: A função para apagar equipes ('delete_my_team') não existe. O administrador precisa criá-la no Supabase.");
+                    return;
+                }
+                throw rpcError;
+            }
+            
+            setSuccessMessage("Equipe apagada com sucesso.");
+            await fetchData(); // Re-fetches data, will show "create team" view.
+            setTimeout(() => setSuccessMessage(null), 3000);
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     // --- LÓGICA DE RENDERIZAÇÃO ---
 
     if (loading) {
@@ -326,7 +339,6 @@ const TeamsScreen: React.FC<TeamsScreenProps> = ({ session, userProfile, onUpgra
         return <ErrorState error={error} />;
     }
     
-    // 1. Prioridade máxima: Mostrar convite pendente.
     if (invitation) {
         return (
             <div className="w-full max-w-2xl mx-auto glassmorphism p-6 rounded-2xl border-2 panel-glow-primary text-center">
@@ -340,11 +352,11 @@ const TeamsScreen: React.FC<TeamsScreenProps> = ({ session, userProfile, onUpgra
         );
     }
 
-    // 2. Se não houver convite, mostrar a equipe atual do usuário.
     if (team) {
         const isOwner = team.owner_id === session?.user?.id;
-        const ownerProfile = members.find(m => m.user_id === team.owner_id);
-        const ownerUsername = ownerProfile?.profiles?.username || session?.user?.email;
+        const ownerMemberRecord = members.find(m => m.user_id === team.owner_id);
+        const ownerUsername = ownerMemberRecord?.profiles?.username || 'Técnico (Conta Removida)';
+        
         return (
             <>
                 <div className="w-full max-w-4xl mx-auto space-y-8">
@@ -409,6 +421,18 @@ const TeamsScreen: React.FC<TeamsScreenProps> = ({ session, userProfile, onUpgra
                             <p className="text-center text-sm text-yellow-400 mt-4">Você atingiu o limite de 6 membros na equipe.</p>
                         )}
                     </div>
+                     {isOwner && (
+                        <div className="glassmorphism p-6 rounded-2xl border-2 border-red-800/50 text-center">
+                            <h3 className="text-lg font-bold text-red-400">Zona de Perigo</h3>
+                            <p className="text-xs text-slate-400 mt-1 mb-4">Esta ação é permanente e não pode ser desfeita.</p>
+                            <button 
+                                onClick={handleDeleteTeam}
+                                className="bg-red-800 hover:bg-red-700 text-white font-bold py-2 px-5 rounded-lg transition-colors"
+                            >
+                                Apagar Equipe
+                            </button>
+                        </div>
+                    )}
                 </div>
 
                 {isEditingLogo && (
@@ -437,7 +461,6 @@ const TeamsScreen: React.FC<TeamsScreenProps> = ({ session, userProfile, onUpgra
         );
     }
     
-    // 3. Se não tiver convite nem time, verifique o plano para permitir a criação.
     const isGloryPlan = userProfile?.plan_id === 'monthly_glory';
     if (isGloryPlan) {
         return (
@@ -480,7 +503,6 @@ const TeamsScreen: React.FC<TeamsScreenProps> = ({ session, userProfile, onUpgra
         );
     }
 
-    // 4. Fallback final: Se não for do plano Glória, mostrar a tela de upgrade.
     return (
         <div className="w-full max-w-2xl mx-auto glassmorphism p-8 rounded-2xl border-2 border-purple-400 text-center animated-entry" style={{boxShadow: '0 0 30px rgba(192, 132, 252, 0.4)'}}>
             <h2 className="text-2xl font-bold text-purple-300 mb-4 flex items-center justify-center gap-2">
