@@ -1349,7 +1349,12 @@ const App: React.FC = () => {
                     heroes={heroes}
                 />;
             case 'teams':
-                return <TeamsScreen session={session} userProfile={userProfile} onUpgradeClick={() => setIsUpgradeModalOpen(true)} />;
+                return <TeamsScreen 
+                    session={session} 
+                    userProfile={userProfile} 
+                    onUpgradeClick={() => setIsUpgradeModalOpen(true)}
+                    onTeamAction={session?.user ? () => fetchUserProfile(session.user) : async () => {}}
+                />;
             default: return null;
         }
     };

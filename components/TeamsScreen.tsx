@@ -23,9 +23,10 @@ interface TeamsScreenProps {
     session: Session | null;
     userProfile: UserProfile | null;
     onUpgradeClick: () => void;
+    onTeamAction: () => Promise<void>;
 }
 
-const TeamsScreen: React.FC<TeamsScreenProps> = ({ session, userProfile, onUpgradeClick }) => {
+const TeamsScreen: React.FC<TeamsScreenProps> = ({ session, userProfile, onUpgradeClick, onTeamAction }) => {
     const [loading, setLoading] = useState(true);
     const [team, setTeam] = useState<TeamData | null>(null);
     const [members, setMembers] = useState<TeamMember[]>([]);
@@ -213,7 +214,8 @@ const TeamsScreen: React.FC<TeamsScreenProps> = ({ session, userProfile, onUpgra
     };
 
     const handleRemoveMember = async (memberId: number) => {
-        if (!window.confirm("Tem a certeza que quer remover este membro?") || !supabase) return;
+        if (!supabase) return;
+        
         setLoading(true);
         try {
             const { error: deleteError } = await supabase
@@ -240,9 +242,9 @@ const TeamsScreen: React.FC<TeamsScreenProps> = ({ session, userProfile, onUpgra
             const { error: rpcError } = await supabase.rpc('accept_my_invitation');
             if (rpcError) throw rpcError;
 
-            // Limpa o convite da UI imediatamente e busca os novos dados da equipe
             setInvitation(null);
-            await fetchData();
+            await onTeamAction(); // Atualiza o perfil do usuário no App.tsx
+            await fetchData(); // Atualiza os dados da equipe na tela atual
     
         } catch (err: any) {
             let friendlyError = err.message;
@@ -304,7 +306,6 @@ const TeamsScreen: React.FC<TeamsScreenProps> = ({ session, userProfile, onUpgra
 
     const handleDeleteTeam = async () => {
         if (!team || !supabase) return;
-        if (!window.confirm("Tem a certeza que quer apagar a sua equipe? TODOS os membros serão removidos e esta ação não pode ser desfeita.")) return;
         
         setLoading(true);
         setError(null);
@@ -321,6 +322,35 @@ const TeamsScreen: React.FC<TeamsScreenProps> = ({ session, userProfile, onUpgra
             
             setSuccessMessage("Equipe apagada com sucesso.");
             await fetchData(); // Re-fetches data, will show "create team" view.
+            setTimeout(() => setSuccessMessage(null), 3000);
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleLeaveTeam = async () => {
+        if (!team || !supabase) return;
+        
+        setLoading(true);
+        setError(null);
+    
+        try {
+            const { error: rpcError } = await supabase.rpc('leave_my_team');
+            if (rpcError) {
+                if (rpcError.message.includes('function public.leave_my_team() does not exist')) {
+                    setError("Falha na configuração do backend: A função para sair da equipe ('leave_my_team') não existe. O administrador precisa criá-la no Supabase.");
+                    setLoading(false);
+                    return;
+                }
+                throw rpcError;
+            }
+            
+            setSuccessMessage("Você saiu da equipe.");
+            // Atualiza o estado localmente para uma resposta de UI imediata
+            setTeam(null);
+            setMembers([]);
             setTimeout(() => setSuccessMessage(null), 3000);
         } catch (err: any) {
             setError(err.message);
@@ -430,6 +460,18 @@ const TeamsScreen: React.FC<TeamsScreenProps> = ({ session, userProfile, onUpgra
                                 className="bg-red-800 hover:bg-red-700 text-white font-bold py-2 px-5 rounded-lg transition-colors"
                             >
                                 Apagar Equipe
+                            </button>
+                        </div>
+                    )}
+                    {!isOwner && (
+                        <div className="glassmorphism p-6 rounded-2xl border-2 border-red-800/50 text-center">
+                            <h3 className="text-lg font-bold text-red-400">Zona de Perigo</h3>
+                            <p className="text-xs text-slate-400 mt-1 mb-4">Esta ação removerá você da equipe e revogará seu acesso premium.</p>
+                            <button 
+                                onClick={handleLeaveTeam}
+                                className="bg-red-800 hover:bg-red-700 text-white font-bold py-2 px-5 rounded-lg transition-colors"
+                            >
+                                Sair da Equipe
                             </button>
                         </div>
                     )}
